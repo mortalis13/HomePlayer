@@ -9,6 +9,8 @@ import android.app.Service;
 import android.app.Notification;
 import android.content.Intent;
 import android.content.Context;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
@@ -32,6 +34,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
   private AudioFocusRequest focusRequest;
+  private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+  private HeadphonesUnpluggedReceiver headphonesUnpluggedReceiver = new HeadphonesUnpluggedReceiver();
   
   private String audioPath;
   private int audioTime;
@@ -140,6 +144,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       return;
     }
     
+    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
+    
     mediaPlayer.start();
     Fun.logd("Playback started");
   }
@@ -150,7 +156,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     }
     
     sendUpdateStoppedTime();
-    
+    unregisterReceiver(headphonesUnpluggedReceiver);
+
     mediaPlayer.stop();
     mediaPlayer.reset();
     Fun.logd("Playback stopped");
@@ -159,6 +166,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public void pause() {
     mediaPlayer.pause();
     sendPlayerPaused();
+    unregisterReceiver(headphonesUnpluggedReceiver);
     Fun.logd("Playback paused");
   }
   
@@ -168,6 +176,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       Fun.loge("Audio focus is not granted");
       return;
     }
+    
+    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
     
     mediaPlayer.start();
     Fun.logd("Playback resumed");
@@ -357,19 +367,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       case AudioManager.AUDIOFOCUS_LOSS:
         Fun.log("AUDIOFOCUS_LOSS");
         pause();
-        // sendPlayerPaused();
         break;
       
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
         Fun.log("AUDIOFOCUS_LOSS_TRANSIENT");
         pause();
-        // sendPlayerPaused();
         break;
       
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
         Fun.log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
         pause();
-        // sendPlayerPaused();
         break;
     }
   }
@@ -378,6 +385,15 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public class PlayerBinder extends Binder {
     PlayerService getService() {
       return PlayerService.this;
+    }
+  }
+  
+  private class HeadphonesUnpluggedReceiver extends BroadcastReceiver {
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+        Fun.log("Headphones unplugged");
+        pause();
+      }
     }
   }
   
