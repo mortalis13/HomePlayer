@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
   // -----------------------------------------------------------
   private void bindPlayerService() {
     if (serviceBound) return;
-    
+    Fun.log("Binding PlayerService");
     Intent intent = new Intent(this, PlayerService.class);
     bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
   }
@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity {
     
     if (playerService.isPlaying()) {
       playerService.pause();
-      setPlayButtonDefault();
+      // setPlayButtonDefault();
     }
     else if (playerService.isPlayerLoaded()) {
       playerService.resume();
@@ -489,6 +489,10 @@ public class MainActivity extends AppCompatActivity {
     setPlayButtonAsPause();
     progressSlider.enable();
     updatePlayingStats();
+  }
+  
+  public void onPlayerPaused() {
+    setPlayButtonDefault();
   }
   
   public void onPlayerPreloaded() {

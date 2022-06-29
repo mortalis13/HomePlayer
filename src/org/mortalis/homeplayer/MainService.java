@@ -49,6 +49,10 @@ public class MainService {
     mainActivity.onPlayerStarted();
   }
   
+  public void onPlayerPaused() {
+    mainActivity.onPlayerPaused();
+  }
+  
   public void onPlayerPreloaded() {
     mainActivity.onPlayerPreloaded();
   }

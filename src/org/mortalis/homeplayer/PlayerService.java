@@ -5,26 +5,33 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.io.File;
 
-import android.os.Handler;
 import android.app.Service;
 import android.app.Notification;
 import android.content.Intent;
+import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Binder;
-import android.util.Log;
+import android.os.Build;
 import android.os.PowerManager;
+import android.util.Log;
 
 
-public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
+public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
   
   private final IBinder binder = new PlayerBinder();
   
   private MediaPlayer mediaPlayer;
+  
+  private AudioManager audioManager;
+  private AudioAttributes playbackAttributes;
+  private AudioFocusRequest focusRequest;
   
   private String audioPath;
   private int audioTime;
@@ -35,10 +42,24 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private Handler progressHandler;
   private Runnable progressRunnable;
   
+  
   @Override
   public void onCreate() {
     Fun.logd("PlayerService.onCreate()");
     super.onCreate();
+    
+    audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    
+    playbackAttributes = new AudioAttributes.Builder()
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        .setUsage(AudioAttributes.USAGE_GAME)
+        .build();
+    focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(playbackAttributes)
+        .setAcceptsDelayedFocusGain(true)
+        .setWillPauseWhenDucked(true)
+        .setOnAudioFocusChangeListener(this)
+        .build();
   }
   
   @Override
@@ -49,16 +70,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
-      
+
       if (mediaPlayer != null) mediaPlayer.release();
       mediaPlayer = new MediaPlayer();
-      mediaPlayer.setAudioAttributes(
-        new AudioAttributes.Builder()
-          .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-          .setUsage(AudioAttributes.USAGE_MEDIA)
-          .build()
-      );
-      
+      mediaPlayer.setAudioAttributes(playbackAttributes);
       // mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
       // mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
       // mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.FULL_WAKE_LOCK);
@@ -69,9 +84,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       
       progressHandler = new Handler();
       
-      Fun.log("PS: audioPath: " + audioPath);
-      Fun.log("PS: audioTime: " + audioTime);
-      Fun.log("PS: startPlayback: " + startPlayback);
       startAudio(audioPath);
       playerLoaded = true;
     }
@@ -87,6 +99,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("PlayerService.onDestroy()");
     super.onDestroy();
     
+    removeAudioFocus();
     if (mediaPlayer != null) mediaPlayer.release();
   }
   
@@ -120,6 +133,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   private void play() {
     preload();
+    
+    boolean audioFocusGranted = requestAudioFocus();
+    if (!audioFocusGranted) {
+      Fun.loge("Audio focus is not granted");
+      return;
+    }
+    
     mediaPlayer.start();
     Fun.logd("Playback started");
   }
@@ -138,10 +158,19 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   public void pause() {
     mediaPlayer.pause();
+    sendPlayerPaused();
+    Fun.logd("Playback paused");
   }
   
   public void resume() {
+    boolean audioFocusGranted = requestAudioFocus();
+    if (!audioFocusGranted) {
+      Fun.loge("Audio focus is not granted");
+      return;
+    }
+    
     mediaPlayer.start();
+    Fun.logd("Playback resumed");
   }
   
   public void restartAudio() {
@@ -150,6 +179,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   private void startAudio(String audioPath) {
     Fun.logd("startAudio()");
+    
     try {
       if (audioPath != null && Fun.fileExists(audioPath)) {
         mediaPlayer.setDataSource(audioPath);
@@ -180,6 +210,26 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   
+  private boolean requestAudioFocus() {
+    if (audioManager == null) return false;
+    
+    int result = 0;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      result = audioManager.requestAudioFocus(focusRequest);
+    }
+    else {
+      result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+    
+    Fun.log("Audio focus request: " + result);
+    return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+  }
+
+  private void removeAudioFocus() {
+    audioManager.abandonAudioFocus(this);
+  }
+  
+  
   // ----- External calls
   private void sendInitProgress() {
     MainService.get().initProgress(mediaPlayer.getDuration());
@@ -204,6 +254,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   private void sendPlayerStarted() {
     MainService.get().onPlayerStarted();
+  }
+  
+  private void sendPlayerPaused() {
+    MainService.get().onPlayerPaused();
   }
   
   private void sendPlayerStopped() {
@@ -269,6 +323,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     startForeground(Vars.NOTIFICATION_ID, Fun.buildNotification(this, title, text));
   }
   
+  
   // --> MediaPlayer.OnCompletionListener
   @Override
   public void onCompletion(MediaPlayer player) {
@@ -279,12 +334,44 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     sendPlayerStopped();
   }
   
+  
   // --> MediaPlayer.OnErrorListener
   @Override
   public boolean onError(MediaPlayer player, int what, int extra) {
     Fun.logd("MediaPlayer.onError()");
     Fun.loge("MediaPlayer Error: " + what + "; " + extra);
     return true;
+  }
+  
+  
+  // --> AudioManager.OnAudioFocusChangeListener
+  @Override
+  public void onAudioFocusChange(int focusChange) {
+    Fun.logd("onAudioFocusChange()");
+    
+    switch (focusChange) {
+      case AudioManager.AUDIOFOCUS_GAIN:
+        Fun.log("AUDIOFOCUS_GAIN");
+        break;
+      
+      case AudioManager.AUDIOFOCUS_LOSS:
+        Fun.log("AUDIOFOCUS_LOSS");
+        pause();
+        // sendPlayerPaused();
+        break;
+      
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+        Fun.log("AUDIOFOCUS_LOSS_TRANSIENT");
+        pause();
+        // sendPlayerPaused();
+        break;
+      
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+        Fun.log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+        pause();
+        // sendPlayerPaused();
+        break;
+    }
   }
   
   
