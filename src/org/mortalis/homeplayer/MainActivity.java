@@ -273,6 +273,7 @@ public class MainActivity extends AppCompatActivity {
       
       favoritesList = Fun.getSharedPrefList(context, "PREF_FAVORITES_LIST");
       // Fun.log("PREF favoritesList: " + favoritesList);
+      cleanFavorites();
       
       File dir = lastFolder == null ? startDir: new File(lastFolder);
       changeDir(dir);
@@ -748,12 +749,6 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingPos);
     lastAudioTime = playingPos;
     
-    // String currentAudioPath = playerService.getAudioPath();
-    // if (currentAudioPath != null) {
-    //   Fun.saveSharedPref(context, "TIME_" + new File(currentAudioPath).getParent(), playingPos);
-    //   Fun.log(String.format("Saved %d time to TIME_%s", playingPos, new File(currentAudioPath).getParent()));
-    // }
-    
     playingPos /= 1000;
     totalTime  /= 1000;
     String timePlaying = Fun.formatTime(playingPos, false);
@@ -780,6 +775,20 @@ public class MainActivity extends AppCompatActivity {
   
   public void setPlayButtonAsPause() {
     bPlayPause.setImageResource(R.drawable.baseline_pause_black_36);
+  }
+  
+  private void cleanFavorites() {
+    // Removes files that don't exist
+    if (favoritesList == null) return;
+    String[] originalList = favoritesList.toArray(new String[0]);
+    
+    for (String favPath: originalList) {
+      if (!new File(favPath).exists()) {
+        favoritesList.remove(favPath);
+      }
+    }
+    
+    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
   

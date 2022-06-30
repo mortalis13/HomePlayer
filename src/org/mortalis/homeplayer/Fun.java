@@ -142,6 +142,7 @@ public class Fun {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
     SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.remove(key).commit();
     editor.putStringSet(key, values);
     editor.commit();
   }
