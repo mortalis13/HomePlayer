@@ -16,6 +16,7 @@ import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
@@ -37,6 +38,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
   private HeadphonesUnpluggedReceiver headphonesUnpluggedReceiver = new HeadphonesUnpluggedReceiver();
   
+  private MediaMetadataRetriever metadataRetriever;
+  
   private String audioPath;
   private int audioTime;
   private boolean updateTimeEnabled;
@@ -57,13 +60,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     playbackAttributes = new AudioAttributes.Builder()
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .setUsage(AudioAttributes.USAGE_GAME)
-        .build();
+    .build();
+    
     focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
         .setAudioAttributes(playbackAttributes)
         .setAcceptsDelayedFocusGain(true)
         .setWillPauseWhenDucked(true)
         .setOnAudioFocusChangeListener(this)
-        .build();
+    .build();
+    
+    metadataRetriever = new MediaMetadataRetriever();
   }
   
   @Override
@@ -220,6 +226,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   
+  // ----- Utils
   private boolean requestAudioFocus() {
     if (audioManager == null) return false;
     
@@ -237,6 +244,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
   private void removeAudioFocus() {
     audioManager.abandonAudioFocus(this);
+  }
+  
+  private Notification buildNotification() {
+    metadataRetriever.setDataSource(audioPath);
+    String audioArtist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    
+    String title = new File(audioPath).getName();
+    String text = audioArtist;
+    
+    return Fun.buildNotification(this, title, text);
   }
   
   
@@ -328,9 +345,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       sendPlayerPreloaded();
     }
     
-    String title = new File(audioPath).getName();
-    String text = "text";
-    startForeground(Vars.NOTIFICATION_ID, Fun.buildNotification(this, title, text));
+    startForeground(Vars.NOTIFICATION_ID, buildNotification());
   }
   
   

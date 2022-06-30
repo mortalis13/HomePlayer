@@ -978,7 +978,6 @@ public class MainActivity extends AppCompatActivity {
         iconContainer = rootView.findViewById(R.id.iconContainer);
         
         iconContainer.setOnClickListener((view) -> {
-          Fun.log("icon click");
           this.item.isFavorite = !this.item.isFavorite;
           itemIndicator.setVisibility(this.item.isFavorite ? View.VISIBLE: View.GONE);
           updateItemFavorite(this.item.path, this.item.isFavorite);
