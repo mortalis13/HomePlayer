@@ -24,6 +24,14 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.PowerManager;
 import android.util.Log;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+
+import androidx.core.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.media.app.NotificationCompat.MediaStyle;
+import android.support.v4.media.session.MediaSessionCompat;
 
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
@@ -31,6 +39,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private final IBinder binder = new PlayerBinder();
   
   private MediaPlayer mediaPlayer;
+  private MediaSessionCompat mediaSession;
   
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
@@ -54,6 +63,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public void onCreate() {
     Fun.logd("PlayerService.onCreate()");
     super.onCreate();
+    
+    mediaSession = new MediaSessionCompat(this, Vars.APP_LOG_TAG);
     
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
     
@@ -253,7 +264,22 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     String title = new File(audioPath).getName();
     String text = audioArtist;
     
-    return Fun.buildNotification(this, title, text);
+    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+    Bitmap largeIcon = BitmapFactory.decodeResource(this.getResources(), R.drawable.round_audiotrack_black_24);
+    
+    mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+    mBuilder.setLargeIcon(largeIcon);
+    mBuilder.setColor(ContextCompat.getColor(this, R.color.notification_color));
+    mBuilder.setVibrate(null);
+    
+    mBuilder.setStyle(new MediaStyle()
+      .setMediaSession(mediaSession.getSessionToken())
+    );
+    
+    mBuilder.setContentTitle(title);
+    mBuilder.setContentText(text);
+    
+    return mBuilder.build();
   }
   
   

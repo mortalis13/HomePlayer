@@ -23,9 +23,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.media.app.NotificationCompat.MediaStyle;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import android.util.Log;
 import android.widget.Toast;
 import android.os.PowerManager;
@@ -38,6 +39,7 @@ import android.util.DisplayMetrics;
 import android.content.res.Resources;
 import android.app.NotificationChannel;
 import android.os.Build;
+import android.support.v4.media.session.MediaSessionCompat;
 
 
 public class Fun {
@@ -310,15 +312,21 @@ public class Fun {
     }
   }
   
-  public static Notification buildNotification(Context context, String title, String text) {
+  public static Notification buildNotification(Context context, String title, String text, MediaSessionCompat.Token sessionToken) {
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
     Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
     
-    mBuilder.setSmallIcon(R.mipmap.ic_launcher);
+    mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
     mBuilder.setLargeIcon(largeIcon);
-    mBuilder.setShowWhen(false);
-    mBuilder.setOngoing(false);
+    mBuilder.setColor(ContextCompat.getColor(context, R.color.notification_color));
+    // mBuilder.setShowWhen(false);
+    // mBuilder.setOngoing(false);
     mBuilder.setVibrate(null);
+    
+    mBuilder.setStyle(new MediaStyle()
+      .setMediaSession(sessionToken)
+      .setShowActionsInCompactView(0)
+    );
     
     mBuilder.setContentTitle(title);
     mBuilder.setContentText(text);
