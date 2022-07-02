@@ -7,6 +7,7 @@ import java.io.File;
 
 import android.app.Service;
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
 import android.content.BroadcastReceiver;
@@ -267,8 +268,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
     Bitmap largeIcon = BitmapFactory.decodeResource(this.getResources(), R.drawable.round_audiotrack_black_24);
     
-    mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    mBuilder.setLargeIcon(largeIcon);
+    Intent intent = new Intent(this, MainActivity.class);
+    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.setColor(ContextCompat.getColor(this, R.color.notification_color));
     
     mBuilder.setStyle(new MediaStyle()
@@ -278,6 +279,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     mBuilder.setContentTitle(title);
     mBuilder.setContentText(text);
     
+    builder.setContentIntent(pendingIntent);
     return mBuilder.build();
   }
   
