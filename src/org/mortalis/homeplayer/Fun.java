@@ -39,7 +39,6 @@ import android.util.DisplayMetrics;
 import android.content.res.Resources;
 import android.app.NotificationChannel;
 import android.os.Build;
-import android.support.v4.media.session.MediaSessionCompat;
 
 
 public class Fun {
@@ -313,20 +312,20 @@ public class Fun {
   }
   
   public static Notification buildNotification(Context context, String title, String text) {
-    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
-    Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
+    Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.round_audiotrack_white_24);
     
-    mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    mBuilder.setLargeIcon(largeIcon);
-    mBuilder.setColor(ContextCompat.getColor(context, R.color.notification_color));
-    mBuilder.setShowWhen(false);
-    mBuilder.setOngoing(false);
-    mBuilder.setVibrate(null);
+    builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+    builder.setLargeIcon(largeIcon);
+    builder.setColor(ContextCompat.getColor(context, R.color.notification_color));
+    builder.setShowWhen(false);
+    builder.setOngoing(false);
+    builder.setVibrate(null);
     
-    mBuilder.setContentTitle(title);
-    mBuilder.setContentText(text);
+    builder.setContentTitle(title);
+    builder.setContentText(text);
     
-    return mBuilder.build();
+    return builder.build();
   }
   
   public static void cancelNotification(Context context, int id) {

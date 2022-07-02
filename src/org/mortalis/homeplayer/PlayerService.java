@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
@@ -265,22 +266,24 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     String title = new File(audioPath).getName();
     String text = audioArtist;
     
-    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
-    Bitmap largeIcon = BitmapFactory.decodeResource(this.getResources(), R.drawable.round_audiotrack_black_24);
+    Bitmap largeIcon = BitmapFactory.decodeResource(this.getResources(), R.drawable.round_audiotrack_white_48);
     
     Intent intent = new Intent(this, MainActivity.class);
     PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    mBuilder.setColor(ContextCompat.getColor(this, R.color.notification_color));
     
-    mBuilder.setStyle(new MediaStyle()
-      .setMediaSession(mediaSession.getSessionToken())
-    );
     
-    mBuilder.setContentTitle(title);
-    mBuilder.setContentText(text);
+    // ----------
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+    builder.setContentTitle(title);
+    builder.setContentText(text);
+    
+    builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+    builder.setLargeIcon(largeIcon);
+    builder.setOngoing(true);
     
     builder.setContentIntent(pendingIntent);
-    return mBuilder.build();
+    
+    return builder.build();
   }
   
   
