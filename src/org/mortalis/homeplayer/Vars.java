@@ -34,7 +34,7 @@ public class Vars {
     "flac",
     "aac",
     "mid",
-    "3gp"
+    "amr"
   };
   
 }
