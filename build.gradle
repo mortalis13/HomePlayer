@@ -28,7 +28,7 @@ allprojects {
 
 // -- app
 android {
-  compileSdkVersion 30
+  compileSdkVersion 31
   
   defaultConfig {
     applicationId "org.mortalis.homeplayer"
@@ -38,7 +38,7 @@ android {
     versionName String.format('%d.%d', (int)(versionCode/10), versionCode%10)
     
     minSdkVersion 16
-    targetSdkVersion 30
+    targetSdkVersion 31
     
     resValue "string", "app_version", versionName
   }
@@ -90,10 +90,10 @@ android {
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
   
-  implementation 'androidx.appcompat:appcompat:1.0.0'
-  implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-  
-  implementation 'androidx.recyclerview:recyclerview:1.0.0'
+  implementation 'androidx.appcompat:appcompat:1.4.2'
+  implementation "androidx.core:core:1.8.0"
+  implementation "androidx.media:media:1.6.0"
+  implementation 'androidx.recyclerview:recyclerview:1.2.1'
 }
 
 def appStart() {
