@@ -976,7 +976,6 @@ public class MainActivity extends AppCompatActivity {
         iconContainer = rootView.findViewById(R.id.iconContainer);
         
         iconContainer.setOnClickListener((view) -> {
-          if (!this.item.isFile) return;
           this.item.isFavorite = !this.item.isFavorite;
           itemIndicator.setVisibility(this.item.isFavorite ? View.VISIBLE: View.GONE);
           updateItemFavorite(this.item.path, this.item.isFavorite);
@@ -1015,25 +1014,19 @@ public class MainActivity extends AppCompatActivity {
         this.item = item;
         if (item == null) return;
         
-        itemIcon.setImageResource(item.imgId);
+        iconContainer.setClickable(item.isFile);
+        itemIndicator.setVisibility(item.isFavorite ? View.VISIBLE: View.GONE);
+        
         itemText.setText(item.text);
         itemTime.setText(item.time);
         itemTime.setVisibility(item.isFile ? View.VISIBLE: View.GONE);
-        itemIndicator.setVisibility(item.isFavorite ? View.VISIBLE: View.GONE);
-
+        
         int iconColor = item_icon_color_default;
         if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
+        itemIcon.setImageResource(item.imgId);
         itemIcon.setColorFilter(iconColor);
       }
     } // ItemViewHolder
-  }
-  
-  
-  public class CircularOutlineProvider extends ViewOutlineProvider {  
-      @Override
-      public void getOutline(View view, Outline outline) {
-          outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), (view.getWidth() / 2F));
-      }
   }
   
   

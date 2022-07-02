@@ -18,7 +18,6 @@
       android:layout_width="46dp"
       android:layout_height="match_parent"
       android:gravity="center"
-      android:clickable="true"
     >
       <ImageView
         android:id="@+id/itemIcon"
@@ -36,26 +35,6 @@
         android:visibility="gone"
       />
     </FrameLayout>
-    
-    <!--
-    <LinearLayout
-      android:id="@+id/iconContainer"
-      android:layout_width="50dp"
-      android:layout_height="match_parent"
-      android:orientation="horizontal"
-      android:gravity="center"
-      android:clickable="true"
-    >
-      <ImageView
-        android:id="@+id/itemIcon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:tint="#888"
-        android:elevation="5dp"
-      />
-    </LinearLayout>
-    -->
     
     <TextView
       android:id="@+id/itemText"
