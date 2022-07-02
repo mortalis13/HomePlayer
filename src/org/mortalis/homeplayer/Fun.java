@@ -312,26 +312,20 @@ public class Fun {
     }
   }
   
-  public static Notification buildNotification(Context context, String title, String text, MediaSessionCompat.Token sessionToken) {
+  public static Notification buildNotification(Context context, String title, String text) {
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
     Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
     
     mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
     mBuilder.setLargeIcon(largeIcon);
     mBuilder.setColor(ContextCompat.getColor(context, R.color.notification_color));
-    // mBuilder.setShowWhen(false);
-    // mBuilder.setOngoing(false);
+    mBuilder.setShowWhen(false);
+    mBuilder.setOngoing(false);
     mBuilder.setVibrate(null);
-    
-    mBuilder.setStyle(new MediaStyle()
-      .setMediaSession(sessionToken)
-      .setShowActionsInCompactView(0)
-    );
     
     mBuilder.setContentTitle(title);
     mBuilder.setContentText(text);
     
-    NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     return mBuilder.build();
   }
   

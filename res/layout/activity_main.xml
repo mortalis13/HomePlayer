@@ -18,9 +18,10 @@
   >
     <org.mortalis.homeplayer.components.TitleScrollView
       android:id="@+id/titleScroller"
-      android:layout_width="wrap_content"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:paddingLeft="10dp"
+      android:paddingRight="10dp"
       android:fillViewport="true"
       android:scrollbars="none"
       android:overScrollMode="never"
@@ -28,11 +29,10 @@
       android:gravity="center_vertical"
       android:smoothScrollbar="false"
       android:layout_alignParentLeft="true"
-      android:layout_toLeftOf="@+id/bGoBack"
     >
     <TextView
       android:id="@+id/activeTitle"
-      android:layout_width="wrap_content"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:paddingTop="4dp"
       android:paddingBottom="4dp"
@@ -42,17 +42,6 @@
       android:textColor="#777"
     />
     </org.mortalis.homeplayer.components.TitleScrollView>
-    
-    <ImageButton
-      android:id="@+id/bGoBack"
-      android:layout_width="50dp"
-      android:layout_height="match_parent"
-      android:layout_weight="1"
-      android:src="@drawable/round_undo_black_24"
-      android:tint="#777"
-      android:background="@drawable/control_button_background"
-      android:layout_alignParentRight="true"
-    />
   </RelativeLayout>
   
   <LinearLayout

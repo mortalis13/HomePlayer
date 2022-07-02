@@ -27,11 +27,12 @@ public class Vars {
   public static final String PREFS_FILE = "home_player_prefs";
   
   public static final String[] AUDIO_EXTS = new String[] {
-    "aac",
-    "flac",
     "mp3",
     "ogg",
     "wav",
+    "m4a",
+    "flac",
+    "aac",
     "mid",
     "3gp"
   };

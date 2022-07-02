@@ -106,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
   
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
-  private ImageButton bGoBack;
   
   private SliderView progressSlider;
   private RecyclerView listItems;
@@ -192,7 +191,6 @@ public class MainActivity extends AppCompatActivity {
   private void configUI() {
     titleScroller = findViewById(R.id.titleScroller);
     activeTitle = findViewById(R.id.activeTitle);
-    bGoBack = findViewById(R.id.bGoBack);
     
     listItems = findViewById(R.id.listItems);
     progressSlider = findViewById(R.id.progressSlider);
@@ -242,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     
-    bGoBack.setOnClickListener(v -> {
+    activeTitle.setOnClickListener(v -> {
       changeToParentDir();
     });
     

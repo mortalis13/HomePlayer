@@ -257,7 +257,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     audioManager.abandonAudioFocus(this);
   }
   
-  private Notification buildNotification() {
+  private Notification buildPlayerNotification() {
     metadataRetriever.setDataSource(audioPath);
     String audioArtist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     
@@ -270,7 +270,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     mBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
     mBuilder.setLargeIcon(largeIcon);
     mBuilder.setColor(ContextCompat.getColor(this, R.color.notification_color));
-    mBuilder.setVibrate(null);
     
     mBuilder.setStyle(new MediaStyle()
       .setMediaSession(mediaSession.getSessionToken())
@@ -371,7 +370,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       sendPlayerPreloaded();
     }
     
-    startForeground(Vars.NOTIFICATION_ID, buildNotification());
+    startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
   }
   
   
