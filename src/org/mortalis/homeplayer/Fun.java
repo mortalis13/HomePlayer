@@ -317,7 +317,7 @@ public class Fun {
     
     builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
     builder.setLargeIcon(largeIcon);
-    builder.setColor(ContextCompat.getColor(context, R.color.notification_color));
+    builder.setColor(Color.RED);
     builder.setShowWhen(false);
     builder.setOngoing(false);
     builder.setVibrate(null);

@@ -4,6 +4,6 @@
   <dimen name="plain_slider_height">46dp</dimen>
   <dimen name="plain_slider_border_width">1dp</dimen>
   
-  <dimen name="favorite_mark_width">7dp</dimen>
-  <dimen name="favorite_mark_height">9dp</dimen>
+  <dimen name="favorite_mark_width">4.5dp</dimen>
+  <dimen name="favorite_mark_height">36dp</dimen>
 </resources>

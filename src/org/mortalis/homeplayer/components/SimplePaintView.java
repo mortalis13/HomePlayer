@@ -52,25 +52,18 @@ public class SimplePaintView extends ImageView {
   
   @Override
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-    float px1 = 0;
-    float py1 = (float) h;
-    float px2 = px1;
-    float py2 = py1 - this.itemHeight;
-    float px3 = this.itemWidth;
-    float py3 = py1;
-    
-    canvasPath = new Path();
-    canvasPath.moveTo(px1, py1);
-    canvasPath.lineTo(px2, py2);
-    canvasPath.lineTo(px3, py3);
-    canvasPath.lineTo(px1, py1);
+    float left = 0;
+    float top = (h - this.itemHeight) / 2;
+    float right = this.itemWidth;
+    float bottom = h - top;
+    canvasRect = new RectF(left, top, right, bottom);
     
     invalidate();
   }
   
   @Override
   protected void onDraw(Canvas canvas) {
-    canvas.drawPath(canvasPath, canvasPaint);
+    canvas.drawRect(canvasRect, canvasPaint);
   }
   
 }
