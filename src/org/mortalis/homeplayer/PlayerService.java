@@ -266,11 +266,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     String title = new File(audioPath).getName();
     String text = audioArtist;
     
-    Bitmap largeIcon = BitmapFactory.decodeResource(this.getResources(), R.drawable.round_audiotrack_white_48);
-    
     Intent intent = new Intent(this, MainActivity.class);
     PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    
     
     // ----------
     NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
@@ -278,8 +275,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     builder.setContentText(text);
     
     builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    builder.setLargeIcon(largeIcon);
     builder.setOngoing(true);
+    builder.setShowWhen(false);
     
     builder.setContentIntent(pendingIntent);
     
