@@ -25,10 +25,14 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
     else if (action.equals(PlayerService.ACTION_PAUSE)) {
       receiverListener.onMsgPause();
     }
+    else if (action.equals(PlayerService.ACTION_EXIT)) {
+      receiverListener.onMsgExit();
+    }
   }
   
   public interface ReceiverListener {
     public void onMsgPlay();
     public void onMsgPause();
+    public void onMsgExit();
   }
 }

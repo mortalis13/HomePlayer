@@ -39,9 +39,11 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   public static final String ACTION_PLAY = "org.mortalis.homeplayer.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayer.action.PAUSE";
+  public static final String ACTION_EXIT = "org.mortalis.homeplayer.action.EXIT";
   
   public static final int ACTION_PLAY_ID = 0;
   public static final int ACTION_PAUSE_ID = 1;
+  public static final int ACTION_EXIT_ID = 2;
   
   private final IBinder binder = new PlayerBinder();
   
@@ -50,7 +52,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
   private AudioFocusRequest focusRequest;
-  private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
   private HeadphonesUnpluggedReceiver headphonesUnpluggedReceiver = new HeadphonesUnpluggedReceiver();
   
   private NotificationManagerCompat notificationManager;
@@ -96,27 +97,34 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       public void onMsgPlay() {
         resume();
       }
-      
       public void onMsgPause() {
         pause();
+      }
+      public void onMsgExit() {
+        progressHandler.removeCallbacks(progressRunnable);
+        MainService.get().exitApp();
+        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
       }
     });
     
     IntentFilter filter = new IntentFilter();
     filter.addAction(ACTION_PLAY);
     filter.addAction(ACTION_PAUSE);
+    filter.addAction(ACTION_EXIT);
     registerReceiver(playerServiceReceiver, filter);
     
-    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
+    registerReceiver(headphonesUnpluggedReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
     
     notificationManager = NotificationManagerCompat.from(this);
     
     PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
     PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT);
     
     notifActions = new NotificationCompat.Action[] {
       new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
-      new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent)
+      new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
+      new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
     };
   }
   
@@ -308,9 +316,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
     notifBuilder.addAction(notifActions[actionId]);
+    notifBuilder.addAction(notifActions[ACTION_EXIT_ID]);
     
     MediaStyle style = new MediaStyle();
-    style.setShowActionsInCompactView(0);
+    style.setShowActionsInCompactView(0, 1);
     notifBuilder.setStyle(style);
     
     return notifBuilder.build();

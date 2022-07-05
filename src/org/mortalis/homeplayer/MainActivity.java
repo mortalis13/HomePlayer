@@ -793,6 +793,11 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
+  public void exitApp() {
+    Fun.logd("exitApp()");
+    finishAndRemoveTask();
+  }
+  
   
   private void itemClick(ListItem item) {
     try {

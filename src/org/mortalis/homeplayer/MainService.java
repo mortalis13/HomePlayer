@@ -65,4 +65,8 @@ public class MainService {
     mainActivity.onPlayerStopped();
   }
   
+  public void exitApp() {
+    mainActivity.exitApp();
+  }
+  
 }
