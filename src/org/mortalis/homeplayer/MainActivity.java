@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
   private int lastAudioTime;
   private Set<String> favoritesList;
   
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     Fun.logd("MainActivity.onCreate()");
@@ -492,6 +492,10 @@ public class MainActivity extends AppCompatActivity {
   
   public void onPlayerPaused() {
     setPlayButtonDefault();
+  }
+  
+  public void onPlayerResumed() {
+    setPlayButtonAsPause();
   }
   
   public void onPlayerPreloaded() {

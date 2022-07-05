@@ -53,6 +53,10 @@ public class MainService {
     mainActivity.onPlayerPaused();
   }
   
+  public void onPlayerResumed() {
+    mainActivity.onPlayerResumed();
+  }
+  
   public void onPlayerPreloaded() {
     mainActivity.onPlayerPreloaded();
   }

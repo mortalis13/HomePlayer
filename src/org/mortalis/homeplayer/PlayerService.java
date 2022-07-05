@@ -57,7 +57,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private boolean playerLoaded;
   private boolean startPlayback;
   
-  private Handler progressHandler;
+  private Handler progressHandler = new Handler();
   private Runnable progressRunnable;
   
   
@@ -104,7 +104,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       mediaPlayer.setOnCompletionListener(this);
       mediaPlayer.setOnErrorListener(this);
       
-      progressHandler = new Handler();
+      progressHandler.removeCallbacks(progressRunnable);
       
       startAudio(audioPath);
       playerLoaded = true;
@@ -150,14 +150,9 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     sendUpdatePlayingTime();
     sendInitProgress();
     sendUpdateProgress();
-    
-    enableUpdateTime();
-    startProgress();
   }
   
   private void play() {
-    preload();
-    
     boolean audioFocusGranted = requestAudioFocus();
     if (!audioFocusGranted) {
       Fun.loge("Audio focus is not granted");
@@ -168,11 +163,18 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("Playback started");
   }
   
-  private void stop() {
-    if (progressHandler != null) {
-      progressHandler.removeCallbacks(progressRunnable);
+  public void resume() {
+    if (!progressHandler.hasCallbacks(progressRunnable)) {
+      enableUpdateTime();
+      startProgress();
     }
     
+    play();
+    sendPlayerResumed();
+  }
+  
+  private void stop() {
+    progressHandler.removeCallbacks(progressRunnable);
     sendUpdateStoppedTime();
 
     mediaPlayer.stop();
@@ -186,16 +188,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("Playback paused");
   }
   
-  public void resume() {
-    boolean audioFocusGranted = requestAudioFocus();
-    if (!audioFocusGranted) {
-      Fun.loge("Audio focus is not granted");
-      return;
-    }
-    
-    mediaPlayer.start();
-    Fun.logd("Playback resumed");
-  }
   
   public void restartAudio() {
     startAudio(audioPath);
@@ -216,9 +208,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private void startProgress() {
-    if (progressHandler != null) {
-      progressHandler.removeCallbacks(progressRunnable);
-    }
+    Fun.logd("startProgress()");
+    progressHandler.removeCallbacks(progressRunnable);
     
     progressRunnable = new Runnable() {
       public void run() {
@@ -309,6 +300,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     MainService.get().onPlayerPaused();
   }
   
+  private void sendPlayerResumed() {
+    MainService.get().onPlayerResumed();
+  }
+  
   private void sendPlayerStopped() {
     MainService.get().onPlayerStopped();
   }
@@ -359,6 +354,9 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     }
     
     if (startPlayback) {
+      preload();
+      enableUpdateTime();
+      startProgress();
       play();
       sendPlayerStarted();
     }
