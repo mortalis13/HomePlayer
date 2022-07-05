@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="ic_volume_up">@drawable/ic_volume_up_black_24dp</string>
-  <string name="ic_folder">@drawable/ic_folder_black_24dp</string>
-</resources>
