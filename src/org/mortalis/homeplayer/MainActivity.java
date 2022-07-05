@@ -151,6 +151,34 @@ public class MainActivity extends AppCompatActivity {
   }
   
   @Override
+  protected void onStart() {
+    Fun.logd("MainActivity.onStart()");
+    super.onStart();
+    MainService.init(this);
+  }
+  
+  @Override
+  protected void onResume() {
+    Fun.logd("MainActivity.onResume()");
+    super.onResume();
+    bindPlayerService();
+  }
+  
+  @Override
+  protected void onDestroy() {
+    Fun.logd("MainActivity.onDestroy()");
+    super.onDestroy();
+
+    if (serviceBound) {
+      unbindService(serviceConnection);
+    }
+    if (playerService != null) {
+      Intent playerIntent = new Intent(this, PlayerService.class);
+      playerService.stopService(playerIntent);
+    }
+  }
+  
+  @Override
   public void onBackPressed() {
     changeToParentDir();
   }
@@ -288,7 +316,6 @@ public class MainActivity extends AppCompatActivity {
     
     if (playerService.isPlaying()) {
       playerService.pause();
-      // setPlayButtonDefault();
     }
     else if (playerService.isPlayerLoaded()) {
       playerService.resume();
@@ -1063,23 +1090,9 @@ public class MainActivity extends AppCompatActivity {
   
   // --------------------
   @Override
-  protected void onStart() {
-    Fun.logd("MainActivity.onStart()");
-    super.onStart();
-    MainService.init(this);
-  }
-  
-  @Override
   protected void onPause() {
     Fun.logd("MainActivity.onPause()");
     super.onPause();
-  }
-  
-  @Override
-  protected void onResume() {
-    Fun.logd("MainActivity.onResume()");
-    super.onResume();
-    bindPlayerService();
   }
   
   @Override
@@ -1092,20 +1105,6 @@ public class MainActivity extends AppCompatActivity {
   protected void onRestart() {
     Fun.logd("MainActivity.onRestart()");
     super.onStop();
-  }
-  
-  @Override
-  protected void onDestroy() {
-    Fun.logd("MainActivity.onDestroy()");
-    super.onDestroy();
-
-    if (serviceBound) {
-      unbindService(serviceConnection);
-    }
-    if (playerService != null) {
-      Intent playerIntent = new Intent(this, PlayerService.class);
-      playerService.stopService(playerIntent);
-    }
   }
   // --------------------
   
