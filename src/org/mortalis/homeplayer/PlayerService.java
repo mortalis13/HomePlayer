@@ -55,7 +55,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   private NotificationManagerCompat notificationManager;
   private NotificationCompat.Builder notifBuilder;
-  private MediaStyle notifStyle;
+  private NotificationCompat.Action[] notifActions;
   private PlayerServiceReceiver playerServiceReceiver;
   
   private MediaMetadataRetriever metadataRetriever;
@@ -110,6 +110,14 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     registerReceiver(headphonesUnpluggedReceiver, intentFilter);
     
     notificationManager = NotificationManagerCompat.from(this);
+    
+    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
+    
+    notifActions = new NotificationCompat.Action[] {
+      new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
+      new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent)
+    };
   }
   
   @Override
@@ -287,9 +295,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Intent intent = new Intent(this, MainActivity.class);
     PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     
-    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
-    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
-    
     // ----------
     notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
     notifBuilder.setContentTitle(title);
@@ -301,12 +306,12 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     notifBuilder.setContentIntent(pendingIntent);
     
-    notifBuilder.addAction(R.drawable.baseline_play_arrow_black_24, "Play", playIntent);
-    notifBuilder.addAction(R.drawable.baseline_pause_black_24, "Pause", pauseIntent);
+    int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
+    notifBuilder.addAction(notifActions[actionId]);
     
-    notifStyle = new MediaStyle();
-    notifStyle.setShowActionsInCompactView(0);
-    notifBuilder.setStyle(notifStyle);
+    MediaStyle style = new MediaStyle();
+    style.setShowActionsInCompactView(0);
+    notifBuilder.setStyle(style);
     
     return notifBuilder.build();
   }
@@ -317,7 +322,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       notification = buildPlayerNotification();
     }
     else {
-      notifStyle.setShowActionsInCompactView(action);
+      notifBuilder.mActions.set(0, notifActions[action]);
       notification = notifBuilder.build();
     }
     
