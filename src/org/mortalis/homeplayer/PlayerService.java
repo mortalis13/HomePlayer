@@ -31,23 +31,32 @@ import android.graphics.Color;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
   
+  public static final String ACTION_PLAY = "org.mortalis.homeplayer.action.PLAY";
+  public static final String ACTION_PAUSE = "org.mortalis.homeplayer.action.PAUSE";
+  
+  public static final int ACTION_PLAY_ID = 0;
+  public static final int ACTION_PAUSE_ID = 1;
+  
   private final IBinder binder = new PlayerBinder();
   
   private MediaPlayer mediaPlayer;
-  private MediaSessionCompat mediaSession;
   
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
   private AudioFocusRequest focusRequest;
   private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
   private HeadphonesUnpluggedReceiver headphonesUnpluggedReceiver = new HeadphonesUnpluggedReceiver();
+  
+  private NotificationManagerCompat notificationManager;
+  private NotificationCompat.Builder notifBuilder;
+  private MediaStyle notifStyle;
+  private PlayerServiceReceiver playerServiceReceiver;
   
   private MediaMetadataRetriever metadataRetriever;
   
@@ -66,8 +75,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("PlayerService.onCreate()");
     super.onCreate();
     
-    mediaSession = new MediaSessionCompat(this, Vars.APP_LOG_TAG);
-    
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
     
     playbackAttributes = new AudioAttributes.Builder()
@@ -84,7 +91,25 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     metadataRetriever = new MediaMetadataRetriever();
     
+    playerServiceReceiver = new PlayerServiceReceiver();
+    playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
+      public void onMsgPlay() {
+        resume();
+      }
+      
+      public void onMsgPause() {
+        pause();
+      }
+    });
+    
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(ACTION_PLAY);
+    filter.addAction(ACTION_PAUSE);
+    registerReceiver(playerServiceReceiver, filter);
+    
     registerReceiver(headphonesUnpluggedReceiver, intentFilter);
+    
+    notificationManager = NotificationManagerCompat.from(this);
   }
   
   @Override
@@ -121,6 +146,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("PlayerService.onDestroy()");
     super.onDestroy();
     
+    unregisterReceiver(playerServiceReceiver);
     unregisterReceiver(headphonesUnpluggedReceiver);
     removeAudioFocus();
     if (mediaPlayer != null) mediaPlayer.release();
@@ -152,6 +178,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     sendUpdateProgress();
   }
   
+  
   private void play() {
     boolean audioFocusGranted = requestAudioFocus();
     if (!audioFocusGranted) {
@@ -160,6 +187,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     }
     
     mediaPlayer.start();
+    updateNotification(ACTION_PAUSE_ID);
     Fun.logd("Playback started");
   }
   
@@ -179,12 +207,14 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
     mediaPlayer.stop();
     mediaPlayer.reset();
+    updateNotification(ACTION_PLAY_ID);
     Fun.logd("Playback stopped");
   }
   
   public void pause() {
     mediaPlayer.pause();
     sendPlayerPaused();
+    updateNotification(ACTION_PLAY_ID);
     Fun.logd("Playback paused");
   }
   
@@ -246,6 +276,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private Notification buildPlayerNotification() {
+    Fun.logd("buildPlayerNotification()");
+    
     metadataRetriever.setDataSource(audioPath);
     String audioArtist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     
@@ -255,18 +287,41 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Intent intent = new Intent(this, MainActivity.class);
     PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     
+    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
+    
     // ----------
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
-    builder.setContentTitle(title);
-    builder.setContentText(text);
+    notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+    notifBuilder.setContentTitle(title);
+    notifBuilder.setContentText(text);
     
-    builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    builder.setOngoing(true);
-    builder.setShowWhen(false);
+    notifBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+    notifBuilder.setOngoing(true);
+    notifBuilder.setShowWhen(false);
     
-    builder.setContentIntent(pendingIntent);
+    notifBuilder.setContentIntent(pendingIntent);
     
-    return builder.build();
+    notifBuilder.addAction(R.drawable.baseline_play_arrow_black_24, "Play", playIntent);
+    notifBuilder.addAction(R.drawable.baseline_pause_black_24, "Pause", pauseIntent);
+    
+    notifStyle = new MediaStyle();
+    notifStyle.setShowActionsInCompactView(0);
+    notifBuilder.setStyle(notifStyle);
+    
+    return notifBuilder.build();
+  }
+  
+  private void updateNotification(int action) {
+    Notification notification = null;
+    if (notifBuilder == null) {
+      notification = buildPlayerNotification();
+    }
+    else {
+      notifStyle.setShowActionsInCompactView(action);
+      notification = notifBuilder.build();
+    }
+    
+    notificationManager.notify(Vars.NOTIFICATION_ID, notification);
   }
   
   
