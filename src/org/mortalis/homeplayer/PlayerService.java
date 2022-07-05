@@ -83,6 +83,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     .build();
     
     metadataRetriever = new MediaMetadataRetriever();
+    
+    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
   }
   
   @Override
@@ -97,9 +99,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       if (mediaPlayer != null) mediaPlayer.release();
       mediaPlayer = new MediaPlayer();
       mediaPlayer.setAudioAttributes(playbackAttributes);
-      // mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-      // mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-      // mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.FULL_WAKE_LOCK);
       
       mediaPlayer.setOnPreparedListener(this);
       mediaPlayer.setOnCompletionListener(this);
@@ -122,6 +121,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("PlayerService.onDestroy()");
     super.onDestroy();
     
+    unregisterReceiver(headphonesUnpluggedReceiver);
     removeAudioFocus();
     if (mediaPlayer != null) mediaPlayer.release();
   }
@@ -136,6 +136,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public boolean onUnbind(Intent intent) {
     Fun.logd("PlayerService.onUnbind()");
     stopForeground(true);
+    stopSelf();
     return super.onUnbind(intent);
   }
   
@@ -163,8 +164,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       return;
     }
     
-    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
-    
     mediaPlayer.start();
     Fun.logd("Playback started");
   }
@@ -175,7 +174,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     }
     
     sendUpdateStoppedTime();
-    unregisterReceiver(headphonesUnpluggedReceiver);
 
     mediaPlayer.stop();
     mediaPlayer.reset();
@@ -185,7 +183,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public void pause() {
     mediaPlayer.pause();
     sendPlayerPaused();
-    unregisterReceiver(headphonesUnpluggedReceiver);
     Fun.logd("Playback paused");
   }
   
@@ -195,8 +192,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       Fun.loge("Audio focus is not granted");
       return;
     }
-    
-    registerReceiver(headphonesUnpluggedReceiver, intentFilter);
     
     mediaPlayer.start();
     Fun.logd("Playback resumed");
@@ -431,6 +426,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private class HeadphonesUnpluggedReceiver extends BroadcastReceiver {
+    @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
         Fun.log("Headphones unplugged");

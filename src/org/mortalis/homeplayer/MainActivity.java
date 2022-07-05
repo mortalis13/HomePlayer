@@ -1093,6 +1093,10 @@ public class MainActivity extends AppCompatActivity {
     if (serviceBound) {
       unbindService(serviceConnection);
     }
+    if (playerService != null) {
+      Intent playerIntent = new Intent(this, PlayerService.class);
+      playerService.stopService(playerIntent);
+    }
   }
   // --------------------
   
