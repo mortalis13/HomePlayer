@@ -168,11 +168,28 @@
       android:background="@drawable/control_button_background"
     />
     <ImageButton
-      android:id="@+id/bPlayPause"
+      android:id="@+id/bFastRewind"
       android:layout_width="0dp"
       android:layout_height="match_parent"
       android:layout_weight="1"
+      android:src="@drawable/outline_fast_rewind_black_24"
+      android:tint="#777"
+      android:background="@drawable/control_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bPlayPause"
+      android:layout_width="120dp"
+      android:layout_height="match_parent"
       android:src="@drawable/baseline_play_arrow_black_36"
+      android:tint="#777"
+      android:background="@drawable/control_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bFastForward"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_fast_forward_black_24"
       android:tint="#777"
       android:background="@drawable/control_button_background"
     />

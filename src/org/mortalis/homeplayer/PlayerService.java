@@ -148,7 +148,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       progressHandler.removeCallbacks(progressRunnable);
       
       startAudio(audioPath);
-      playerLoaded = true;
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -234,6 +233,20 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("Playback paused");
   }
   
+  public void fastRewind(int s) {
+    if (!playerLoaded) return;
+    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
+    sendUpdatePlayingTime();
+    sendUpdateProgress();
+  }
+  
+  public void fastForward(int s) {
+    if (!playerLoaded) return;
+    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
+    sendUpdatePlayingTime();
+    sendUpdateProgress();
+  }
+  
   
   public void restartAudio() {
     startAudio(audioPath);
@@ -246,6 +259,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       if (audioPath != null && Fun.fileExists(audioPath)) {
         mediaPlayer.setDataSource(audioPath);
         mediaPlayer.prepareAsync();
+        playerLoaded = true;
       }
     }
     catch (Exception e) {

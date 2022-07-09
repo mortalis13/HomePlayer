@@ -114,7 +114,6 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTimePlaying;
   private TextView textTimeTotal;
   
-  private TextView textCurrentFolderStats;
   private TextView textCurrentFolderTime;
   private TextView textPlayingStats;
   private TextView textPlayingFolderTime;
@@ -122,6 +121,8 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bPrevFile;
   private ImageButton bPlayPause;
   private ImageButton bNextFile;
+  private ImageButton bFastRewind;
+  private ImageButton bFastForward;
   
   private String lastFolder;
   private String lastAudio;
@@ -227,7 +228,6 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft = findViewById(R.id.textTimeLeft);
     textTimeTotal = findViewById(R.id.textTimeTotal);
     
-    textCurrentFolderStats = findViewById(R.id.textCurrentFolderStats);
     textCurrentFolderTime = findViewById(R.id.textCurrentFolderTime);
     textPlayingStats = findViewById(R.id.textPlayingStats);
     textPlayingFolderTime = findViewById(R.id.textPlayingFolderTime);
@@ -235,6 +235,8 @@ public class MainActivity extends AppCompatActivity {
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
     bNextFile = findViewById(R.id.bNextFile);
+    bFastRewind = findViewById(R.id.bFastRewind);
+    bFastForward = findViewById(R.id.bFastForward);
     
     
     titleScroller.setSmoothScrollingEnabled(false);
@@ -247,7 +249,6 @@ public class MainActivity extends AppCompatActivity {
     textTimePlaying.setTypeface(typeface);
     textTimeLeft.setTypeface(typeface);
     textTimeTotal.setTypeface(typeface);
-    textCurrentFolderStats.setTypeface(typeface);
     textCurrentFolderTime.setTypeface(typeface);
     textPlayingStats.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
@@ -282,6 +283,14 @@ public class MainActivity extends AppCompatActivity {
     
     bNextFile.setOnClickListener(v -> {
       playNextFileAction();
+    });
+    
+    bFastRewind.setOnClickListener(v -> {
+      fastRewindAction();
+    });
+    
+    bFastForward.setOnClickListener(v -> {
+      fastForwardAction();
     });
   }
   
@@ -337,6 +346,16 @@ public class MainActivity extends AppCompatActivity {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     boolean startPlayback = playerService.isPlaying();
     playNextFile(startPlayback);
+  }
+  
+  public void fastRewindAction() {
+    if (playerService == null || !playerService.isPlayerLoaded()) return;
+    playerService.fastRewind(5);
+  }
+  
+  public void fastForwardAction() {
+    if (playerService == null || !playerService.isPlayerLoaded()) return;
+    playerService.fastForward(5);
   }
   
   
