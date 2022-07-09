@@ -11,7 +11,7 @@
   <RelativeLayout
     android:id="@+id/panelTitle"
     android:layout_width="match_parent"
-    android:layout_height="50dp"
+    android:layout_height="46dp"
     android:focusable="true"
     android:gravity="center_vertical"
     android:background="@color/title_background"
@@ -58,96 +58,103 @@
     />
   </LinearLayout>
   
-  <RelativeLayout
-    android:id="@+id/panelTimeInfo"
-    android:layout_width="match_parent"
-    android:layout_height="24dp"
-    android:paddingLeft="6dp"
-    android:paddingRight="6dp"
-    android:gravity="center_vertical"
-  >
-    <TextView
-      android:id="@+id/textTimePlaying"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_alignParentLeft="true"
-    />
-    <TextView
-      android:id="@+id/textTimeLeft"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_centerHorizontal="true"
-    />
-    <TextView
-      android:id="@+id/textTimeTotal"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_alignParentRight="true"
-    />
-  </RelativeLayout>
   
-  <RelativeLayout
-    android:id="@+id/panelStats"
+  
+  <LinearLayout
+    android:id="@+id/panelTimeInfo"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="24dp"
+    android:layout_height="64dp"
     android:paddingLeft="6dp"
     android:paddingRight="6dp"
-    android:layout_marginBottom="3dp"
-    android:gravity="center_vertical"
+    android:layout_alignParentBottom="false"
   >
-    <TextView
-      android:id="@+id/textCurrentFolderStats"
-      android:layout_width="wrap_content"
+    <LinearLayout
+      android:id="@+id/panelInfoLeft"
+      android:orientation="vertical"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingRight="6dp"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_alignParentLeft="true"
-    />
-    <TextView
-      android:id="@+id/textCurrentFolderTime"
-      android:layout_width="wrap_content"
+      android:layout_weight="1"
+      android:background="@drawable/control_button_background"
+    >
+      <TextView
+        android:id="@+id/textTimePlaying"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+      <TextView
+        android:id="@+id/textCurrentFolderTime"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+    </LinearLayout>
+  
+    <LinearLayout
+      android:id="@+id/panelInfoCenter"
+      android:orientation="vertical"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingLeft="6dp"
-      android:paddingRight="6dp"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_toRightOf="@+id/textCurrentFolderStats"
-    />
-    
-    <TextView
-      android:id="@+id/textPlayingStats"
-      android:layout_width="wrap_content"
+      android:layout_weight="1"
+      android:background="@drawable/control_button_background"
+    >
+      <TextView
+        android:id="@+id/textTimeLeft"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:paddingLeft="-7dp"
+        android:gravity="center"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+      <TextView
+        android:id="@+id/textPlayingStats"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+    </LinearLayout>
+  
+    <LinearLayout
+      android:id="@+id/panelInfoRight"
+      android:orientation="vertical"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingLeft="6dp"
-      android:paddingRight="6dp"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_toLeftOf="@+id/textPlayingFolderTime"
-    />
-    <TextView
-      android:id="@+id/textPlayingFolderTime"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:paddingLeft="6dp"
-      android:gravity="center_vertical"
-      android:textSize="20dp"
-      android:textColor="#777"
-      android:layout_alignParentRight="true"
-    />
-  </RelativeLayout>
+      android:layout_weight="1"
+      android:background="@drawable/control_button_background"
+    >
+      <TextView
+        android:id="@+id/textTimeTotal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical|right"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+      <TextView
+        android:id="@+id/textPlayingFolderTime"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical|right"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
+    </LinearLayout>
+  </LinearLayout>
+
   
   <include layout="@layout/divider_horizontal_include"/>
   

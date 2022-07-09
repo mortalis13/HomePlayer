@@ -124,6 +124,10 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bFastRewind;
   private ImageButton bFastForward;
   
+  private LinearLayout panelInfoLeft;
+  private LinearLayout panelInfoCenter;
+  private LinearLayout panelInfoRight;
+  
   private String lastFolder;
   private String lastAudio;
   private int lastAudioTime;
@@ -232,6 +236,10 @@ public class MainActivity extends AppCompatActivity {
     textPlayingStats = findViewById(R.id.textPlayingStats);
     textPlayingFolderTime = findViewById(R.id.textPlayingFolderTime);
     
+    panelInfoLeft = findViewById(R.id.panelInfoLeft);
+    panelInfoCenter = findViewById(R.id.panelInfoCenter);
+    panelInfoRight = findViewById(R.id.panelInfoRight);
+    
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
     bNextFile = findViewById(R.id.bNextFile);
@@ -256,6 +264,10 @@ public class MainActivity extends AppCompatActivity {
     listLayoutManager = new LinearLayoutManager(context);
     listItems.setLayoutManager(listLayoutManager);
     
+    activeTitle.setOnClickListener(v -> {
+      changeToParentDir();
+    });
+    
     progressSlider.setProgressChangeListener(new SliderView.ProgressChangeListener() {
       public void onChanging(int value) {
         if (!serviceBound) return;
@@ -269,9 +281,19 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     
-    activeTitle.setOnClickListener(v -> {
-      changeToParentDir();
+    
+    panelInfoLeft.setOnClickListener(v -> {
+      toggleExtraPanel();
     });
+    
+    panelInfoCenter.setOnClickListener(v -> {
+      toggleCurrentFileInfo();
+    });
+    
+    panelInfoRight.setOnClickListener(v -> {
+      changeToPlayingDir();
+    });
+    
     
     bPrevFile.setOnClickListener(v -> {
       playPrevFileAction();
@@ -434,30 +456,6 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Navigation ------------------------------
-  private void changeToParentDir() {
-    File parent = currentPath.getParentFile();
-    if (currentPath.equals(ROOT_STORAGE)) {
-      Fun.log("In the root folder, cannot go to parent");
-      return;
-    }
-    
-    File prevPath = new File(currentPath.getPath());
-    changeDir(parent);
-    
-    File[] dirs = parent.listFiles(Fun.dirFilter);
-    Arrays.sort(dirs, Fun.nocaseComp);
-    
-    int scrollPos = 0;
-    for (int i = 0; i < dirs.length; i++) {
-      if (dirs[i].equals(prevPath)) {
-        scrollPos = i;
-        break;
-      }
-    }
-    
-    listLayoutManager.scrollToPosition(scrollPos);
-  }
-  
   private void changeDir(File path) {
     if (!path.exists()) path = ROOT_STORAGE;
     currentPath = path;
@@ -509,6 +507,41 @@ public class MainActivity extends AppCompatActivity {
     markFavorites(files);
   }
   
+  private void changeToParentDir() {
+    File parent = currentPath.getParentFile();
+    if (currentPath.equals(ROOT_STORAGE)) {
+      Fun.log("In the root folder, cannot go to parent");
+      return;
+    }
+    
+    File prevPath = new File(currentPath.getPath());
+    changeDir(parent);
+    
+    File[] dirs = parent.listFiles(Fun.dirFilter);
+    Arrays.sort(dirs, Fun.nocaseComp);
+    
+    int scrollPos = 0;
+    for (int i = 0; i < dirs.length; i++) {
+      if (dirs[i].equals(prevPath)) {
+        scrollPos = i;
+        break;
+      }
+    }
+    
+    listLayoutManager.scrollToPosition(scrollPos);
+  }
+  
+  private void changeToPlayingDir() {
+    Fun.logd("changeToPlayingDir()");
+    
+    if (playerService == null || playerService.getAudioPath() == null) return;
+    
+    File currentFile = new File(playerService.getAudioPath());
+    if (currentFile.getParent().equals(currentPath.getPath())) return;
+    
+    changeDir(currentFile.getParentFile());
+  }
+  
   private void markLastPlayedFile(File dir) {
     String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
     int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
@@ -528,6 +561,7 @@ public class MainActivity extends AppCompatActivity {
       }
     }
   }
+  
   
   // ------------------------------ Events ------------------------------
   public void onPlayerStarted() {
@@ -763,13 +797,9 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Utils ------------------------------
   private void updateCurrentFolderStats(File[] files, int numDirs) {
     if (files.length == 0) {
-      textCurrentFolderStats.setText("");
       textCurrentFolderTime.setText("");
       return;
     }
-    
-    String stats = String.format("%d", files.length);
-    textCurrentFolderStats.setText(stats);
     
     String totalTime = getTotalTimeInDirectory(files, dirAudioData);
     textCurrentFolderTime.setText(totalTime);
@@ -837,6 +867,14 @@ public class MainActivity extends AppCompatActivity {
     }
     
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
+  }
+  
+  private void toggleExtraPanel() {
+    
+  }
+  
+  private void toggleCurrentFileInfo() {
+    
   }
   
   public void exitApp() {
