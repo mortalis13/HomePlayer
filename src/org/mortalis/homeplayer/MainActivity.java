@@ -50,6 +50,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.ImageButton;
@@ -128,10 +129,15 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout panelInfoCenter;
   private LinearLayout panelInfoRight;
   
+  private RelativeLayout extraPanel;
+  private ImageButton bShuffle;
+  private ImageButton bRepeat;
+  
   private String lastFolder;
   private String lastAudio;
   private int lastAudioTime;
   private Set<String> favoritesList;
+  private boolean playbackRepeat;
   
 
   @Override
@@ -240,6 +246,10 @@ public class MainActivity extends AppCompatActivity {
     panelInfoCenter = findViewById(R.id.panelInfoCenter);
     panelInfoRight = findViewById(R.id.panelInfoRight);
     
+    extraPanel = findViewById(R.id.extraPanel);
+    bShuffle = findViewById(R.id.bShuffle);
+    bRepeat = findViewById(R.id.bRepeat);
+    
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
     bNextFile = findViewById(R.id.bNextFile);
@@ -295,6 +305,17 @@ public class MainActivity extends AppCompatActivity {
     });
     
     
+    bShuffle.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      playbackShuffleAction();
+    });
+    
+    bRepeat.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      playbackRepeatAction();
+    });
+    
+    
     bPrevFile.setOnClickListener(v -> {
       playPrevFileAction();
     });
@@ -331,6 +352,9 @@ public class MainActivity extends AppCompatActivity {
       favoritesList = Fun.getSharedPrefList(context, "PREF_FAVORITES_LIST");
       // Fun.log("PREF favoritesList: " + favoritesList);
       cleanFavorites();
+      
+      playbackRepeat = Fun.getSharedPrefBool(context, "PLAYBACK_REPEAT");
+      Fun.log("PREF playbackRepeat: " + playbackRepeat);
       
       File dir = lastFolder == null ? startDir: new File(lastFolder);
       changeDir(dir);
@@ -380,12 +404,20 @@ public class MainActivity extends AppCompatActivity {
     playerService.fastForward(5);
   }
   
-  
-  // ------------------------------ Audio ------------------------------
-  private void playAudio(String filePath, boolean startPlayback) {
-    playAudio(filePath, 0, startPlayback);
+  public void playbackShuffleAction() {
+    
   }
   
+  public void playbackRepeatAction() {
+    playbackRepeat = !playbackRepeat;
+    Fun.saveSharedPref(context, "PLAYBACK_REPEAT", playbackRepeat);
+    
+    if (playerService == null || !playerService.isPlayerLoaded()) return;
+    playerService.setRepeat(playbackRepeat);
+  }
+  
+  
+  // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     Fun.logd("playAudio()");
     File playingFile = new File(filePath);
@@ -404,6 +436,7 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
+    playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       startForegroundService(playerIntent);
@@ -417,6 +450,10 @@ public class MainActivity extends AppCompatActivity {
     markLastPlayedFile(currentPath);
     
     updatePlayingAudioInfo(playingFile);
+  }
+  
+  private void playAudio(String filePath, boolean startPlayback) {
+    playAudio(filePath, 0, startPlayback);
   }
   
   private void preloadAudio(String filePath, int time) {
@@ -870,7 +907,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleExtraPanel() {
-    
+    int visibility = extraPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    extraPanel.setVisibility(visibility);
   }
   
   private void toggleCurrentFileInfo() {

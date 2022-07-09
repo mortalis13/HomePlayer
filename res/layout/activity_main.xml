@@ -163,7 +163,6 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:layout_alignParentBottom="false"
   >
     <ImageButton
       android:id="@+id/bPrevFile"
@@ -213,6 +212,39 @@
   
   <include layout="@layout/divider_horizontal_include"/>
   <include layout="@layout/divider_horizontal_include"/>
+  
+  <RelativeLayout
+    android:id="@+id/extraPanel"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:visibility="gone"
+  >
+    <ImageButton
+      android:id="@+id/bShuffle"
+      android:layout_width="60dp"
+      android:layout_height="match_parent"
+      android:src="@drawable/round_shuffle_black_24"
+      android:tint="#777"
+      android:background="@drawable/toggle_button_background"
+      android:layout_alignParentLeft="true"
+    />
+    <ImageButton
+      android:id="@+id/bRepeat"
+      android:layout_width="60dp"
+      android:layout_height="match_parent"
+      android:src="@drawable/round_repeat_black_24"
+      android:tint="#777"
+      android:background="@drawable/toggle_button_background"
+      android:layout_alignParentRight="true"
+    />
+    
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="#aaa"
+      android:layout_alignParentBottom="true"
+    />
+  </RelativeLayout>
   
   <org.mortalis.homeplayer.components.BrowserRecyclerView
     android:id="@+id/listItems"

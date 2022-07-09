@@ -136,10 +136,12 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
+      boolean repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 
       if (mediaPlayer != null) mediaPlayer.release();
       mediaPlayer = new MediaPlayer();
       mediaPlayer.setAudioAttributes(playbackAttributes);
+      mediaPlayer.setLooping(repeat);
       
       mediaPlayer.setOnPreparedListener(this);
       mediaPlayer.setOnCompletionListener(this);
@@ -203,7 +205,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     mediaPlayer.start();
     updateNotification(ACTION_PAUSE_ID);
-    Fun.logd("Playback started");
+    Fun.log("Playback started");
   }
   
   public void resume() {
@@ -223,28 +225,30 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     mediaPlayer.stop();
     mediaPlayer.reset();
     updateNotification(ACTION_PLAY_ID);
-    Fun.logd("Playback stopped");
+    Fun.log("Playback stopped");
   }
   
   public void pause() {
     mediaPlayer.pause();
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
-    Fun.logd("Playback paused");
+    Fun.log("Playback paused");
   }
   
   public void fastRewind(int s) {
-    if (!playerLoaded) return;
     mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
   
   public void fastForward(int s) {
-    if (!playerLoaded) return;
     mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
+  }
+  
+  public void setRepeat(boolean repeat) {
+    mediaPlayer.setLooping(repeat);
   }
   
   
