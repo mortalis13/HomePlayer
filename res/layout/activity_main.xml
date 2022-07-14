@@ -8,10 +8,11 @@
   android:orientation="vertical"
   android:background="@color/main_background"
 >
+  
   <RelativeLayout
     android:id="@+id/panelTitle"
     android:layout_width="match_parent"
-    android:layout_height="46dp"
+    android:layout_height="48dp"
     android:focusable="true"
     android:gravity="center_vertical"
     android:background="@color/title_background"
@@ -20,8 +21,6 @@
       android:id="@+id/titleScroller"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingLeft="10dp"
-      android:paddingRight="10dp"
       android:fillViewport="true"
       android:scrollbars="none"
       android:overScrollMode="never"
@@ -30,17 +29,19 @@
       android:smoothScrollbar="false"
       android:layout_alignParentLeft="true"
     >
-    <TextView
-      android:id="@+id/activeTitle"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:paddingTop="4dp"
-      android:paddingBottom="4dp"
-      android:gravity="center_vertical"
-      android:textStyle="bold"
-      android:textSize="20dp"
-      android:textColor="#777"
-    />
+      <TextView
+        android:id="@+id/activeTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:gravity="center_vertical"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        android:textColor="#777"
+      />
     </org.mortalis.homeplayer.components.TitleScrollView>
   </RelativeLayout>
   
