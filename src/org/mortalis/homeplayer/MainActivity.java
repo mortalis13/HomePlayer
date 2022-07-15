@@ -535,6 +535,8 @@ public class MainActivity extends AppCompatActivity {
       listItems.setOverScrollMode(mode);
     });
     
+    listLayoutManager.scrollToPositionWithOffset(0, 0);
+    
     Fun.saveSharedPref(context, "PREF_LAST_FOLDER", path.getPath());
     
     selectPlayingDirOrFile(files, dirs);
@@ -927,7 +929,6 @@ public class MainActivity extends AppCompatActivity {
       
       if (chosenFile.isDirectory()) {
         changeDir(chosenFile);
-        listLayoutManager.scrollToPositionWithOffset(0, 0);
       }
       else {
         int time = 0;
