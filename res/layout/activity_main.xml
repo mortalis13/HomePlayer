@@ -60,14 +60,11 @@
   </LinearLayout>
   
   
-  
   <LinearLayout
     android:id="@+id/panelTimeInfo"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:paddingLeft="6dp"
-    android:paddingRight="6dp"
     android:layout_alignParentBottom="false"
   >
     <LinearLayout
@@ -76,6 +73,7 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:layout_weight="1"
+      android:paddingLeft="6dp"
       android:background="@drawable/control_button_background"
     >
       <TextView
@@ -133,6 +131,7 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:layout_weight="1"
+      android:paddingRight="6dp"
       android:background="@drawable/control_button_background"
     >
       <TextView
@@ -156,7 +155,6 @@
     </LinearLayout>
   </LinearLayout>
 
-  
   <include layout="@layout/divider_horizontal_include"/>
   
   <LinearLayout
@@ -214,43 +212,50 @@
   <include layout="@layout/divider_horizontal_include"/>
   <include layout="@layout/divider_horizontal_include"/>
   
-  <RelativeLayout
-    android:id="@+id/extraPanel"
+  <FrameLayout
     android:layout_width="match_parent"
-    android:layout_height="60dp"
-    android:visibility="gone"
+    android:layout_height="match_parent"
   >
-    <ImageButton
-      android:id="@+id/bShuffle"
-      android:layout_width="60dp"
-      android:layout_height="match_parent"
-      android:src="@drawable/round_shuffle_black_24"
-      android:tint="#777"
-      android:background="@drawable/toggle_button_background"
-      android:layout_alignParentLeft="true"
-    />
-    <ImageButton
-      android:id="@+id/bRepeat"
-      android:layout_width="60dp"
-      android:layout_height="match_parent"
-      android:src="@drawable/round_repeat_black_24"
-      android:tint="#777"
-      android:background="@drawable/toggle_button_background"
-      android:layout_alignParentRight="true"
+    <org.mortalis.homeplayer.components.BrowserRecyclerView
+      android:id="@+id/listItems"
+      android:scrollbars="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
     />
     
-    <View
+    <RelativeLayout
+      android:id="@+id/extraPanel"
       android:layout_width="match_parent"
-      android:layout_height="1dp"
-      android:background="#aaa"
-      android:layout_alignParentBottom="true"
-    />
-  </RelativeLayout>
-  
-  <org.mortalis.homeplayer.components.BrowserRecyclerView
-    android:id="@+id/listItems"
-    android:scrollbars="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-  />
+      android:layout_height="60dp"
+      android:visibility="gone"
+      android:background="@color/secondary_background"
+    >
+      <ImageButton
+        android:id="@+id/bShuffle"
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/round_shuffle_black_24"
+        android:tint="#777"
+        android:background="@drawable/secondary_toggle_button_background"
+        android:layout_alignParentLeft="true"
+      />
+      <ImageButton
+        android:id="@+id/bRepeat"
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/round_repeat_black_24"
+        android:tint="#777"
+        android:background="@drawable/secondary_toggle_button_background"
+        android:layout_alignParentRight="true"
+      />
+      
+      <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#aaa"
+        android:layout_alignParentBottom="true"
+      />
+    </RelativeLayout>
+  </FrameLayout>
+
 </LinearLayout>
