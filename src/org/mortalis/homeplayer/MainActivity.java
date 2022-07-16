@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.Random;
 
 import android.os.Environment;
 import android.net.Uri;
@@ -138,6 +139,10 @@ public class MainActivity extends AppCompatActivity {
   private int lastAudioTime;
   private Set<String> favoritesList;
   private boolean playbackRepeat;
+  
+  private boolean playbackShuffle;
+  private List<File> shuffleList;
+  private Random randShuffle = new Random();
   
 
   @Override
@@ -355,6 +360,11 @@ public class MainActivity extends AppCompatActivity {
       
       playbackRepeat = Fun.getSharedPrefBool(context, "PLAYBACK_REPEAT");
       Fun.log("PREF playbackRepeat: " + playbackRepeat);
+      bRepeat.setSelected(playbackRepeat);
+      
+      playbackShuffle = Fun.getSharedPrefBool(context, "PLAYBACK_SHUFFLE");
+      Fun.log("PREF playbackShuffle: " + playbackShuffle);
+      bShuffle.setSelected(playbackShuffle);
       
       File dir = lastFolder == null ? startDir: new File(lastFolder);
       changeDir(dir);
@@ -405,7 +415,9 @@ public class MainActivity extends AppCompatActivity {
   }
   
   public void playbackShuffleAction() {
-    
+    playbackShuffle = !playbackShuffle;
+    Fun.saveSharedPref(context, "PLAYBACK_SHUFFLE", playbackShuffle);
+    if (shuffleList != null) shuffleList.clear();
   }
   
   public void playbackRepeatAction() {
@@ -426,6 +438,8 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
+    updateShuffleList(playingFile);
+    
     String currentAudioPath = playerService.getAudioPath();
     if (currentAudioPath != null && !new File(filePath).getParent().equals(new File(currentAudioPath).getParent())) {
       Fun.saveSharedPref(context, "TIME_" + new File(currentAudioPath).getParent(), lastAudioTime);
@@ -444,6 +458,8 @@ public class MainActivity extends AppCompatActivity {
     else {
       startService(playerIntent);
     }
+    
+    removeFromShuffleList(playingFile);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", playingFile.getPath());
     Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), playingFile.getPath());
@@ -466,7 +482,15 @@ public class MainActivity extends AppCompatActivity {
     if (playerService == null || playerService.getAudioPath() == null) return;
     
     File currentFile = new File(playerService.getAudioPath());
-    File file = getNextFile(currentFile);
+    File file = null;
+    if (playbackShuffle) {
+      file = getNextRandomFile(currentFile);
+    }
+    
+    if (file == null) {
+      file = getNextFile(currentFile);
+    }
+    
     if (file != null) {
       Fun.log("Next file: " + file.toString());
       playAudio(file.getPath(), startPlayback);
@@ -623,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   public void onPlayerStopped() {
-    if (isPlayingLastFile()) {
+    if (!playbackShuffle && isPlayingLastFile()) {
       progressSlider.disable();
       setPlayButtonDefault();
     }
@@ -661,6 +685,16 @@ public class MainActivity extends AppCompatActivity {
     }
     
     return null;
+  }
+  
+  public File getNextRandomFile(File file) {
+    if (shuffleList == null || shuffleList.size() == 0) {
+      generateShuffleList(file);
+    }
+    
+    int nextId = randShuffle.nextInt(shuffleList.size());
+    file = shuffleList.get(nextId);
+    return file;
   }
   
   private void selectPlayingDirOrFile(String filePath) {
@@ -830,6 +864,45 @@ public class MainActivity extends AppCompatActivity {
       result.add(newInfo);
     }
     return result;
+  }
+  
+  private void generateShuffleList(File audioFile) {
+    Fun.logd("generateShuffleList(): " + audioFile);
+    File parent = audioFile.getParentFile();
+    File[] files = parent.listFiles(Fun.fileFilter);
+    Arrays.sort(files, Fun.nocaseComp);
+    
+    shuffleList = new ArrayList<>(Arrays.asList(files));
+    removeFromShuffleList(audioFile);
+  }
+  
+  private void removeFromShuffleList(File audioFile) {
+    Fun.logd("removeFromShuffleList(): " + audioFile);
+    if (!playbackShuffle) return;
+    if (shuffleList == null) return;
+    
+    int removeId = -1;
+    
+    for (int i = 0; i < shuffleList.size(); i++) {
+      if (shuffleList.get(i).equals(audioFile)) {
+        removeId = i;
+        break;
+      }
+    }
+    
+    if (removeId != -1) {
+      shuffleList.remove(removeId);
+    }
+  }
+  
+  private void updateShuffleList(File audioFile) {
+    Fun.logd("updateShuffleList(): " + audioFile);
+    if (!playbackShuffle) return;
+    
+    String currentAudioPath = playerService.getAudioPath();
+    if (currentAudioPath == null || !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
+      generateShuffleList(audioFile);
+    }
   }
   
   

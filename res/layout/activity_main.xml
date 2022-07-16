@@ -239,6 +239,13 @@
         android:background="@drawable/secondary_toggle_button_background"
         android:layout_alignParentLeft="true"
       />
+      <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="#aaa"
+        android:layout_alignParentLeft="true"
+      />
+      
       <ImageButton
         android:id="@+id/bRepeat"
         android:layout_width="60dp"
@@ -248,10 +255,16 @@
         android:background="@drawable/secondary_toggle_button_background"
         android:layout_alignParentRight="true"
       />
+      <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="#aaa"
+        android:layout_alignParentRight="true"
+      />
       
       <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
         android:background="#aaa"
         android:layout_alignParentBottom="true"
       />
