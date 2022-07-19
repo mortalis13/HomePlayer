@@ -528,7 +528,7 @@ public class MainActivity extends AppCompatActivity {
     Arrays.sort(dirs, Fun.nocaseComp);
     
     for (File dir: dirs) {
-      fileList.add(new ListItem(dir.getName()));
+      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath()));
     }
     
     File[] files = path.listFiles(Fun.fileFilter);
@@ -580,29 +580,28 @@ public class MainActivity extends AppCompatActivity {
     File prevPath = new File(currentPath.getPath());
     changeDir(parent);
     
-    File[] dirs = parent.listFiles(Fun.dirFilter);
-    Arrays.sort(dirs, Fun.nocaseComp);
-    
-    int scrollPos = 0;
-    for (int i = 0; i < dirs.length; i++) {
-      if (dirs[i].equals(prevPath)) {
-        scrollPos = i;
-        break;
-      }
-    }
-    
+    int scrollPos = filesAdapter.getItemPosition(prevPath.getPath());
+    scrollPos = scrollPos == -1 ? 0: scrollPos;
     listLayoutManager.scrollToPosition(scrollPos);
+    
+    hideExtraPanels();
   }
   
   private void changeToPlayingDir() {
     Fun.logd("changeToPlayingDir()");
     
     if (playerService == null || playerService.getAudioPath() == null) return;
-    
     File currentFile = new File(playerService.getAudioPath());
-    if (currentFile.getParent().equals(currentPath.getPath())) return;
     
-    changeDir(currentFile.getParentFile());
+    if (currentFile.getParent().equals(currentPath.getPath())) {
+      int scrollPos = filesAdapter.getItemPosition(currentFile.getPath());
+      if (scrollPos != -1) {
+        listLayoutManager.scrollToPosition(scrollPos);
+      }
+    }
+    else {
+      changeDir(currentFile.getParentFile());
+    }
   }
   
   private void markLastPlayedFile(File dir) {
@@ -967,6 +966,10 @@ public class MainActivity extends AppCompatActivity {
     bPlayPause.setImageResource(R.drawable.baseline_pause_black_36);
   }
   
+  private void hideExtraPanels() {
+    if (extraPanel.getVisibility() == View.VISIBLE) extraPanel.setVisibility(View.GONE);
+  }
+  
   private void cleanFavorites() {
     // Removes files that don't exist
     if (favoritesList == null) return;
@@ -995,9 +998,10 @@ public class MainActivity extends AppCompatActivity {
     finishAndRemoveTask();
   }
   
-  
   private void itemClick(ListItem item) {
     try {
+      hideExtraPanels();
+      
       File chosenFile = new File(currentPath, item.text);
       
       if (chosenFile.isDirectory()) {
@@ -1010,6 +1014,7 @@ public class MainActivity extends AppCompatActivity {
           if (lastTime != -1) time = lastTime;
         }
         playAudio(item.path, time, true);
+        
       }
     }
     catch (Exception e) {
@@ -1039,8 +1044,8 @@ public class MainActivity extends AppCompatActivity {
     boolean isLastPlayed;
     boolean isFavorite;
     
-    ListItem(String text) {
-      this(text, null, null, false);
+    ListItem(String text, String path) {
+      this(text, path, null, false);
     }
     
     ListItem(String text, String path, String time) {
@@ -1159,6 +1164,14 @@ public class MainActivity extends AppCompatActivity {
           notifyItemChanged(i);
         }
       }
+    }
+    
+    public int getItemPosition(String path) {
+      for (int i = 0; i < fileList.size(); i++) {
+        ListItem item = fileList.get(i);
+        if (item.path.equals(path)) return i;
+      }
+      return -1;
     }
     
     

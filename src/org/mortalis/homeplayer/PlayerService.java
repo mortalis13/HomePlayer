@@ -76,56 +76,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("PlayerService.onCreate()");
     super.onCreate();
     
-    audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-    
-    playbackAttributes = new AudioAttributes.Builder()
-        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-        .setUsage(AudioAttributes.USAGE_GAME)
-    .build();
-    
-    focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-        .setAudioAttributes(playbackAttributes)
-        .setAcceptsDelayedFocusGain(true)
-        .setWillPauseWhenDucked(true)
-        .setOnAudioFocusChangeListener(this)
-    .build();
-    
-    metadataRetriever = new MediaMetadataRetriever();
-    
-    playerServiceReceiver = new PlayerServiceReceiver();
-    playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
-      public void onMsgPlay() {
-        resume();
-      }
-      public void onMsgPause() {
-        pause();
-      }
-      public void onMsgExit() {
-        progressHandler.removeCallbacks(progressRunnable);
-        MainService.get().exitApp();
-        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
-      }
-    });
-    
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(ACTION_PLAY);
-    filter.addAction(ACTION_PAUSE);
-    filter.addAction(ACTION_EXIT);
-    registerReceiver(playerServiceReceiver, filter);
-    
-    registerReceiver(headphonesUnpluggedReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
-    
-    notificationManager = NotificationManagerCompat.from(this);
-    
-    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
-    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
-    PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT);
-    
-    notifActions = new NotificationCompat.Action[] {
-      new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
-      new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
-      new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
-    };
+    init();
   }
   
   @Override
@@ -187,6 +138,61 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public void onRebind(Intent intent) {
     Fun.logd("PlayerService.onRebind()");
   }
+  
+  
+  private void init() {
+    audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    
+    playbackAttributes = new AudioAttributes.Builder()
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        .setUsage(AudioAttributes.USAGE_GAME)
+    .build();
+    
+    focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(playbackAttributes)
+        .setAcceptsDelayedFocusGain(true)
+        .setWillPauseWhenDucked(true)
+        .setOnAudioFocusChangeListener(this)
+    .build();
+    
+    metadataRetriever = new MediaMetadataRetriever();
+    
+    playerServiceReceiver = new PlayerServiceReceiver();
+    playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
+      public void onMsgPlay() {
+        resume();
+      }
+      public void onMsgPause() {
+        pause();
+      }
+      public void onMsgExit() {
+        progressHandler.removeCallbacks(progressRunnable);
+        MainService.get().exitApp();
+        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
+      }
+    });
+    
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(ACTION_PLAY);
+    filter.addAction(ACTION_PAUSE);
+    filter.addAction(ACTION_EXIT);
+    registerReceiver(playerServiceReceiver, filter);
+    
+    registerReceiver(headphonesUnpluggedReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+    
+    notificationManager = NotificationManagerCompat.from(this);
+    
+    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT);
+    
+    notifActions = new NotificationCompat.Action[] {
+      new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
+      new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
+      new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
+    };
+  }
+  // -----------------------------
   
   
   private void preload() {
