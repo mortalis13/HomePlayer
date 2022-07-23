@@ -181,14 +181,66 @@
       android:tint="#777"
       android:background="@drawable/control_button_background"
     />
-    <ImageButton
-      android:id="@+id/bPlayPause"
-      android:layout_width="120dp"
+    <FrameLayout
+      android:id="@+id/iconContainer"
+      android:layout_width="wrap_content"
       android:layout_height="match_parent"
-      android:src="@drawable/baseline_play_arrow_black_36"
-      android:tint="#777"
-      android:background="@drawable/control_button_background"
-    />
+      android:gravity="center"
+    >
+      <ImageButton
+        android:id="@+id/bPlayPause"
+        android:layout_width="120dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/baseline_play_arrow_black_36"
+        android:tint="#777"
+        android:background="@drawable/control_button_background"
+      />
+      <LinearLayout
+        android:layout_width="120dp"
+        android:layout_height="match_parent"
+      >
+        <RelativeLayout
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:paddingLeft="16dp"
+          android:paddingTop="6dp"
+        >
+          <ImageView
+            android:id="@+id/playExtraIconShuffle"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:tint="#788c94"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/round_shuffle_black_18"
+            android:visibility="gone"
+          />
+        </RelativeLayout>
+        <RelativeLayout
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:paddingRight="16dp"
+          android:paddingTop="6dp"
+        >
+          <ImageView
+            android:id="@+id/playExtraIconRepeat"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:tint="#788c94"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/round_repeat_black_18"
+            android:visibility="gone"
+          />
+        </RelativeLayout>
+      </LinearLayout>
+    </FrameLayout>
     <ImageButton
       android:id="@+id/bFastForward"
       android:layout_width="0dp"

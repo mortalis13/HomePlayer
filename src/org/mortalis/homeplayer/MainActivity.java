@@ -125,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bNextFile;
   private ImageButton bFastRewind;
   private ImageButton bFastForward;
+  private ImageView playExtraIconShuffle;
+  private ImageView playExtraIconRepeat;
   
   private LinearLayout panelInfoLeft;
   private LinearLayout panelInfoCenter;
@@ -261,6 +263,9 @@ public class MainActivity extends AppCompatActivity {
     bFastRewind = findViewById(R.id.bFastRewind);
     bFastForward = findViewById(R.id.bFastForward);
     
+    playExtraIconShuffle = findViewById(R.id.playExtraIconShuffle);
+    playExtraIconRepeat = findViewById(R.id.playExtraIconRepeat);
+    
     
     titleScroller.setSmoothScrollingEnabled(false);
     
@@ -361,10 +366,12 @@ public class MainActivity extends AppCompatActivity {
       playbackRepeat = Fun.getSharedPrefBool(context, "PLAYBACK_REPEAT");
       Fun.log("PREF playbackRepeat: " + playbackRepeat);
       bRepeat.setSelected(playbackRepeat);
+      playExtraIconRepeat.setVisibility(playbackRepeat ? View.VISIBLE: View.GONE);
       
       playbackShuffle = Fun.getSharedPrefBool(context, "PLAYBACK_SHUFFLE");
       Fun.log("PREF playbackShuffle: " + playbackShuffle);
       bShuffle.setSelected(playbackShuffle);
+      playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
       
       File dir = lastFolder == null ? startDir: new File(lastFolder);
       changeDir(dir);
@@ -417,12 +424,16 @@ public class MainActivity extends AppCompatActivity {
   public void playbackShuffleAction() {
     playbackShuffle = !playbackShuffle;
     Fun.saveSharedPref(context, "PLAYBACK_SHUFFLE", playbackShuffle);
+    playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
+    
     if (shuffleList != null) shuffleList.clear();
   }
   
   public void playbackRepeatAction() {
     playbackRepeat = !playbackRepeat;
     Fun.saveSharedPref(context, "PLAYBACK_REPEAT", playbackRepeat);
+    
+    playExtraIconRepeat.setVisibility(playbackRepeat ? View.VISIBLE: View.GONE);
     
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     playerService.setRepeat(playbackRepeat);
@@ -908,7 +919,7 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Utils ------------------------------
   private void updateCurrentFolderStats(File[] files, int numDirs) {
     if (files.length == 0) {
-      textCurrentFolderTime.setText("");
+      textCurrentFolderTime.setText("00:00:00");
       return;
     }
     
