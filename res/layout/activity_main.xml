@@ -9,6 +9,7 @@
   android:background="@color/main_background"
 >
   
+  <!-- =========== Title =========== -->
   <RelativeLayout
     android:id="@+id/panelTitle"
     android:layout_width="match_parent"
@@ -45,6 +46,8 @@
     </org.mortalis.homeplayer.components.TitleScrollView>
   </RelativeLayout>
   
+  
+  <!-- =========== Progress =========== -->
   <LinearLayout
     android:id="@+id/panelProgress"
     android:layout_width="match_parent"
@@ -60,6 +63,7 @@
   </LinearLayout>
   
   
+  <!-- =========== Time =========== -->
   <LinearLayout
     android:id="@+id/panelTimeInfo"
     android:orientation="horizontal"
@@ -157,6 +161,8 @@
 
   <include layout="@layout/divider_horizontal_include"/>
   
+  
+  <!-- =========== Controls =========== -->
   <LinearLayout
     android:id="@+id/controlsPanel"
     android:orientation="horizontal"
@@ -264,10 +270,12 @@
   <include layout="@layout/divider_horizontal_include"/>
   <include layout="@layout/divider_horizontal_include"/>
   
+  
   <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
   >
+    <!-- =========== File browser =========== -->
     <org.mortalis.homeplayer.components.BrowserRecyclerView
       android:id="@+id/listItems"
       android:scrollbars="vertical"
@@ -275,6 +283,13 @@
       android:layout_height="wrap_content"
     />
     
+    
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+    >
+    <!-- =========== Extra controls =========== -->
     <RelativeLayout
       android:id="@+id/extraPanel"
       android:layout_width="match_parent"
@@ -321,6 +336,288 @@
         android:layout_alignParentBottom="true"
       />
     </RelativeLayout>
+    
+    
+    <!-- =========== Extra info =========== -->
+    <ScrollView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:fillViewport="true"
+    >
+    <LinearLayout
+      android:id="@+id/extraInfo"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:paddingTop="4dp"
+      android:orientation="vertical"
+      android:visibility="gone"
+      android:background="@color/secondary_background"
+    >
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#555"
+        android:text="File:"
+      />
+      <TextView
+        android:id="@+id/textExtraFileName"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#555"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#555"
+        android:text="Title:"
+      />
+      <TextView
+        android:id="@+id/textExtraTitle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#555"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#555"
+        android:text="Artist:"
+      />
+      <TextView
+        android:id="@+id/textExtraArtist"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#555"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#555"
+        android:text="Album:"
+      />
+      <TextView
+        android:id="@+id/textExtraAlbum"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#555"
+      />
+      </LinearLayout>
+      
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Length:"
+      />
+      <TextView
+        android:id="@+id/textExtraLength"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Bitrate:"
+      />
+      <TextView
+        android:id="@+id/textExtraBitrate"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Frequency:"
+      />
+      <TextView
+        android:id="@+id/textExtraFrequency"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Channels:"
+      />
+      <TextView
+        android:id="@+id/textExtraChannels"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Size:"
+      />
+      <TextView
+        android:id="@+id/textExtraSize"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:minHeight="@dimen/extra_info_row_min_height"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/extra_info_row_padding"
+        android:paddingRight="@dimen/extra_info_row_padding"
+      >
+      <TextView
+        android:layout_width="@dimen/extra_info_caption_width"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="#777"
+        android:text="Path:"
+      />
+      <TextView
+        android:id="@+id/textExtraPath"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="18dp"
+        android:textColor="#777"
+      />
+      </LinearLayout>
+      
+      <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#aaa"
+      />
+    </LinearLayout>
+    <!-- extraInfo -->
+    </ScrollView>
+    
+    </LinearLayout>
+    <!-- All extras -->
+    
   </FrameLayout>
 
 </LinearLayout>

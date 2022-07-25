@@ -18,6 +18,7 @@ import android.media.RingtoneManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
@@ -318,7 +319,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private Notification buildPlayerNotification() {
     Fun.logd("buildPlayerNotification()");
     
-    metadataRetriever.setDataSource(audioPath);
     String audioArtist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     
     String title = new File(audioPath).getName();
@@ -435,6 +435,17 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     return audioPath;
   }
   
+  public AudioInfo getAudioInfo() {
+    AudioInfo audioInfo = new AudioInfo();
+    audioInfo.file = new File(audioPath);
+    audioInfo.title = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+    audioInfo.artist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    audioInfo.album = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+    audioInfo.bitrate = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
+    audioInfo.frequency = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+    return audioInfo;
+  }
+  
   
   // --> MediaPlayer.OnPreparedListener
   @Override
@@ -445,6 +456,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       Fun.log("Seeking to time: " + audioTime);
       changePlayPosition(audioTime);
     }
+    
+    metadataRetriever.setDataSource(audioPath);
     
     if (startPlayback) {
       preload();

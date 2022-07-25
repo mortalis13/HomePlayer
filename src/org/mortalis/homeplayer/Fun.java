@@ -43,6 +43,9 @@ import android.os.Build;
 
 public class Fun {
   
+  private static String[] units = {"B", "KB", "MB", "GB", "TB"};
+  
+  
   public static FileFilter dirFilter = (file) -> {
     return (file.isDirectory() && file.canRead() && !file.isHidden());
   };
@@ -82,7 +85,7 @@ public class Fun {
   }
   
   
-  public static String formatTime(int time, boolean includeHours) { // time in s
+  public static String formatTime(int time, boolean includeHours) {  // time in s
     int _time  = time < 0 ? -time: time;
     String fmt = time < 0 ? "-%02d:%02d": "%02d:%02d";
     
@@ -103,6 +106,16 @@ public class Fun {
     return result;
   }
   
+  public static String formatSize(long size) {  // size in bytes
+    float result = (float) size;
+    int units_index = 0;
+    while (result > 1024) {
+      result /= 1024;
+      units_index++;
+    }
+    return String.format("%.1f %s", result, units[units_index]);
+  }
+    
   public static int getRandomInt(int from, int to) {
     return from + new Random().nextInt(to - from + 1);
   }

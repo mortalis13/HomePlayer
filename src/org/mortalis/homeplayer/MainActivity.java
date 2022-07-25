@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.os.Build;
@@ -135,6 +136,18 @@ public class MainActivity extends AppCompatActivity {
   private RelativeLayout extraPanel;
   private ImageButton bShuffle;
   private ImageButton bRepeat;
+  
+  private LinearLayout extraInfo;
+  private TextView textExtraFileName;
+  private TextView textExtraTitle;
+  private TextView textExtraArtist;
+  private TextView textExtraAlbum;
+  private TextView textExtraLength;
+  private TextView textExtraBitrate;
+  private TextView textExtraFrequency;
+  private TextView textExtraChannels;
+  private TextView textExtraSize;
+  private TextView textExtraPath;
   
   private String lastFolder;
   private String lastAudio;
@@ -256,6 +269,18 @@ public class MainActivity extends AppCompatActivity {
     extraPanel = findViewById(R.id.extraPanel);
     bShuffle = findViewById(R.id.bShuffle);
     bRepeat = findViewById(R.id.bRepeat);
+    
+    extraInfo = findViewById(R.id.extraInfo);
+    textExtraFileName = findViewById(R.id.textExtraFileName);
+    textExtraTitle = findViewById(R.id.textExtraTitle);
+    textExtraArtist = findViewById(R.id.textExtraArtist);
+    textExtraAlbum = findViewById(R.id.textExtraAlbum);
+    textExtraLength = findViewById(R.id.textExtraLength);
+    textExtraBitrate = findViewById(R.id.textExtraBitrate);
+    textExtraFrequency = findViewById(R.id.textExtraFrequency);
+    textExtraChannels = findViewById(R.id.textExtraChannels);
+    textExtraSize = findViewById(R.id.textExtraSize);
+    textExtraPath = findViewById(R.id.textExtraPath);
     
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
@@ -641,6 +666,13 @@ public class MainActivity extends AppCompatActivity {
     setPlayButtonAsPause();
     progressSlider.enable();
     updatePlayingStats();
+    updateExtraAudioInfo();
+  }
+  
+  public void onPlayerPreloaded() {
+    progressSlider.enable();
+    updatePlayingStats();
+    updateExtraAudioInfo();
   }
   
   public void onPlayerPaused() {
@@ -649,11 +681,6 @@ public class MainActivity extends AppCompatActivity {
   
   public void onPlayerResumed() {
     setPlayButtonAsPause();
-  }
-  
-  public void onPlayerPreloaded() {
-    progressSlider.enable();
-    updatePlayingStats();
   }
   
   public void onPlayerStopped() {
@@ -788,6 +815,7 @@ public class MainActivity extends AppCompatActivity {
       MediaFormat format = mediaExtractor.getTrackFormat(0);
       long duration = format.getLong(MediaFormat.KEY_DURATION);
       info.time = (int) (duration / 1000);
+      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
       mediaExtractor.release();
     }
     catch (Exception e) {
@@ -839,6 +867,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updatePlayingAudioInfo(File playingFile) {
+    Fun.logd("updatePlayingAudioInfo: " + playingFile);
+    
     boolean updateInfo = false;
     File playingDirectory = playingFile.getParentFile();
     
@@ -868,10 +898,7 @@ public class MainActivity extends AppCompatActivity {
   private List<AudioInfo> copyAudioInfo(List<AudioInfo> data) {
     List<AudioInfo> result = new ArrayList<>();
     for (AudioInfo info: data) {
-      AudioInfo newInfo = new AudioInfo();
-      newInfo.file = info.file;
-      newInfo.time = info.time;
-      result.add(newInfo);
+      result.add(info);
     }
     return result;
   }
@@ -887,8 +914,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void removeFromShuffleList(File audioFile) {
-    Fun.logd("removeFromShuffleList(): " + audioFile);
     if (!playbackShuffle) return;
+    Fun.logd("removeFromShuffleList(): " + audioFile);
     if (shuffleList == null) return;
     
     int removeId = -1;
@@ -906,8 +933,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateShuffleList(File audioFile) {
-    Fun.logd("updateShuffleList(): " + audioFile);
     if (!playbackShuffle) return;
+    Fun.logd("updateShuffleList(): " + audioFile);
     
     String currentAudioPath = playerService.getAudioPath();
     if (currentAudioPath == null || !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
@@ -960,6 +987,34 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft.setText(timeLeft);
   }
   
+  private void updateExtraAudioInfo() {
+    Fun.logd("updateExtraAudioInfo()");
+    
+    AudioInfo currentAudioInfo = playerService.getAudioInfo();
+    
+    AudioInfo cachedInfo = null;
+    for (AudioInfo info: playingDirAudioData) {
+      if (info.file.equals(currentAudioInfo.file)) {
+        cachedInfo = info;
+        break;
+      }
+    }
+    
+    textExtraFileName.setText(currentAudioInfo.file.getName());
+    textExtraTitle.setText(currentAudioInfo.title);
+    textExtraArtist.setText(currentAudioInfo.artist);
+    textExtraAlbum.setText(currentAudioInfo.album);
+    textExtraBitrate.setText(currentAudioInfo.bitrate + " kbps");
+    textExtraFrequency.setText(String.format("%.1f kHz", (float) currentAudioInfo.frequency / 1000));
+    textExtraSize.setText(Fun.formatSize(currentAudioInfo.file.length()));
+    textExtraPath.setText(currentAudioInfo.file.getPath());
+    
+    if (cachedInfo != null) {
+      textExtraLength.setText(Fun.formatTime(cachedInfo.time / 1000, false));
+      textExtraChannels.setText(String.valueOf(cachedInfo.channels));
+    }
+  }
+  
   public void initProgress(int time) {
     progressSlider.setMax(time);
     progressSlider.setProgress(0);
@@ -979,6 +1034,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void hideExtraPanels() {
     if (extraPanel.getVisibility() == View.VISIBLE) extraPanel.setVisibility(View.GONE);
+    if (extraInfo.getVisibility() == View.VISIBLE)  extraInfo.setVisibility(View.GONE);
   }
   
   private void cleanFavorites() {
@@ -1001,7 +1057,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleCurrentFileInfo() {
-    
+    int visibility = extraInfo.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    extraInfo.setVisibility(visibility);
   }
   
   public void exitApp() {

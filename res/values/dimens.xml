@@ -6,4 +6,8 @@
   
   <dimen name="favorite_mark_width">4.5dp</dimen>
   <dimen name="favorite_mark_height">36dp</dimen>
+  
+  <dimen name="extra_info_row_min_height">28dp</dimen>
+  <dimen name="extra_info_caption_width">96dp</dimen>
+  <dimen name="extra_info_row_padding">6dp</dimen>
 </resources>
