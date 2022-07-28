@@ -57,7 +57,9 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.view.WindowManager;
+import android.view.GestureDetector;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GestureDetectorCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.app.NotificationManager;
@@ -82,6 +84,8 @@ import org.mortalis.homeplayer.components.SimplePaintView;
 
 
 public class MainActivity extends AppCompatActivity {
+  
+  private ListItemGestureDetector detector;
   
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   private static final String ROOT_DIR_TITLE = "storage";
@@ -298,6 +302,9 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter = new FilesAdapter(fileList);
     listItems.setAdapter(filesAdapter);
     
+    listLayoutManager = new LinearLayoutManager(context);
+    listItems.setLayoutManager(listLayoutManager);
+    
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);
     textTimeLeft.setTypeface(typeface);
@@ -305,9 +312,6 @@ public class MainActivity extends AppCompatActivity {
     textCurrentFolderTime.setTypeface(typeface);
     textPlayingStats.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
-    
-    listLayoutManager = new LinearLayoutManager(context);
-    listItems.setLayoutManager(listLayoutManager);
     
     activeTitle.setOnClickListener(v -> {
       changeToParentDir();
@@ -370,7 +374,134 @@ public class MainActivity extends AppCompatActivity {
     bFastForward.setOnClickListener(v -> {
       fastForwardAction();
     });
+    
+    // ------------------------------------------------------------
+    listItems.addOnItemTouchListener(new RecyclerTouchListener(this, listItems));
+    
+    detector = new ListItemGestureDetector(context, new GestureDetector.OnGestureListener() {
+      public void onLongPress(MotionEvent e) {
+        Fun.log("onLongPress");
+      }
+      
+      public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        Fun.log("onFling");
+        return false;
+      }
+      
+      public void onShowPress(MotionEvent e) {
+        Fun.log("onShowPress");
+        Fun.log(e.getX() + ", " + e.getY());
+        Fun.log(e.getRawX() + ", " + e.getRawY());
+        Fun.log("-------");
+        // View view = listItems.findChildViewUnder(e.getX(), e.getY());
+        // view.setPressed(true);
+      }
+      
+      
+      public boolean onDown(MotionEvent e) {
+        Fun.log("onDown");
+        return true;
+      }
+      
+      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        Fun.log("onScroll");
+        return true;
+      }
+      
+      public boolean onSingleTapUp(MotionEvent e) {
+        Fun.log("onSingleTapUp");
+        return false;
+      }
+    });
   }
+  
+  
+  class ListItemGestureDetector extends GestureDetector {
+    public ListItemGestureDetector(Context context, GestureDetector.OnGestureListener listener) {
+      super(context, listener);
+    }
+    
+    public boolean onTouchEvent(View v, MotionEvent ev) {
+      return super.onTouchEvent(ev);
+    }
+  }
+  
+  
+  class RecyclerTouchListener implements RecyclerView.OnItemTouchListener {
+    private GestureDetectorCompat gestureDetector;
+    
+    public RecyclerTouchListener(Context context, final RecyclerView recycleView) {
+      gestureDetector = new GestureDetectorCompat(context, new GestureDetector.OnGestureListener() {
+        public void onLongPress(MotionEvent e) {
+          Fun.log("onLongPress");
+        }
+        
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+          Fun.log("onFling");
+          return false;
+        }
+        
+        public void onShowPress(MotionEvent e) {
+          Fun.log("onShowPress");
+          View view = recycleView.findChildViewUnder(e.getX(), e.getY());
+          view.setPressed(true);
+        }
+        
+        
+        public boolean onDown(MotionEvent e) {
+          Fun.log("onDown");
+          return true;
+        }
+        
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+          Fun.log("onScroll");
+          return true;
+        }
+        
+        public boolean onSingleTapUp(MotionEvent e) {
+          Fun.log("onSingleTapUp");
+          return false;
+        }
+      });
+    }
+    
+    public boolean onInterceptTouchEvent(RecyclerView recycleView, MotionEvent e) {
+      // Fun.log("onInterceptTouchEvent");
+      boolean result = gestureDetector.onTouchEvent(e);
+      // Fun.log("result: " + result);
+      
+      int action = e.getAction();
+      if (!result) {
+        if (action == MotionEvent.ACTION_DOWN) Fun.log("_ACTION_DOWN");
+        else if (action == MotionEvent.ACTION_CANCEL) Fun.log("_ACTION_CANCEL");
+        else if (action == MotionEvent.ACTION_UP) Fun.log("_ACTION_UP");
+        
+        View view = recycleView.findChildViewUnder(e.getX(), e.getY());
+        if (action == MotionEvent.ACTION_UP) {
+          // itemClick(item);
+        }
+        view.setPressed(false);
+      }
+      else {
+        if (action == MotionEvent.ACTION_UP) Fun.log("== ACTION_UP");
+      }
+      
+      return false;
+    }
+    
+    public void onTouchEvent(RecyclerView recycleView, MotionEvent e) {
+      Fun.log("onTouchEvent");
+    }
+    
+    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+      Fun.log("onRequestDisallowInterceptTouchEvent: " + disallowIntercept);
+    }
+  }
+  
+  
+  // -----------------------------------------------------------
+  
+  
   
   private void restoreState() {
     try {
@@ -1252,6 +1383,8 @@ public class MainActivity extends AppCompatActivity {
       
       ListItem item;
       
+      boolean isMoving;
+      
       public ItemViewHolder(View rootView) {
         super(rootView);
         
@@ -1267,23 +1400,55 @@ public class MainActivity extends AppCompatActivity {
           updateItemFavorite(this.item.path, this.item.isFavorite);
         });
         
-        itemView.setOnTouchListener((view, event) -> {
-          if (this.item == null) return false;
-
-          int action = event.getAction();
-          if (action == MotionEvent.ACTION_DOWN) {
-            view.setPressed(true);
-          }
-          else if (action == MotionEvent.ACTION_CANCEL) {
-            view.setPressed(false);
-          }
-          else if (action == MotionEvent.ACTION_UP) {
-            view.setPressed(false);
-            itemClick(this.item);
-          }
+        
+        // itemView.setOnTouchListener((view, event) -> {
+        //   boolean result = detector.onTouchEvent(view, event);
+        //   if (result) return true;
           
-          return true;
-        });
+        //   Fun.log("onTouch after detector");
+        //   int action = event.getAction();
+        //   if (action == MotionEvent.ACTION_CANCEL) {
+        //     view.setPressed(false);
+        //   }
+          
+        //   return true;
+        // });
+        
+        
+        // itemView.setOnTouchListener((view, event) -> {
+        //   if (this.item == null) return false;
+
+        //   int action = event.getAction();
+        //   if (action == MotionEvent.ACTION_DOWN) {
+        //     view.setPressed(true);
+        //     // return false;
+        //   }
+        //   else if (action == MotionEvent.ACTION_MOVE) {
+        //     Fun.log("MOVE: " + event.getX() + ", " + event.getY());
+        //     // if (event.getY() < 0) {
+        //     //   view.getParent().requestDisallowInterceptTouchEvent(false);
+        //     //   return true;
+        //     // }
+        //     // isMoving = true;
+        //     // view.getParent().requestDisallowInterceptTouchEvent(true);
+        //   }
+        //   else if (action == MotionEvent.ACTION_CANCEL) {
+        //     view.setPressed(false);
+        //     isMoving = false;
+        //     // return false;
+        //   }
+        //   else if (action == MotionEvent.ACTION_UP) {
+        //     view.setPressed(false);
+        //     if (isMoving) {
+        //       isMoving = false;
+        //       return true;
+        //     }
+        //     itemClick(this.item);
+        //   }
+          
+        //   return true;
+        // });
+        
       }
       
       public void select() {
