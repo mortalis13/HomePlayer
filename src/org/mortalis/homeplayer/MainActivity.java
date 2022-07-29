@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraTitle;
   private TextView textExtraArtist;
   private TextView textExtraAlbum;
+  private TextView textExtraYear;
   private TextView textExtraLength;
   private TextView textExtraBitrate;
   private TextView textExtraFrequency;
@@ -275,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
     textExtraTitle = findViewById(R.id.textExtraTitle);
     textExtraArtist = findViewById(R.id.textExtraArtist);
     textExtraAlbum = findViewById(R.id.textExtraAlbum);
+    textExtraYear = findViewById(R.id.textExtraYear);
     textExtraLength = findViewById(R.id.textExtraLength);
     textExtraBitrate = findViewById(R.id.textExtraBitrate);
     textExtraFrequency = findViewById(R.id.textExtraFrequency);
@@ -990,24 +992,25 @@ public class MainActivity extends AppCompatActivity {
   private void updateExtraAudioInfo() {
     Fun.logd("updateExtraAudioInfo()");
     
-    AudioInfo currentAudioInfo = playerService.getAudioInfo();
+    AudioInfo info = playerService.getAudioInfo();
     
     AudioInfo cachedInfo = null;
-    for (AudioInfo info: playingDirAudioData) {
-      if (info.file.equals(currentAudioInfo.file)) {
-        cachedInfo = info;
+    for (AudioInfo dir_info: playingDirAudioData) {
+      if (dir_info.file.equals(info.file)) {
+        cachedInfo = dir_info;
         break;
       }
     }
     
-    textExtraFileName.setText(currentAudioInfo.file.getName());
-    textExtraTitle.setText(currentAudioInfo.title);
-    textExtraArtist.setText(currentAudioInfo.artist);
-    textExtraAlbum.setText(currentAudioInfo.album);
-    textExtraBitrate.setText(currentAudioInfo.bitrate + " kbps");
-    textExtraFrequency.setText(String.format("%.1f kHz", (float) currentAudioInfo.frequency / 1000));
-    textExtraSize.setText(Fun.formatSize(currentAudioInfo.file.length()));
-    textExtraPath.setText(currentAudioInfo.file.getPath());
+    textExtraFileName.setText(info.file.getName());
+    textExtraTitle.setText(info.title);
+    textExtraArtist.setText(info.artist);
+    textExtraAlbum.setText(info.album);
+    textExtraYear.setText(info.year);
+    textExtraBitrate.setText(info.bitrate + " kbps");
+    textExtraFrequency.setText(String.format("%.1f kHz", (float) info.frequency / 1000));
+    textExtraSize.setText(Fun.formatSize(info.file.length()));
+    textExtraPath.setText(info.file.getPath());
     
     if (cachedInfo != null) {
       textExtraLength.setText(Fun.formatTime(cachedInfo.time / 1000, false));

@@ -441,6 +441,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     audioInfo.title = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
     audioInfo.artist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     audioInfo.album = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+    audioInfo.year = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
     audioInfo.bitrate = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
     audioInfo.frequency = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
     return audioInfo;

@@ -8,6 +8,7 @@ public class AudioInfo {
   String title;
   String artist;
   String album;
+  String year;
   int bitrate;
   int frequency;
   int channels;
