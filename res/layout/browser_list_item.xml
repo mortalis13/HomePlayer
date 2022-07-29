@@ -6,6 +6,7 @@
   android:descendantFocusability="blocksDescendants"
   android:background="@drawable/list_item_background"
 >
+
 <FrameLayout
   android:layout_width="match_parent"
   android:layout_height="match_parent"
@@ -85,6 +86,40 @@
       android:layout_height="match_parent"
       android:layout_alignParentRight="true"
       android:clickable="true"
+    />
+  </RelativeLayout>
+  
+  
+  <!-- =========== File menu =========== -->
+  <RelativeLayout
+    android:id="@+id/itemMenuPanel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+  >
+    <View
+      android:layout_width="1dp"
+      android:layout_height="match_parent"
+      android:background="#bbb"
+      android:layout_toLeftOf="@+id/bRemoveFile"
+    />
+    <ImageButton
+      android:id="@+id/bRemoveFile"
+      android:layout_width="70dp"
+      android:layout_height="match_parent"
+      android:src="@drawable/outline_highlight_off_black_24"
+      android:tint="#555"
+      android:background="@drawable/list_item_button_background"
+      android:layout_toLeftOf="@+id/bFileInfo"
+    />
+    <ImageButton
+      android:id="@+id/bFileInfo"
+      android:layout_width="70dp"
+      android:layout_height="match_parent"
+      android:src="@drawable/outline_info_black_24"
+      android:tint="#555"
+      android:background="@drawable/list_item_button_background"
+      android:layout_alignParentRight="true"
     />
   </RelativeLayout>
 

@@ -345,10 +345,10 @@
       android:fillViewport="true"
     >
     <LinearLayout
-      android:id="@+id/extraInfo"
+      android:id="@+id/extraInfoPanel"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:paddingTop="4dp"
+      android:paddingTop="2dp"
       android:orientation="vertical"
       android:visibility="gone"
       android:background="@color/secondary_background"
@@ -364,7 +364,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#555"
         android:text="File:"
@@ -373,7 +373,7 @@
         android:id="@+id/textExtraFileName"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#555"
       />
       </LinearLayout>
@@ -389,7 +389,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#555"
         android:text="Title:"
@@ -398,7 +398,7 @@
         android:id="@+id/textExtraTitle"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#555"
       />
       </LinearLayout>
@@ -414,7 +414,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#555"
         android:text="Artist:"
@@ -423,7 +423,7 @@
         android:id="@+id/textExtraArtist"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#555"
       />
       </LinearLayout>
@@ -439,7 +439,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#555"
         android:text="Album:"
@@ -448,7 +448,7 @@
         android:id="@+id/textExtraAlbum"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#555"
       />
       </LinearLayout>
@@ -464,7 +464,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#555"
         android:text="Year:"
@@ -473,7 +473,7 @@
         android:id="@+id/textExtraYear"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#555"
       />
       </LinearLayout>
@@ -491,7 +491,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Length:"
@@ -500,7 +500,7 @@
         android:id="@+id/textExtraLength"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -516,7 +516,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Bitrate:"
@@ -525,7 +525,7 @@
         android:id="@+id/textExtraBitrate"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -541,7 +541,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Frequency:"
@@ -550,7 +550,7 @@
         android:id="@+id/textExtraFrequency"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -566,7 +566,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Channels:"
@@ -575,7 +575,7 @@
         android:id="@+id/textExtraChannels"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -591,7 +591,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Size:"
@@ -600,7 +600,7 @@
         android:id="@+id/textExtraSize"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -617,7 +617,7 @@
       <TextView
         android:layout_width="@dimen/extra_info_caption_width"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textStyle="bold"
         android:textColor="#777"
         android:text="Path:"
@@ -626,7 +626,7 @@
         android:id="@+id/textExtraPath"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="18dp"
+        android:textSize="@dimen/extra_info_font"
         android:textColor="#777"
       />
       </LinearLayout>
@@ -637,7 +637,7 @@
         android:background="#aaa"
       />
     </LinearLayout>
-    <!-- extraInfo -->
+    <!-- extraInfoPanel -->
     </ScrollView>
     
     </LinearLayout>

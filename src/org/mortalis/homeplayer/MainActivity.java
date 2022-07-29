@@ -57,7 +57,9 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.view.WindowManager;
+import android.view.GestureDetector;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GestureDetectorCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.app.NotificationManager;
@@ -82,7 +84,7 @@ import org.mortalis.homeplayer.components.SimplePaintView;
 
 
 public class MainActivity extends AppCompatActivity {
-  
+
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   private static final String ROOT_DIR_TITLE = "storage";
   
@@ -137,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bShuffle;
   private ImageButton bRepeat;
   
-  private LinearLayout extraInfo;
+  private LinearLayout extraInfoPanel;
   private TextView textExtraFileName;
   private TextView textExtraTitle;
   private TextView textExtraArtist;
@@ -159,6 +161,10 @@ public class MainActivity extends AppCompatActivity {
   private boolean playbackShuffle;
   private List<File> shuffleList;
   private Random randShuffle = new Random();
+  
+  private GestureDetector gestureDetector;
+  private boolean itemSwipedLeft;
+  private boolean itemSwiping;
   
 
   @Override
@@ -271,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
     bShuffle = findViewById(R.id.bShuffle);
     bRepeat = findViewById(R.id.bRepeat);
     
-    extraInfo = findViewById(R.id.extraInfo);
+    extraInfoPanel = findViewById(R.id.extraInfoPanel);
     textExtraFileName = findViewById(R.id.textExtraFileName);
     textExtraTitle = findViewById(R.id.textExtraTitle);
     textExtraArtist = findViewById(R.id.textExtraArtist);
@@ -300,6 +306,9 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter = new FilesAdapter(fileList);
     listItems.setAdapter(filesAdapter);
     
+    listLayoutManager = new LinearLayoutManager(context);
+    listItems.setLayoutManager(listLayoutManager);
+    
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);
     textTimeLeft.setTypeface(typeface);
@@ -307,9 +316,6 @@ public class MainActivity extends AppCompatActivity {
     textCurrentFolderTime.setTypeface(typeface);
     textPlayingStats.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
-    
-    listLayoutManager = new LinearLayoutManager(context);
-    listItems.setLayoutManager(listLayoutManager);
     
     activeTitle.setOnClickListener(v -> {
       changeToParentDir();
@@ -371,6 +377,31 @@ public class MainActivity extends AppCompatActivity {
     
     bFastForward.setOnClickListener(v -> {
       fastForwardAction();
+    });
+    
+    // ------------------------------------------------------------
+    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
+        
+        float moveDiff = e2.getX() - e1.getX();
+        int direction = moveDiff < 0 ? 0: 1;
+        float swipedRatio = Math.abs(moveDiff) / view.getWidth();
+        
+        if (direction == 0) {
+          if (!itemSwiping) {
+            listItems.requestDisallowInterceptTouchEvent(true);
+            itemSwiping = true;
+            view.setPressed(true);
+          }
+          
+          // LEFT
+          if (swipedRatio >= 0.25f) {
+            itemSwipedLeft = true;
+          }
+        }
+        return true;
+      }
     });
   }
   
@@ -668,13 +699,11 @@ public class MainActivity extends AppCompatActivity {
     setPlayButtonAsPause();
     progressSlider.enable();
     updatePlayingStats();
-    updateExtraAudioInfo();
   }
   
   public void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
-    updateExtraAudioInfo();
   }
   
   public void onPlayerPaused() {
@@ -989,19 +1018,39 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft.setText(timeLeft);
   }
   
-  private void updateExtraAudioInfo() {
-    Fun.logd("updateExtraAudioInfo()");
+  private void showExtraAudioInfo(String filePath) {
+    Fun.logd("showExtraAudioInfo()");
     
-    AudioInfo info = playerService.getAudioInfo();
+    AudioInfo info = new AudioInfo();
+    info.file = new File(filePath);
     
-    AudioInfo cachedInfo = null;
-    for (AudioInfo dir_info: playingDirAudioData) {
-      if (dir_info.file.equals(info.file)) {
-        cachedInfo = dir_info;
-        break;
-      }
+    MediaMetadataRetriever metadata = new MediaMetadataRetriever();
+    metadata.setDataSource(filePath);
+    
+    info.title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+    info.artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+    info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
+    info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
+    info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+    info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+    
+    try {
+      MediaExtractor mediaExtractor = new MediaExtractor();
+      mediaExtractor.setDataSource(filePath);
+      
+      MediaFormat format = mediaExtractor.getTrackFormat(0);
+      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
     }
     
+    fillAudioInfo(info);
+    extraInfoPanel.setVisibility(View.VISIBLE);
+  }
+  
+  private void fillAudioInfo(AudioInfo info) {
     textExtraFileName.setText(info.file.getName());
     textExtraTitle.setText(info.title);
     textExtraArtist.setText(info.artist);
@@ -1011,11 +1060,8 @@ public class MainActivity extends AppCompatActivity {
     textExtraFrequency.setText(String.format("%.1f kHz", (float) info.frequency / 1000));
     textExtraSize.setText(Fun.formatSize(info.file.length()));
     textExtraPath.setText(info.file.getPath());
-    
-    if (cachedInfo != null) {
-      textExtraLength.setText(Fun.formatTime(cachedInfo.time / 1000, false));
-      textExtraChannels.setText(String.valueOf(cachedInfo.channels));
-    }
+    textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
+    textExtraChannels.setText(String.valueOf(info.channels));
   }
   
   public void initProgress(int time) {
@@ -1037,7 +1083,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void hideExtraPanels() {
     if (extraPanel.getVisibility() == View.VISIBLE) extraPanel.setVisibility(View.GONE);
-    if (extraInfo.getVisibility() == View.VISIBLE)  extraInfo.setVisibility(View.GONE);
+    if (extraInfoPanel.getVisibility() == View.VISIBLE)  extraInfoPanel.setVisibility(View.GONE);
   }
   
   private void cleanFavorites() {
@@ -1060,8 +1106,14 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleCurrentFileInfo() {
-    int visibility = extraInfo.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
-    extraInfo.setVisibility(visibility);
+    if (playerService == null || !playerService.hasAudio()) return;
+
+    if (extraInfoPanel.getVisibility() == View.GONE) {
+      showExtraAudioInfo(playerService.getAudioPath());
+    }
+    else {
+      extraInfoPanel.setVisibility(View.GONE);
+    }
   }
   
   public void exitApp() {
@@ -1106,7 +1158,7 @@ public class MainActivity extends AppCompatActivity {
 
   // ---------------------- Classes ----------------------
   private class ListItem {
-    int imgId;
+    int icon;
     String text;
     String path;
     String time;
@@ -1130,10 +1182,10 @@ public class MainActivity extends AppCompatActivity {
       this.isFile = isFile;
       
       if (isFile && path != null) {
-        imgId = getFileIconByType(path);
+        icon = getFileIconByType(path);
       }
       else if (!isFile) {
-        imgId = R.drawable.round_folder_black_36;
+        icon = R.drawable.round_folder_black_36;
       }
     }
     
@@ -1152,6 +1204,8 @@ public class MainActivity extends AppCompatActivity {
     
     int lastItemSelectedPos = -1;
     int selectedItemPos = -1;
+    
+    int holderWithMenu = -1;
     
     public FilesAdapter(List<ListItem> fileList) {
       this.fileList = fileList;
@@ -1245,6 +1299,22 @@ public class MainActivity extends AppCompatActivity {
       return -1;
     }
     
+    private void hideMenuPanels(int currentPos) {
+      if (holderWithMenu != -1) {
+        int pos = holderWithMenu;
+        holderWithMenu = -1;
+        
+        ItemViewHolder viewHolder = (ItemViewHolder) listItems.findViewHolderForAdapterPosition(pos);
+        if (viewHolder != null && viewHolder.itemMenuPanel != null && viewHolder.itemMenuPanel.getVisibility() == View.VISIBLE) {
+          viewHolder.itemMenuPanel.setVisibility(View.GONE);
+        }
+        
+        if (pos != currentPos) {
+          notifyItemChanged(pos);
+        }
+      }
+    }
+    
     
     public class ItemViewHolder extends RecyclerView.ViewHolder {
       ImageView itemIcon;
@@ -1252,6 +1322,10 @@ public class MainActivity extends AppCompatActivity {
       TextView itemText;
       TextView itemTime;
       FrameLayout iconContainer;
+      RelativeLayout itemMenuPanel;
+      
+      ImageButton bRemoveFile;
+      ImageButton bFileInfo;
       
       ListItem item;
       
@@ -1264,29 +1338,71 @@ public class MainActivity extends AppCompatActivity {
         itemTime = rootView.findViewById(R.id.itemTime);
         iconContainer = rootView.findViewById(R.id.iconContainer);
         
-        iconContainer.setOnClickListener((view) -> {
+        itemMenuPanel = rootView.findViewById(R.id.itemMenuPanel);
+        bRemoveFile = rootView.findViewById(R.id.bRemoveFile);
+        bFileInfo = rootView.findViewById(R.id.bFileInfo);
+        
+        iconContainer.setOnClickListener(v -> {
           this.item.isFavorite = !this.item.isFavorite;
           itemIndicator.setVisibility(this.item.isFavorite ? View.VISIBLE: View.GONE);
           updateItemFavorite(this.item.path, this.item.isFavorite);
         });
         
+        bRemoveFile.setOnClickListener(v -> {
+          
+        });
+        
+        bFileInfo.setOnClickListener(v -> {
+          showExtraAudioInfo(this.item.path);
+          hideItemMenu();
+        });
+        
         itemView.setOnTouchListener((view, event) -> {
-          if (this.item == null) return false;
-
-          int action = event.getAction();
-          if (action == MotionEvent.ACTION_DOWN) {
-            view.setPressed(true);
+          float x = event.getX();
+          float y = view.getTop() + event.getY();
+          event = MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(), x, y, event.getMetaState());
+          
+          boolean result = gestureDetector.onTouchEvent(event);
+          if (result) return true;
+          
+          return this.processOnTouch(view, event);
+        });
+      }
+      
+      private boolean processOnTouch(View view, MotionEvent event) {
+        if (this.item == null) return false;
+        int action = event.getAction();
+        
+        if (action == MotionEvent.ACTION_DOWN) Fun.log("ACTION_DOWN");
+        else if (action == MotionEvent.ACTION_CANCEL) Fun.log("ACTION_CANCEL");
+        else if (action == MotionEvent.ACTION_UP) Fun.log("ACTION_UP");
+        
+        if (action == MotionEvent.ACTION_DOWN) {
+          view.setPressed(true);
+          hideMenuPanels(getBindingAdapterPosition());
+        }
+        else if (action == MotionEvent.ACTION_CANCEL) {
+          view.setPressed(false);
+          itemSwipedLeft = false;
+          itemSwiping = false;
+        }
+        else if (action == MotionEvent.ACTION_UP) {
+          view.setPressed(false);
+          
+          if (itemSwipedLeft) {
+            Fun.log("Swiped left");
+            showItemMenu();
+            holderWithMenu = getBindingAdapterPosition();
           }
-          else if (action == MotionEvent.ACTION_CANCEL) {
-            view.setPressed(false);
-          }
-          else if (action == MotionEvent.ACTION_UP) {
-            view.setPressed(false);
+          else if (!itemSwiping) {
             itemClick(this.item);
           }
           
-          return true;
-        });
+          itemSwipedLeft = false;
+          itemSwiping = false;
+        }
+        
+        return true;
       }
       
       public void select() {
@@ -1297,6 +1413,14 @@ public class MainActivity extends AppCompatActivity {
       public void unselect() {
         itemView.setSelected(false);
         itemView.setPressed(false);
+      }
+      
+      private void showItemMenu() {
+        itemMenuPanel.setVisibility(View.VISIBLE);
+      }
+      
+      private void hideItemMenu() {
+        itemMenuPanel.setVisibility(View.GONE);
       }
       
       public void bind(ListItem item) {
@@ -1312,8 +1436,10 @@ public class MainActivity extends AppCompatActivity {
         
         int iconColor = item_icon_color_default;
         if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
-        itemIcon.setImageResource(item.imgId);
+        itemIcon.setImageResource(item.icon);
         itemIcon.setColorFilter(iconColor);
+        
+        hideItemMenu();
       }
     } // ItemViewHolder
   }

@@ -22,6 +22,9 @@
   <color name="control_button_background_pressed">#ddd</color>
   <color name="control_button_background_default">@color/transparent</color>
   
+  <color name="list_item_button_background_pressed">#eee</color>
+  <color name="list_item_button_background_default">#e5e5e5</color>
+  
   <color name="secondary_toggle_button_background_selected">#c4d6de</color>
   <color name="secondary_toggle_button_background_default">@color/transparent</color>
   

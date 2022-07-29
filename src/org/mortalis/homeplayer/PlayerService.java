@@ -60,7 +60,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private NotificationCompat.Action[] notifActions;
   private PlayerServiceReceiver playerServiceReceiver;
   
-  private MediaMetadataRetriever metadataRetriever;
+  private MediaMetadataRetriever metadata;
   
   private String audioPath;
   private int audioTime;
@@ -156,7 +156,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         .setOnAudioFocusChangeListener(this)
     .build();
     
-    metadataRetriever = new MediaMetadataRetriever();
+    metadata = new MediaMetadataRetriever();
     
     playerServiceReceiver = new PlayerServiceReceiver();
     playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
@@ -319,7 +319,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private Notification buildPlayerNotification() {
     Fun.logd("buildPlayerNotification()");
     
-    String audioArtist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     
     String title = new File(audioPath).getName();
     String text = audioArtist;
@@ -435,18 +435,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     return audioPath;
   }
   
-  public AudioInfo getAudioInfo() {
-    AudioInfo audioInfo = new AudioInfo();
-    audioInfo.file = new File(audioPath);
-    audioInfo.title = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-    audioInfo.artist = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-    audioInfo.album = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-    audioInfo.year = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
-    audioInfo.bitrate = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
-    audioInfo.frequency = Integer.parseInt(metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
-    return audioInfo;
-  }
-  
   
   // --> MediaPlayer.OnPreparedListener
   @Override
@@ -458,7 +446,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       changePlayPosition(audioTime);
     }
     
-    metadataRetriever.setDataSource(audioPath);
+    metadata.setDataSource(audioPath);
     
     if (startPlayback) {
       preload();
