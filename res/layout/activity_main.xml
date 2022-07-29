@@ -284,6 +284,72 @@
     />
     
     
+    <!-- =========== File menu =========== -->
+    <RelativeLayout
+      android:id="@+id/fileMenuPanel"
+      android:layout_width="match_parent"
+      android:layout_height="84dp"
+      android:visibility="gone"
+      android:background="#ddd"
+      android:clickable="true"
+    >
+      <TextView
+        android:id="@+id/textFileMenuTitle"
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:gravity="center_vertical|right"
+        android:textSize="16dp"
+        android:textStyle="bold"
+        android:textColor="#839096"
+        android:text="03 - Lord Of The Flies.mp3"
+        android:layout_alignParentTop="true"
+      />
+      
+      <ImageButton
+        android:id="@+id/bFileInfo"
+        android:layout_width="80dp"
+        android:layout_height="60dp"
+        android:src="@drawable/outline_info_black_24"
+        android:tint="#555"
+        android:background="@drawable/secondary_control_button_background"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/textFileMenuTitle"
+      />
+      <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="#aaa"
+        android:layout_alignParentLeft="true"
+      />
+      
+      <ImageButton
+        android:id="@+id/bRemoveFile"
+        android:layout_width="80dp"
+        android:layout_height="60dp"
+        android:src="@drawable/outline_highlight_off_black_24"
+        android:tint="#555"
+        android:background="@drawable/secondary_control_button_background"
+        android:layout_toLeftOf="@+id/bFileInfo"
+        android:layout_below="@+id/textFileMenuTitle"
+      />
+      <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="#aaa"
+        android:layout_alignParentRight="true"
+      />
+      
+      <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#aaa"
+        android:layout_below="@+id/bFileInfo"
+      />
+    </RelativeLayout>
+    
+    
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
