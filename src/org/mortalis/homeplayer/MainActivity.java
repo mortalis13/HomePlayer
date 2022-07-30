@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout panelInfoCenter;
   private LinearLayout panelInfoRight;
   
-  private RelativeLayout extraPanel;
+  private RelativeLayout extraControlPanel;
   private ImageButton bShuffle;
   private ImageButton bRepeat;
   
@@ -165,6 +165,8 @@ public class MainActivity extends AppCompatActivity {
   private GestureDetector gestureDetector;
   private boolean itemSwipedLeft;
   private boolean itemSwiping;
+  
+  private AudioInfo currrentExtraInfo;
   
 
   @Override
@@ -252,6 +254,30 @@ public class MainActivity extends AppCompatActivity {
   private void init() {
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
+    
+    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
+        
+        float moveDiff = e2.getX() - e1.getX();
+        int direction = moveDiff < 0 ? 0: 1;
+        float swipedRatio = Math.abs(moveDiff) / view.getWidth();
+        
+        if (direction == 0) {
+          if (!itemSwiping) {
+            listItems.requestDisallowInterceptTouchEvent(true);
+            itemSwiping = true;
+            view.setPressed(true);
+          }
+          
+          // LEFT
+          if (swipedRatio >= 0.25f) {
+            itemSwipedLeft = true;
+          }
+        }
+        return true;
+      }
+    });
   }
   
   private void configUI() {
@@ -273,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
     panelInfoCenter = findViewById(R.id.panelInfoCenter);
     panelInfoRight = findViewById(R.id.panelInfoRight);
     
-    extraPanel = findViewById(R.id.extraPanel);
+    extraControlPanel = findViewById(R.id.extraControlPanel);
     bShuffle = findViewById(R.id.bShuffle);
     bRepeat = findViewById(R.id.bRepeat);
     
@@ -336,11 +362,11 @@ public class MainActivity extends AppCompatActivity {
     
     
     panelInfoLeft.setOnClickListener(v -> {
-      toggleExtraPanel();
+      toggleExtraControlPanel();
     });
     
     panelInfoCenter.setOnClickListener(v -> {
-      toggleCurrentFileInfo();
+      toggleExtraInfoPanel();
     });
     
     panelInfoRight.setOnClickListener(v -> {
@@ -379,28 +405,19 @@ public class MainActivity extends AppCompatActivity {
       fastForwardAction();
     });
     
-    // ------------------------------------------------------------
-    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
-        
-        float moveDiff = e2.getX() - e1.getX();
-        int direction = moveDiff < 0 ? 0: 1;
-        float swipedRatio = Math.abs(moveDiff) / view.getWidth();
-        
-        if (direction == 0) {
-          if (!itemSwiping) {
-            listItems.requestDisallowInterceptTouchEvent(true);
-            itemSwiping = true;
-            view.setPressed(true);
-          }
-          
-          // LEFT
-          if (swipedRatio >= 0.25f) {
-            itemSwipedLeft = true;
-          }
+    extraInfoPanel.setOnTouchListener(new OnSwipeTouchListener(this) {
+      public void onSwipeLeft() {
+        if (currrentExtraInfo != null && currrentExtraInfo.file != null) {
+          showExtraAudioInfo(getNextFile(currrentExtraInfo.file).getPath());
         }
-        return true;
+      }
+      public void onSwipeRight() {
+        if (currrentExtraInfo != null && currrentExtraInfo.file != null) {
+          showExtraAudioInfo(getPrevFile(currrentExtraInfo.file).getPath());
+        }
+      }
+      public void onSwipeUp() {
+        hideExtraInfoPanel();
       }
     });
   }
@@ -1055,6 +1072,8 @@ public class MainActivity extends AppCompatActivity {
     
     fillAudioInfo(info);
     extraInfoPanel.setVisibility(View.VISIBLE);
+    
+    currrentExtraInfo = info;
   }
   
   private void fillAudioInfo(AudioInfo info) {
@@ -1089,7 +1108,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void hideExtraPanels() {
-    if (extraPanel.getVisibility() == View.VISIBLE) extraPanel.setVisibility(View.GONE);
+    if (extraControlPanel.getVisibility() == View.VISIBLE) extraControlPanel.setVisibility(View.GONE);
     if (extraInfoPanel.getVisibility() == View.VISIBLE)  extraInfoPanel.setVisibility(View.GONE);
   }
   
@@ -1107,18 +1126,22 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
-  private void toggleExtraPanel() {
-    int visibility = extraPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
-    extraPanel.setVisibility(visibility);
+  private void toggleExtraControlPanel() {
+    int visibility = extraControlPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    extraControlPanel.setVisibility(visibility);
   }
   
-  private void toggleCurrentFileInfo() {
+  private void toggleExtraInfoPanel() {
     if (extraInfoPanel.getVisibility() == View.GONE) {
       showExtraAudioInfo();
     }
     else {
       extraInfoPanel.setVisibility(View.GONE);
     }
+  }
+  
+  private void hideExtraInfoPanel() {
+    extraInfoPanel.setVisibility(View.GONE);
   }
   
   public void exitApp() {
