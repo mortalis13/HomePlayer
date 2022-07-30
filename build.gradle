@@ -34,7 +34,7 @@ android {
     applicationId "org.mortalis.homeplayer"
     vectorDrawables.useSupportLibrary = true
     
-    versionCode 22
+    versionCode 23
     versionName String.format('%d.%d', (int)(versionCode/10), versionCode%10)
     
     minSdkVersion 16
