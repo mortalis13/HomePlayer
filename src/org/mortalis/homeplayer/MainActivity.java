@@ -1402,12 +1402,14 @@ public class MainActivity extends AppCompatActivity {
         });
         
         itemView.setOnTouchListener((view, event) -> {
-          float x = event.getX();
-          float y = view.getTop() + event.getY();
-          event = MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(), x, y, event.getMetaState());
-          
-          boolean result = gestureDetector.onTouchEvent(event);
-          if (result) return true;
+          if (this.item.isFile) {
+            float x = event.getX();
+            float y = view.getTop() + event.getY();
+            event = MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(), x, y, event.getMetaState());
+            
+            boolean result = gestureDetector.onTouchEvent(event);
+            if (result) return true;
+          }
           
           return this.processOnTouch(view, event);
         });
