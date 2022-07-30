@@ -76,6 +76,17 @@ public class Fun {
     return new File(filePath).getParentFile().getAbsolutePath();
   }
   
+  public static boolean removeFile(String filePath) {
+    try {
+      return new File(filePath).delete();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+    return false;
+  }
+  
   public static String getBaseFileName(String filePath) {
     return FilenameUtils.getBaseName(filePath);
   }

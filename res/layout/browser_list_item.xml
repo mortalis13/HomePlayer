@@ -109,7 +109,7 @@
       android:layout_height="match_parent"
       android:src="@drawable/outline_highlight_off_black_24"
       android:tint="#555"
-      android:background="@drawable/list_item_button_background"
+      android:background="@color/list_item_button_background_default"
       android:layout_toLeftOf="@+id/bFileInfo"
     />
     <ImageButton

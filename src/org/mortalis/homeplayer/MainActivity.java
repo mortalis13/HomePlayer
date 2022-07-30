@@ -690,6 +690,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void refreshCurrentDir() {
+    changeDir(currentPath);
+  }
+  
   private void markLastPlayedFile(File dir) {
     String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
     int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
@@ -1327,14 +1331,14 @@ public class MainActivity extends AppCompatActivity {
       return -1;
     }
     
-    private void hideMenuPanels(int currentPos) {
+    private void hideActiveMenu(int currentPos) {
       if (holderWithMenu != -1) {
         int pos = holderWithMenu;
         holderWithMenu = -1;
         
         ItemViewHolder viewHolder = (ItemViewHolder) listItems.findViewHolderForAdapterPosition(pos);
-        if (viewHolder != null && viewHolder.itemMenuPanel != null && viewHolder.itemMenuPanel.getVisibility() == View.VISIBLE) {
-          viewHolder.itemMenuPanel.setVisibility(View.GONE);
+        if (viewHolder != null) {
+          viewHolder.hideItemMenu();
         }
         
         if (pos != currentPos) {
@@ -1357,6 +1361,8 @@ public class MainActivity extends AppCompatActivity {
       
       ListItem item;
       
+      boolean isRemovePressed;
+      
       public ItemViewHolder(View rootView) {
         super(rootView);
         
@@ -1377,7 +1383,17 @@ public class MainActivity extends AppCompatActivity {
         });
         
         bRemoveFile.setOnClickListener(v -> {
-          
+          if (!isRemovePressed) {
+            setRemoveState();
+          }
+          else {
+            if (Fun.removeFile(this.item.path)) {
+              refreshCurrentDir();
+            }
+            else {
+              resetRemoveState();
+            }
+          }
         });
         
         bFileInfo.setOnClickListener(v -> {
@@ -1401,13 +1417,13 @@ public class MainActivity extends AppCompatActivity {
         if (this.item == null) return false;
         int action = event.getAction();
         
-        if (action == MotionEvent.ACTION_DOWN) Fun.log("ACTION_DOWN");
-        else if (action == MotionEvent.ACTION_CANCEL) Fun.log("ACTION_CANCEL");
-        else if (action == MotionEvent.ACTION_UP) Fun.log("ACTION_UP");
+        // if (action == MotionEvent.ACTION_DOWN) Fun.log("ACTION_DOWN");
+        // else if (action == MotionEvent.ACTION_CANCEL) Fun.log("ACTION_CANCEL");
+        // else if (action == MotionEvent.ACTION_UP) Fun.log("ACTION_UP");
         
         if (action == MotionEvent.ACTION_DOWN) {
           view.setPressed(true);
-          hideMenuPanels(getBindingAdapterPosition());
+          hideActiveMenu(getBindingAdapterPosition());
         }
         else if (action == MotionEvent.ACTION_CANCEL) {
           view.setPressed(false);
@@ -1418,7 +1434,6 @@ public class MainActivity extends AppCompatActivity {
           view.setPressed(false);
           
           if (itemSwipedLeft) {
-            Fun.log("Swiped left");
             showItemMenu();
             holderWithMenu = getBindingAdapterPosition();
           }
@@ -1444,14 +1459,35 @@ public class MainActivity extends AppCompatActivity {
       }
       
       private void showItemMenu() {
-        itemMenuPanel.setVisibility(View.VISIBLE);
+        resetRemoveState();
+        
+        if (itemMenuPanel == null) return;
+        if (itemMenuPanel.getVisibility() != View.VISIBLE) {
+          itemMenuPanel.setVisibility(View.VISIBLE);
+        }
       }
       
       private void hideItemMenu() {
-        itemMenuPanel.setVisibility(View.GONE);
+        if (itemMenuPanel == null) return;
+        if (itemMenuPanel.getVisibility() != View.GONE) {
+          itemMenuPanel.setVisibility(View.GONE);
+        }
+      }
+      
+      public void setRemoveState() {
+        isRemovePressed = true;
+        bRemoveFile.setBackgroundResource(R.color.remove_file_confirm);
+      }
+      
+      public void resetRemoveState() {
+        isRemovePressed = false;
+        bRemoveFile.setBackgroundResource(R.color.list_item_button_background_default);
       }
       
       public void bind(ListItem item) {
+        hideItemMenu();
+        resetRemoveState();
+        
         this.item = item;
         if (item == null) return;
         
@@ -1466,8 +1502,6 @@ public class MainActivity extends AppCompatActivity {
         if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
         itemIcon.setImageResource(item.icon);
         itemIcon.setColorFilter(iconColor);
-        
-        hideItemMenu();
       }
     } // ItemViewHolder
   }
