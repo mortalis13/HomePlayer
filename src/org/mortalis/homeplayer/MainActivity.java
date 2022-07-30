@@ -696,14 +696,16 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Events ------------------------------
   public void onPlayerStarted() {
+    onPlayerPreloaded();
     setPlayButtonAsPause();
-    progressSlider.enable();
-    updatePlayingStats();
   }
   
   public void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
+    if (extraInfoPanel.getVisibility() == View.VISIBLE) {
+      showExtraAudioInfo();
+    }
   }
   
   public void onPlayerPaused() {
@@ -1018,6 +1020,11 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft.setText(timeLeft);
   }
   
+  private void showExtraAudioInfo() {
+    if (playerService == null || !playerService.hasAudio()) return;
+    showExtraAudioInfo(playerService.getAudioPath());
+  }
+  
   private void showExtraAudioInfo(String filePath) {
     Fun.logd("showExtraAudioInfo()");
     
@@ -1106,10 +1113,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleCurrentFileInfo() {
-    if (playerService == null || !playerService.hasAudio()) return;
-
     if (extraInfoPanel.getVisibility() == View.GONE) {
-      showExtraAudioInfo(playerService.getAudioPath());
+      showExtraAudioInfo();
     }
     else {
       extraInfoPanel.setVisibility(View.GONE);
