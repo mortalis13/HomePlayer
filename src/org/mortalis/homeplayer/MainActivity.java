@@ -759,6 +759,11 @@ public class MainActivity extends AppCompatActivity {
   
   public File getNearestFile(File file, boolean next) {
     File parent = file.getParentFile();
+    if (!parent.exists()) {
+      Fun.loge("The parent does not exist for file " + file);
+      return null;
+    }
+    
     File[] files = parent.listFiles(Fun.fileFilter);
     Arrays.sort(files, Fun.nocaseComp);
     
@@ -781,6 +786,10 @@ public class MainActivity extends AppCompatActivity {
   public File getNextRandomFile(File file) {
     if (shuffleList == null || shuffleList.size() == 0) {
       generateShuffleList(file);
+    }
+    
+    if (shuffleList == null || shuffleList.size() == 0) {
+      return null;
     }
     
     int nextId = randShuffle.nextInt(shuffleList.size());
@@ -960,6 +969,12 @@ public class MainActivity extends AppCompatActivity {
   private void generateShuffleList(File audioFile) {
     Fun.logd("generateShuffleList(): " + audioFile);
     File parent = audioFile.getParentFile();
+    
+    if (!parent.exists()) {
+      Fun.loge("The parent does not exist for file " + audioFile);
+      return;
+    }
+    
     File[] files = parent.listFiles(Fun.fileFilter);
     Arrays.sort(files, Fun.nocaseComp);
     
@@ -1034,7 +1049,9 @@ public class MainActivity extends AppCompatActivity {
     totalTime  /= 1000;
     String timePlaying = Fun.formatTime(playingPos, false);
     String timeTotal   = Fun.formatTime(totalTime, false);
-    String timeLeft    = "-" + Fun.formatTime(totalTime - playingPos, false);
+    int timeDiff = totalTime - playingPos;
+    if (timeDiff < 0) timeDiff = 0;
+    String timeLeft    = "-" + Fun.formatTime(timeDiff, false);
     
     textTimePlaying.setText(timePlaying);
     textTimeTotal.setText(timeTotal);
@@ -1048,6 +1065,11 @@ public class MainActivity extends AppCompatActivity {
   
   private void showExtraAudioInfo(String filePath) {
     Fun.logd("showExtraAudioInfo()");
+    
+    if (!Fun.fileExists(filePath)) {
+      Fun.loge("File doesn't exist: " + filePath);
+      return;
+    }
     
     AudioInfo info = new AudioInfo();
     info.file = new File(filePath);
