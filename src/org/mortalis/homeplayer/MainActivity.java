@@ -554,7 +554,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), playingFile.getPath());
     markLastPlayedFile(currentPath);
     
-    updatePlayingAudioInfo(playingFile);
+    // updatePlayingAudioInfo(playingFile);
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -617,18 +617,19 @@ public class MainActivity extends AppCompatActivity {
     Arrays.sort(dirs, Fun.nocaseComp);
     
     for (File dir: dirs) {
-      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath()));
+      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath(), false));
     }
     
     File[] files = path.listFiles(Fun.fileFilter);
     if (files == null) files = new File[0];
     Arrays.sort(files, Fun.nocaseComp);
     
-    dirAudioData = getAudioDataForDirectory(files);
+    // dirAudioData = getAudioDataForDirectory(files);
     
     for (File file: files) {
-      String time = Fun.formatTime(getAudioTime(file, dirAudioData) / 1000, false);
-      fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), time));
+      // String time = Fun.formatTime(getAudioTime(file, dirAudioData) / 1000, false);
+      // fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), time));
+      fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true));
     }
     
     String title = currentPath.getName();
@@ -881,7 +882,25 @@ public class MainActivity extends AppCompatActivity {
       MediaFormat format = mediaExtractor.getTrackFormat(0);
       long duration = format.getLong(MediaFormat.KEY_DURATION);
       info.time = (int) (duration / 1000);
-      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+      mediaExtractor.release();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+    return info;
+  }
+  
+  public AudioInfo extractAudioInfo(String filePath) {
+    AudioInfo info = new AudioInfo();
+    
+    try {
+      MediaExtractor mediaExtractor = new MediaExtractor();
+      mediaExtractor.setDataSource(filePath);
+
+      MediaFormat format = mediaExtractor.getTrackFormat(0);
+      long duration = format.getLong(MediaFormat.KEY_DURATION);
+      info.time = (int) (duration / 1000);
       mediaExtractor.release();
     }
     catch (Exception e) {
@@ -1022,8 +1041,8 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    String totalTime = getTotalTimeInDirectory(files, dirAudioData);
-    textCurrentFolderTime.setText(totalTime);
+    // String totalTime = getTotalTimeInDirectory(files, dirAudioData);
+    // textCurrentFolderTime.setText(totalTime);
   }
   
   private void updatePlayingStats() {
@@ -1040,8 +1059,8 @@ public class MainActivity extends AppCompatActivity {
       textPlayingStats.setText(stats);
     }
     
-    String totalTime = getTotalTimeInDirectory(files, playingDirAudioData);
-    textPlayingFolderTime.setText(totalTime);
+    // String totalTime = getTotalTimeInDirectory(files, playingDirAudioData);
+    // textPlayingFolderTime.setText(totalTime);
   }
   
   public void updatePlayingTime(int playingPos, int totalTime) {
@@ -1249,17 +1268,16 @@ public class MainActivity extends AppCompatActivity {
     boolean isFavorite;
     
     ListItem(String text, String path) {
-      this(text, path, null, false);
+      this(text, path, false);
     }
     
     ListItem(String text, String path, String time) {
-      this(text, path, time, true);
+      this(text, path, true);
     }
     
-    ListItem(String text, String path, String time, boolean isFile) {
+    ListItem(String text, String path, boolean isFile) {
       this.text = text;
       this.path = path;
-      this.time = time;
       this.isFile = isFile;
       
       if (isFile && path != null) {
@@ -1306,6 +1324,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBindViewHolder(ItemViewHolder holder, int position) {
       ListItem item = fileList.get(position);
+      Fun.log("onBindViewHolder: " + item.path + " " + item.time);
+      
+      if (item.isFile && item.time == null) {
+        AudioInfo info = extractAudioInfo(item.path);
+        String time = Fun.formatTime(info.time / 1000, false);
+        item.time = time;
+      }
+      
       holder.bind(item);
       if (position == selectedItemPos) {
         holder.select();
