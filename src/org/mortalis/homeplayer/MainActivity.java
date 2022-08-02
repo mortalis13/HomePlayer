@@ -81,6 +81,7 @@ import android.media.MediaExtractor;
 import android.graphics.PorterDuff;
 import android.graphics.Outline;
 import android.view.ViewOutlineProvider;
+import android.os.AsyncTask;
 
 import org.mortalis.homeplayer.components.SliderView;
 import org.mortalis.homeplayer.components.SimplePaintView;
@@ -170,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
   private boolean itemSwiping;
   
   private AudioInfo currrentExtraInfo;
+  
+  private LoadInfoTask loadInfoTask;
   
 
   @Override
@@ -554,7 +557,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), playingFile.getPath());
     markLastPlayedFile(currentPath);
     
-    updatePlayingAudioInfo(playingFile);
+    // updatePlayingAudioInfo(playingFile);
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -617,18 +620,19 @@ public class MainActivity extends AppCompatActivity {
     Arrays.sort(dirs, Fun.nocaseComp);
     
     for (File dir: dirs) {
-      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath()));
+      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath(), false));
     }
     
     File[] files = path.listFiles(Fun.fileFilter);
     if (files == null) files = new File[0];
     Arrays.sort(files, Fun.nocaseComp);
     
-    dirAudioData = getAudioDataForDirectory(files);
+    // dirAudioData = getAudioDataForDirectory(files);
+    if (loadInfoTask != null) loadInfoTask.cancel(true);
+    loadInfoTask = new LoadInfoTask();
     
     for (File file: files) {
-      String time = Fun.formatTime(getAudioTime(file, dirAudioData) / 1000, false);
-      fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), time));
+      fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true));
     }
     
     String title = currentPath.getName();
@@ -642,13 +646,14 @@ public class MainActivity extends AppCompatActivity {
     listItems.post(() -> {
       int lastPos = listLayoutManager.findLastCompletelyVisibleItemPosition();
       int mode = View.OVER_SCROLL_IF_CONTENT_SCROLLS;
-      if (lastPos == filesAdapter.getItemCount()-1) {
+      if (lastPos == filesAdapter.getItemCount() - 1) {
         mode = View.OVER_SCROLL_NEVER;
       }
       listItems.setOverScrollMode(mode);
     });
     
     listLayoutManager.scrollToPositionWithOffset(0, 0);
+    loadInfoTask.execute();
     
     Fun.saveSharedPref(context, "PREF_LAST_FOLDER", path.getPath());
     
@@ -891,6 +896,92 @@ public class MainActivity extends AppCompatActivity {
     return info;
   }
   
+  public AudioInfo extractAudioInfo(String filePath) {
+    AudioInfo info = new AudioInfo();
+    // info.file = file;
+    
+    try {
+      MediaExtractor mediaExtractor = new MediaExtractor();
+      mediaExtractor.setDataSource(filePath);
+
+      MediaFormat format = mediaExtractor.getTrackFormat(0);
+      long duration = format.getLong(MediaFormat.KEY_DURATION);
+      info.time = (int) (duration / 1000);
+      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+      mediaExtractor.release();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+    return info;
+  }
+  
+  
+  // -----
+  private class LoadInfoTask extends AsyncTask<Void, Integer, Void> {
+    protected void onPreExecute() {
+    }
+    
+    protected Void doInBackground(Void... params) {
+      Fun.log("Start task: " + this);
+      
+      for (int i = 0; i < fileList.size(); i++) {
+        ListItem item = fileList.get(i);
+        if (!item.isFile) continue;
+        
+        AudioInfo info = extractAudioInfo(item.path);
+        String time = Fun.formatTime(info.time / 1000, false);
+        item.time = time;
+        
+        publishProgress(i);
+        
+        if (isCancelled()) {
+          Fun.logw("Task is cancelled: " + this);
+          break;
+        }
+      }
+
+      Fun.log("End task: " + this);
+      return null;
+    }
+    
+    protected void onProgressUpdate(Integer... progress) {
+      int pos = progress[0];
+      filesAdapter.notifyItemChanged(pos);
+    }
+    
+    protected void onPostExecute(Void result) {
+      // filesAdapter.notifyDataSetChanged();
+    }
+  }
+  
+  private class LoadInfoSingleTask extends AsyncTask<Void, Void, Void> {
+    int pos;
+    
+    public LoadInfoSingleTask(int position) {
+      this.pos = position;
+    }
+    
+    protected Void doInBackground(Void... params) {
+      Fun.log("Start task: " + pos + " " + this);
+      
+      ListItem item = fileList.get(pos);
+      AudioInfo info = extractAudioInfo(item.path);
+      String time = Fun.formatTime(info.time / 1000, false);
+      item.time = time;
+
+      Fun.log("End task: " + pos + " " + this);
+      return null;
+    }
+    
+    protected void onPostExecute(Void result) {
+      filesAdapter.notifyItemChanged(pos);
+    }
+  }
+  // -----
+  
+  
   public List<AudioInfo> getAudioDataForDirectory(File[] files) {
     Fun.logd("getAudioDataForDirectory(File[])");
     if (files.length == 0) return null;
@@ -1040,8 +1131,8 @@ public class MainActivity extends AppCompatActivity {
       textPlayingStats.setText(stats);
     }
     
-    String totalTime = getTotalTimeInDirectory(files, playingDirAudioData);
-    textPlayingFolderTime.setText(totalTime);
+    // String totalTime = getTotalTimeInDirectory(files, playingDirAudioData);
+    // textPlayingFolderTime.setText(totalTime);
   }
   
   public void updatePlayingTime(int playingPos, int totalTime) {
@@ -1249,17 +1340,12 @@ public class MainActivity extends AppCompatActivity {
     boolean isFavorite;
     
     ListItem(String text, String path) {
-      this(text, path, null, false);
+      this(text, path, false);
     }
     
-    ListItem(String text, String path, String time) {
-      this(text, path, time, true);
-    }
-    
-    ListItem(String text, String path, String time, boolean isFile) {
+    ListItem(String text, String path, boolean isFile) {
       this.text = text;
       this.path = path;
-      this.time = time;
       this.isFile = isFile;
       
       if (isFile && path != null) {
@@ -1306,6 +1392,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBindViewHolder(ItemViewHolder holder, int position) {
       ListItem item = fileList.get(position);
+      if (item.isFile && item.time == null) {
+        // new LoadInfoSingleTask(position).execute();
+      }
+      
       holder.bind(item);
       if (position == selectedItemPos) {
         holder.select();
