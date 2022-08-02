@@ -67,6 +67,9 @@ import android.view.MotionEvent;
 import android.widget.HorizontalScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.view.animation.TranslateAnimation;
+import android.view.animation.Animation;
+import android.animation.AnimatorListenerAdapter;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
@@ -417,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
         }
       }
       public void onSwipeUp() {
-        hideExtraInfoPanel();
+        hideExtraInfoPanel(true);
       }
     });
   }
@@ -1098,7 +1101,6 @@ public class MainActivity extends AppCompatActivity {
     
     fillAudioInfo(info);
     extraInfoPanel.setVisibility(View.VISIBLE);
-    
     currrentExtraInfo = info;
   }
   
@@ -1162,12 +1164,37 @@ public class MainActivity extends AppCompatActivity {
       showExtraAudioInfo();
     }
     else {
+      hideExtraInfoPanel();
+    }
+  }
+  
+  private void hideExtraInfoPanel(boolean animate) {
+    if (animate) {
+      TranslateAnimation animation = new TranslateAnimation(0, 0, 0, -extraInfoPanel.getHeight());
+      animation.setDuration(200);
+      animation.setFillAfter(true);
+      
+      animation.setAnimationListener(new Animation.AnimationListener() {
+        public void onAnimationEnd(Animation animation) {
+          extraInfoPanel.setVisibility(View.GONE);
+          extraInfoPanel.clearAnimation();
+        }
+        public void onAnimationRepeat(Animation animation) {
+          
+        }
+        public void onAnimationStart(Animation animation) {
+          
+        }
+      });
+      extraInfoPanel.startAnimation(animation);
+    }
+    else {
       extraInfoPanel.setVisibility(View.GONE);
     }
   }
   
   private void hideExtraInfoPanel() {
-    extraInfoPanel.setVisibility(View.GONE);
+    hideExtraInfoPanel(false);
   }
   
   public void exitApp() {
@@ -1488,6 +1515,11 @@ public class MainActivity extends AppCompatActivity {
         if (itemMenuPanel == null) return;
         if (itemMenuPanel.getVisibility() != View.VISIBLE) {
           itemMenuPanel.setVisibility(View.VISIBLE);
+          
+          float menuWidth = Fun.dpToPx(141);
+          TranslateAnimation animation = new TranslateAnimation(menuWidth, 0, 0, 0);
+          animation.setDuration(150);
+          itemMenuPanel.startAnimation(animation);
         }
       }
       
