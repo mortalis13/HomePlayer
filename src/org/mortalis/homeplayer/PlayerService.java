@@ -84,6 +84,11 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public int onStartCommand(Intent intent, int flags, int startId) {
     Fun.logd("PlayerService.onStartCommand()");
     
+    if (intent == null) {
+      Fun.loge("intent is null");
+      return START_STICKY;
+    }
+    
     try {
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);

@@ -34,38 +34,47 @@ public class MainService {
   
   // ------ Connection
   public void updatePlayingTime(int playingPos, int totalTime) {
+    if (mainActivity == null) return;
     mainActivity.updatePlayingTime(playingPos, totalTime);
   }
   
   public void initProgress(int time) {
+    if (mainActivity == null) return;
     mainActivity.initProgress(time);
   }
   
   public void updateProgress(int time) {
+    if (mainActivity == null) return;
     mainActivity.updateProgress(time);
   }
   
   public void onPlayerStarted() {
+    if (mainActivity == null) return;
     mainActivity.onPlayerStarted();
   }
   
   public void onPlayerPaused() {
+    if (mainActivity == null) return;
     mainActivity.onPlayerPaused();
   }
   
   public void onPlayerResumed() {
+    if (mainActivity == null) return;
     mainActivity.onPlayerResumed();
   }
   
   public void onPlayerPreloaded() {
+    if (mainActivity == null) return;
     mainActivity.onPlayerPreloaded();
   }
   
   public void onPlayerStopped() {
+    if (mainActivity == null) return;
     mainActivity.onPlayerStopped();
   }
   
   public void exitApp() {
+    if (mainActivity == null) return;
     mainActivity.exitApp();
   }
   
