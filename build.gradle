@@ -5,12 +5,9 @@ apply plugin: 'com.android.application'
 
 buildscript {
   repositories {
+    gradlePluginPortal()
     google()
-    jcenter()
-    mavenLocal()
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
+    mavenCentral()
   }
   
   dependencies {
@@ -28,7 +25,7 @@ allprojects {
 
 // -- app
 android {
-  compileSdkVersion 31
+  compileSdkVersion 33
   
   defaultConfig {
     applicationId "org.mortalis.homeplayer"
@@ -38,7 +35,7 @@ android {
     versionName String.format('%d.%d', (int)(versionCode/10), versionCode%10)
     
     minSdkVersion 16
-    targetSdkVersion 31
+    targetSdkVersion 33
     
     resValue "string", "app_version", versionName
   }
