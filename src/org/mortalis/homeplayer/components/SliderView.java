@@ -20,8 +20,6 @@ import android.view.View;
 
 public class SliderView extends View {
   
-  private static final int SNAP_POS_X = (int) Fun.dpToPx(8);
-  
   private boolean sliderEnabled;
   
   private Paint canvasPaint;
@@ -36,6 +34,7 @@ public class SliderView extends View {
   private int canvasHeight;
   
   private float borderWidth;
+  private float snapPosX;
   private float leftOffset;
   private float topOffset;
   
@@ -57,6 +56,7 @@ public class SliderView extends View {
   
   private void init(Context context) {
     this.borderWidth = (float) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
+    this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
     
     this.leftOffset = this.borderWidth;
     this.topOffset = this.borderWidth;
@@ -124,8 +124,8 @@ public class SliderView extends View {
     int x = (int) event.getX();
     
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
-      if (x < SNAP_POS_X) x = 0;
-      if (x > this.canvasWidth - SNAP_POS_X) x = this.canvasWidth;
+      if (x < this.snapPosX) x = 0;
+      if (x > this.canvasWidth - this.snapPosX) x = this.canvasWidth;
       
       int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
       setProgress(_progress);
