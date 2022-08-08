@@ -93,20 +93,20 @@ public class MainActivity extends AppCompatActivity {
 
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   private static final String ROOT_DIR_TITLE = "storage";
+  private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
+  private static final File START_DIR = new File(Environment.getExternalStorageDirectory(), "_music");
   
   private int item_icon_color_default;
   private int item_icon_color_lastplayed;
   
-  private File ROOT_STORAGE = Environment.getExternalStorageDirectory();
-  private File startDir = new File(Environment.getExternalStorageDirectory(), "_music");
-  
   private Context context;
-  private LinearLayoutManager listLayoutManager;
   
   private PlayerService playerService;
+  private ServiceConnection serviceConnection;
   private boolean serviceBound;
   
   private FilesAdapter filesAdapter;
+  private LinearLayoutManager listLayoutManager;
   private List<ListItem> fileList;
   private List<AudioInfo> dirAudioData;
   private List<AudioInfo> playingDirAudioData;
@@ -115,6 +115,27 @@ public class MainActivity extends AppCompatActivity {
   private File previouslyPlayedFile;
   private int scrollPos;
   
+  private String lastFolder;
+  private String lastAudio;
+  private int lastAudioTime;
+  private Set<String> favoritesList;
+  private boolean playbackRepeat;
+  
+  private boolean playbackShuffle;
+  private List<File> shuffleList;
+  private Random randShuffle = new Random();
+  
+  private GestureDetector gestureDetector;
+  private boolean itemSwipedLeft;
+  private boolean itemSwiping;
+  
+  private AudioInfo currrentExtraInfo;
+  
+  private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
+  private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
+  private Queue<Integer> itemsQueue = new ArrayDeque<>(50);
+  
+  // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
   
@@ -158,26 +179,6 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraSize;
   private TextView textExtraPath;
   
-  private String lastFolder;
-  private String lastAudio;
-  private int lastAudioTime;
-  private Set<String> favoritesList;
-  private boolean playbackRepeat;
-  
-  private boolean playbackShuffle;
-  private List<File> shuffleList;
-  private Random randShuffle = new Random();
-  
-  private GestureDetector gestureDetector;
-  private boolean itemSwipedLeft;
-  private boolean itemSwiping;
-  
-  private AudioInfo currrentExtraInfo;
-  
-  private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
-  private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
-  private Queue<Integer> itemsQueue = new ArrayDeque<>(50);
-  
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -191,13 +192,9 @@ public class MainActivity extends AppCompatActivity {
     requestAppPermissions(context);
     Fun.createNotificationChannel(context);
     
-    bindPlayerService();
-    
     init();
     configUI();
     restoreState();
-    
-    setVolumeControlStream(AudioManager.STREAM_MUSIC);
   }
   
   @Override
@@ -262,32 +259,33 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void init() {
+    setVolumeControlStream(AudioManager.STREAM_MUSIC);
+    
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
     
-    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
+    gestureDetector = new GestureDetector(context, new ListSwipeManager());
+    
+    serviceConnection = new ServiceConnection() {
+      public void onServiceConnected(ComponentName className, IBinder service) {
+        PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
+        playerService = binder.getService();
+        serviceBound = true;
         
-        float moveDiff = e2.getX() - e1.getX();
-        int direction = moveDiff < 0 ? 0: 1;
-        float swipedRatio = Math.abs(moveDiff) / view.getWidth();
-        
-        if (direction == 0) {
-          if (!itemSwiping) {
-            listItems.requestDisallowInterceptTouchEvent(true);
-            itemSwiping = true;
-            view.setPressed(true);
-          }
-          
-          // LEFT
-          if (swipedRatio >= 0.25f) {
-            itemSwipedLeft = true;
-          }
+        if (lastAudio != null) {
+          Fun.log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
+          preloadAudio(lastAudio, lastAudioTime);
+          selectPlayingDirOrFile(lastAudio);
         }
-        return true;
       }
-    });
+
+      public void onServiceDisconnected(ComponentName arg0) {
+        playerService = null;
+        serviceBound = false;
+      }
+    };
+    
+    bindPlayerService();
   }
   
   private void configUI() {
@@ -467,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
       bShuffle.setSelected(playbackShuffle);
       playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
       
-      File dir = lastFolder == null ? startDir: new File(lastFolder);
+      File dir = lastFolder == null ? START_DIR: new File(lastFolder);
       changeDir(dir);
     }
     catch (Exception e) {
@@ -1630,26 +1628,29 @@ public class MainActivity extends AppCompatActivity {
   }
   
   
-  private ServiceConnection serviceConnection = new ServiceConnection() {
-    @Override
-    public void onServiceConnected(ComponentName className, IBinder service) {
-      PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
-      playerService = binder.getService();
-      serviceBound = true;
+  private class ListSwipeManager extends GestureDetector.SimpleOnGestureListener {
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+      View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
       
-      if (lastAudio != null) {
-        Fun.log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
-        preloadAudio(lastAudio, lastAudioTime);
-        selectPlayingDirOrFile(lastAudio);
+      float moveDiff = e2.getX() - e1.getX();
+      int direction = moveDiff < 0 ? 0: 1;
+      float swipedRatio = Math.abs(moveDiff) / view.getWidth();
+      
+      if (direction == 0) {
+        if (!itemSwiping) {
+          listItems.requestDisallowInterceptTouchEvent(true);
+          itemSwiping = true;
+          view.setPressed(true);
+        }
+        
+        // LEFT
+        if (swipedRatio >= 0.25f) {
+          itemSwipedLeft = true;
+        }
       }
+      return true;
     }
-
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-      playerService = null;
-      serviceBound = false;
-    }
-  };
+  }
   
   
   // --------------------
