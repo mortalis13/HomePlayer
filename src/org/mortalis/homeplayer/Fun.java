@@ -234,14 +234,11 @@ public class Fun {
           break;
         }
       }
-      
-      // log_file(msg);
     }
     catch (Exception e) {
       System.out.println(Vars.APP_LOG_TAG + " :: " + msg);
     }
   }
-  
   
   public static void log(String format, Object... values) {
     try {
@@ -292,33 +289,20 @@ public class Fun {
   
   private static String getCallerLogInfo() {
     String result = "";
-    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     
-    if (stackTrace != null && stackTrace.length > 1){
-      boolean currentFound = false;
-      
-      int len = stackTrace.length;
-      for (int i = 0; i < len; i++) {
-        StackTraceElement stackElement = stackTrace[i];
-        String className = stackElement.getClassName();
-        
-        if (className != null && className.equals(Fun.class.getName())) {
-          currentFound = true;
-        }
-        
-        if (currentFound && className != null && !className.equals(Fun.class.getName())) {
-          String resultClass = stackElement.getClassName();
-          String method = stackElement.getMethodName();
-          int line = stackElement.getLineNumber();
-          result = "[" + resultClass + ":" + method + "():" + line + "]";
-          break;
-        }
-      }
-    }
+    if (stackTrace == null || stackTrace.length == 0) return result;
+    String callingClassName = stackTrace[0].getClassName();
+    
+    var callerElement = Arrays.stream(stackTrace)
+      .filter(e -> !e.getClassName().equals(callingClassName))
+      .findFirst()
+      .get();
+    result = String.format("[%s:%s():%d]", callerElement.getClassName(), callerElement.getMethodName(), callerElement.getLineNumber());
     
     return result;
   }
-  
+
   public static void createNotificationChannel(Context context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       String id = Vars.NOTIFICATIONS_CHANNEL_ID;
