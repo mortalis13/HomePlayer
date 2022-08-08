@@ -1,5 +1,7 @@
 package org.mortalis.homeplayer;
 
+import java.util.Optional;
+
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -12,15 +14,13 @@ public class MainService {
   
   private static MainService instance = new MainService();
   
-  private MainActivity mainActivity;
+  private Optional<MainActivity> mainActivity;
   
-  public static Context context;
   public static int notif_current_id;
   
   
   public static void init(MainActivity mainActivity) {
-    instance.mainActivity = mainActivity;
-    instance.context = mainActivity;
+    instance.mainActivity = Optional.ofNullable(mainActivity);
   }
   
   public static void release() {
@@ -34,48 +34,48 @@ public class MainService {
   
   // ------ Connection
   public void updatePlayingTime(int playingPos, int totalTime) {
-    if (mainActivity == null) return;
-    mainActivity.updatePlayingTime(playingPos, totalTime);
+    mainActivity.ifPresent(activity ->
+      activity.updatePlayingTime(playingPos, totalTime));
   }
   
   public void initProgress(int time) {
-    if (mainActivity == null) return;
-    mainActivity.initProgress(time);
+    mainActivity.ifPresent(activity ->
+      activity.initProgress(time));
   }
   
   public void updateProgress(int time) {
-    if (mainActivity == null) return;
-    mainActivity.updateProgress(time);
+    mainActivity.ifPresent(activity ->
+      activity.updateProgress(time));
   }
   
   public void onPlayerStarted() {
-    if (mainActivity == null) return;
-    mainActivity.onPlayerStarted();
+    mainActivity.ifPresent(activity ->
+      activity.onPlayerStarted());
   }
   
   public void onPlayerPaused() {
-    if (mainActivity == null) return;
-    mainActivity.onPlayerPaused();
+    mainActivity.ifPresent(activity ->
+      activity.onPlayerPaused());
   }
   
   public void onPlayerResumed() {
-    if (mainActivity == null) return;
-    mainActivity.onPlayerResumed();
+    mainActivity.ifPresent(activity ->
+      activity.onPlayerResumed());
   }
   
   public void onPlayerPreloaded() {
-    if (mainActivity == null) return;
-    mainActivity.onPlayerPreloaded();
+    mainActivity.ifPresent(activity ->
+      activity.onPlayerPreloaded());
   }
   
   public void onPlayerStopped() {
-    if (mainActivity == null) return;
-    mainActivity.onPlayerStopped();
+    mainActivity.ifPresent(activity ->
+      activity.onPlayerStopped());
   }
   
   public void exitApp() {
-    if (mainActivity == null) return;
-    mainActivity.exitApp();
+    mainActivity.ifPresent(activity ->
+      activity.exitApp());
   }
   
 }

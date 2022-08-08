@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Date;
@@ -51,10 +52,7 @@ public class Fun {
   };
   
   public static FilenameFilter fileFilter = (dirName, fileName) -> {
-    for (String ext: Vars.AUDIO_EXTS) {
-      if (fileName.toLowerCase().endsWith(ext)) return true;
-    }
-    return false;
+    return Arrays.stream(Vars.AUDIO_EXTS).anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
   };
   
   public static Comparator<File> nocaseComp = (item1, item2) -> {

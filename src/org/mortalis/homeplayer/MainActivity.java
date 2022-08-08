@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
   
   private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
   private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
-  private Queue<Integer> itemsQueue = new ArrayDeque<Integer>(50);
+  private Queue<Integer> itemsQueue = new ArrayDeque<>(50);
   
 
   @Override
@@ -913,7 +913,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private List<AudioInfo> copyAudioInfo(List<AudioInfo> data) {
-    List<AudioInfo> result = new ArrayList<>();
+    var result = new ArrayList<AudioInfo>();
     for (AudioInfo info: data) {
       result.add(info);
     }
@@ -1533,7 +1533,7 @@ public class MainActivity extends AppCompatActivity {
     boolean updatePlayingDir;
     
     public LoadCurrentDirTimeTask(List<ListItem> items) {
-      this.items = new ArrayList<>(items);
+      this.items = List.copyOf(items);
     }
     
     public void copyToPlayingDirTime() {
