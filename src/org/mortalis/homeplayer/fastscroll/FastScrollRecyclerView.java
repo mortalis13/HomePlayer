@@ -127,13 +127,6 @@ public class FastScrollRecyclerView extends RecyclerView implements FastScrollDe
     return this;
   }
 
-  /**
-   * @deprecated use {@link #getFastScrollDelegate()} instead
-   */
-  public FastScrollDelegate getDelegate() {
-    return getFastScrollDelegate();
-  }
-
   @Override
   public FastScrollDelegate getFastScrollDelegate() {
     return mFastScrollDelegate;

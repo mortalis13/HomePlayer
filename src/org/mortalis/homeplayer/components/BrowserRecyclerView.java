@@ -2,9 +2,12 @@ package org.mortalis.homeplayer.components;
 
 import org.mortalis.homeplayer.fastscroll.FastScrollDelegate;
 import org.mortalis.homeplayer.fastscroll.FastScrollRecyclerView;
+import org.mortalis.homeplayer.Fun;
+import org.mortalis.homeplayer.R;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import androidx.core.content.ContextCompat;
 
 
 public class BrowserRecyclerView extends FastScrollRecyclerView {
@@ -19,19 +22,15 @@ public class BrowserRecyclerView extends FastScrollRecyclerView {
 
   public BrowserRecyclerView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
-    init(context);
   }
-  
-  private void init(Context context) {
-    FastScrollDelegate.FASTSCROLLER_FADE_TIMEOUT = 3000;
-  }
-  
   
   @Override
   public FastScrollDelegate createFastScrollDelegate(Context context) {
     FastScrollDelegate.Builder builder = new FastScrollDelegate.Builder(this);
-    builder.width(8).height(100);
-    builder.thumbPressedColor(0x88356e86);
+    var w = getResources().getDimension(R.dimen.scrollbar_width);
+    var h = getResources().getDimension(R.dimen.scrollbar_height);
+    builder.width(w).height(h);
+    builder.thumbPressedColor(ContextCompat.getColor(context, R.color.scrollbar_pressed_color));
     return builder.build();
   }
   

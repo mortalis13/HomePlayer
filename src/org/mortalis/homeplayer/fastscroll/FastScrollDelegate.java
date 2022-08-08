@@ -62,7 +62,7 @@ public class FastScrollDelegate {
   /** Duration of fade-in animation. */
   public static int FASTSCROLLER_DURATION_FADE_IN = 150;
   /** Inactivity timeout before fading controls. */
-  public static long FASTSCROLLER_FADE_TIMEOUT = 1500;
+  public static long FASTSCROLLER_FADE_TIMEOUT = 3000;
 
   private static final int[] DRAWABLE_STATE_PRESSED = new int[] { android.R.attr.state_pressed };
   private static final int[] DRAWABLE_STATE_DEFAULT = new int[] {};
@@ -549,13 +549,13 @@ public class FastScrollDelegate {
       height = dp2px(FASTSCROLLER_MIN_HEIGHT_DP);
     }
 
-    public Builder width(float widthDp) {
-      width = dp2px(widthDp);
+    public Builder width(float w) {
+      this.width = (int) w;
       return this;
     }
 
-    public Builder height(float heightDp) {
-      height = dp2px(heightDp);
+    public Builder height(float h) {
+      this.height = (int) h;
       return this;
     }
 
