@@ -668,17 +668,15 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void changeToParentDir() {
-    File parent = currentPath.getParentFile();
     if (currentPath.equals(ROOT_STORAGE)) {
       Fun.log("In the root folder, cannot go to parent");
       return;
     }
     
-    File prevPath = new File(currentPath.getPath());
-    changeDir(parent);
+    String prevPath = currentPath.getPath();
+    changeDir(currentPath.getParentFile());
     
-    int scrollPos = filesAdapter.getItemPosition(prevPath.getPath());
-    scrollPos = scrollPos == -1 ? 0: scrollPos;
+    int scrollPos = filesAdapter.getItemPosition(prevPath);
     listLayoutManager.scrollToPosition(scrollPos);
     
     hideExtraPanels();
@@ -686,11 +684,10 @@ public class MainActivity extends AppCompatActivity {
   
   private void changeToPlayingDir() {
     Fun.logd("changeToPlayingDir()");
-    
-    if (playerService == null || playerService.getAudioPath() == null) return;
+    if (playerService == null || !playerService.hasAudio()) return;
     File currentFile = new File(playerService.getAudioPath());
     
-    if (currentFile.getParent().equals(currentPath.getPath())) {
+    if (currentFile.getParentFile().equals(currentPath)) {
       int scrollPos = filesAdapter.getItemPosition(currentFile.getPath());
       if (scrollPos != -1) {
         listLayoutManager.scrollToPosition(scrollPos);
@@ -708,21 +705,15 @@ public class MainActivity extends AppCompatActivity {
   private void markLastPlayedFile(File dir) {
     String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
     int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
-    if (lastFile != null) {
-      Fun.log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFile, lastTime));
-      filesAdapter.markLastPlayedItem(lastFile);
-    }
+
+    Fun.log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFile, lastTime));
+    filesAdapter.markLastPlayedItem(lastFile);
   }
   
   private void markFavorites() {
-    for (ListItem item: fileList) {
-      for (String favPath: favoritesList) {
-        if (favPath.equals(item.path)) {
-          filesAdapter.markAsFavorite(favPath);
-          break;
-        }
-      }
-    }
+    fileList.stream()
+      .filter(item -> favoritesList.contains(item.path))
+      .forEach(item -> filesAdapter.markAsFavorite(item.path));
   }
   
   
@@ -1288,9 +1279,12 @@ public class MainActivity extends AppCompatActivity {
     }
     
     public void markLastPlayedItem(String filePath) {
+      if (filePath == null) return;
+      
       for (int i = 0; i < fileList.size(); i++) {
         ListItem item = fileList.get(i);
         if (!item.isFile) continue;
+      
         if (item.path.equals(filePath)) {
           item.isLastPlayed = true;
           notifyItemChanged(i);
