@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileDescriptor;
 import java.io.FileDescriptor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -751,15 +748,15 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Audio Utils ------------------------------
-  public File getPrevFile(File file) {
-    return getNearestFile(file, false);
+  private File getPrevFile(File file) {
+    return getPrevNextFile(file, false);
   }
   
-  public File getNextFile(File file) {
-    return getNearestFile(file, true);
+  private File getNextFile(File file) {
+    return getPrevNextFile(file, true);
   }
   
-  public File getNearestFile(File file, boolean next) {
+  private File getPrevNextFile(File file, boolean next) {
     File parent = file.getParentFile();
     if (!parent.exists()) {
       Fun.loge("The parent does not exist for file " + file);
@@ -778,6 +775,7 @@ public class MainActivity extends AppCompatActivity {
         else {
           file = files[i == 0 ? len-1: i-1];
         }
+        
         return file;
       }
     }
@@ -813,19 +811,16 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private boolean isPlayingLastFile() {
-    if (playerService == null || playerService.getAudioPath() == null) return true;
-
+    if (playerService == null || !playerService.hasAudio()) return true;
+    
     File currentFile = new File(playerService.getAudioPath());
     File[] files = currentFile.getParentFile().listFiles(Fun.fileFilter);
     Arrays.sort(files, Fun.nocaseComp);
     
-    for (int i = 0; i < files.length; i++) {
-      if (files[i].equals(currentFile)) {
-        return i == files.length - 1;
-      }
-    }
+    int len = files.length;
+    if (len == 0) return true;
     
-    return false;
+    return currentFile.equals(files[len-1]);
   }
   
   public int extractAudioTime(String filePath) {
@@ -845,18 +840,6 @@ public class MainActivity extends AppCompatActivity {
     }
     
     return time;
-  }
-  
-  private boolean doesDirBelongToAudioInfo(File dir, List<AudioInfo> data) {
-    return data.get(0).file.getParentFile().equals(dir);
-  }
-  
-  private List<AudioInfo> copyAudioInfo(List<AudioInfo> data) {
-    var result = new ArrayList<AudioInfo>();
-    for (AudioInfo info: data) {
-      result.add(info);
-    }
-    return result;
   }
   
   private void generateShuffleList(File audioFile) {
@@ -879,19 +862,8 @@ public class MainActivity extends AppCompatActivity {
     if (!playbackShuffle) return;
     Fun.logd("removeFromShuffleList(): " + audioFile);
     if (shuffleList == null) return;
-    
-    int removeId = -1;
-    
-    for (int i = 0; i < shuffleList.size(); i++) {
-      if (shuffleList.get(i).equals(audioFile)) {
-        removeId = i;
-        break;
-      }
-    }
-    
-    if (removeId != -1) {
-      shuffleList.remove(removeId);
-    }
+
+    shuffleList.remove(audioFile);
   }
   
   private void updateShuffleList(File audioFile) {
@@ -1043,20 +1015,6 @@ public class MainActivity extends AppCompatActivity {
     if (extraInfoPanel.getVisibility() == View.VISIBLE)  extraInfoPanel.setVisibility(View.GONE);
   }
   
-  private void cleanFavorites() {
-    // Removes files that don't exist
-    if (favoritesList == null) return;
-    String[] originalList = favoritesList.toArray(new String[0]);
-    
-    for (String favPath: originalList) {
-      if (!new File(favPath).exists()) {
-        favoritesList.remove(favPath);
-      }
-    }
-    
-    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
-  }
-  
   private void toggleExtraControlPanel() {
     int visibility = extraControlPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
     extraControlPanel.setVisibility(visibility);
@@ -1082,12 +1040,8 @@ public class MainActivity extends AppCompatActivity {
           extraInfoPanel.setVisibility(View.GONE);
           extraInfoPanel.clearAnimation();
         }
-        public void onAnimationRepeat(Animation animation) {
-          
-        }
-        public void onAnimationStart(Animation animation) {
-          
-        }
+        public void onAnimationRepeat(Animation animation) {}
+        public void onAnimationStart(Animation animation) {}
       });
       extraInfoPanel.startAnimation(animation);
     }
@@ -1109,24 +1063,37 @@ public class MainActivity extends AppCompatActivity {
     try {
       hideExtraPanels();
       
-      File chosenFile = new File(currentPath, item.text);
-      
-      if (chosenFile.isDirectory()) {
-        changeDir(chosenFile);
+      File clickedFile = new File(item.path);
+      if (clickedFile.isDirectory()) {
+        changeDir(clickedFile);
       }
       else {
         int time = 0;
         if (item.isLastPlayed && !item.path.equals(playerService.getAudioPath())) {
-          int lastTime = Fun.getSharedPrefInt(this, "TIME_" + new File(item.path).getParent());
+          int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
           if (lastTime != -1) time = lastTime;
         }
-        playAudio(item.path, time, true);
         
+        playAudio(item.path, time, true);
       }
     }
     catch (Exception e) {
       e.printStackTrace();
     }
+  }
+  
+  private void cleanFavorites() {
+    // Removes files that don't exist
+    if (favoritesList == null) return;
+    var listCopy = List.copyOf(favoritesList);
+    
+    for (String favPath: listCopy) {
+      if (!new File(favPath).exists()) {
+        favoritesList.remove(favPath);
+      }
+    }
+    
+    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
   private void updateItemFavorite(String filePath, boolean isFavorite) {
@@ -1149,50 +1116,13 @@ public class MainActivity extends AppCompatActivity {
   
 
   // ---------------------- Classes ----------------------
-  private class ListItem {
-    int icon;
-    String text;
-    String path;
-    String time;
-    
-    boolean isFile;
-    boolean isLastPlayed;
-    boolean isFavorite;
-    
-    ListItem(String text, String path) {
-      this(text, path, false);
-    }
-    
-    ListItem(String text, String path, boolean isFile) {
-      this.text = text;
-      this.path = path;
-      this.isFile = isFile;
-      
-      if (isFile && path != null) {
-        icon = getFileIconByType(path);
-      }
-      else if (!isFile) {
-        icon = R.drawable.round_folder_black_36;
-      }
-    }
-    
-    private int getFileIconByType(String path) {
-      return R.drawable.round_audio_file_black_36;
-      // return R.drawable.round_speaker_black_36;
-      // return R.drawable.round_album_black_36;
-      // return R.drawable.round_volume_up_black_36;
-      // return R.drawable.round_audiotrack_black_36;
-    }
-  }
-  
-  
   private class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
-    public List<ListItem> fileList;
+    private List<ListItem> fileList;
     
-    int lastItemSelectedPos = -1;
-    int selectedItemPos = -1;
+    private int lastItemSelectedPos = -1;
+    private int selectedItemPos = -1;
     
-    int holderWithMenu = -1;
+    private int holderWithMenu = -1;
     
     public FilesAdapter(List<ListItem> fileList) {
       this.fileList = fileList;
@@ -1211,7 +1141,7 @@ public class MainActivity extends AppCompatActivity {
     
     @Override
     public void onBindViewHolder(ItemViewHolder holder, int position) {
-      ListItem item = fileList.get(position);
+      ListItem item = this.fileList.get(position);
       
       if (item.isFile && item.time == null) {
         if (!itemsQueue.contains(position)) {
@@ -1233,12 +1163,12 @@ public class MainActivity extends AppCompatActivity {
     
     @Override
     public int getItemCount() {
-      return fileList.size();
+      return this.fileList.size();
     }
     
     private int getDirsCount() {
       int result = 0;
-      for (ListItem item: fileList) if (!item.isFile) result ++; else break;
+      for (ListItem item: this.fileList) if (!item.isFile) result ++; else break;
       return result;
     }
     
@@ -1281,8 +1211,8 @@ public class MainActivity extends AppCompatActivity {
     public void markLastPlayedItem(String filePath) {
       if (filePath == null) return;
       
-      for (int i = 0; i < fileList.size(); i++) {
-        ListItem item = fileList.get(i);
+      for (int i = 0; i < this.fileList.size(); i++) {
+        ListItem item = this.fileList.get(i);
         if (!item.isFile) continue;
       
         if (item.path.equals(filePath)) {
@@ -1297,8 +1227,8 @@ public class MainActivity extends AppCompatActivity {
     }
     
     public void markAsFavorite(String filePath) {
-      for (int i = 0; i < fileList.size(); i++) {
-        ListItem item = fileList.get(i);
+      for (int i = 0; i < this.fileList.size(); i++) {
+        ListItem item = this.fileList.get(i);
         if (!item.isFile) continue;
         if (item.path.equals(filePath)) {
           item.isFavorite = true;
@@ -1308,28 +1238,28 @@ public class MainActivity extends AppCompatActivity {
     }
     
     public int getItemPosition(String path) {
-      for (int i = 0; i < fileList.size(); i++) {
-        ListItem item = fileList.get(i);
+      for (int i = 0; i < this.fileList.size(); i++) {
+        ListItem item = this.fileList.get(i);
         if (item.path.equals(path)) return i;
       }
       return -1;
     }
     
-    private void hideActiveMenu(int currentPos) {
-      if (holderWithMenu != -1) {
-        int pos = holderWithMenu;
-        holderWithMenu = -1;
+    // private void hideActiveMenu(int currentPos) {
+    //   if (holderWithMenu != -1) {
+    //     int pos = holderWithMenu;
+    //     holderWithMenu = -1;
         
-        ItemViewHolder viewHolder = (ItemViewHolder) listItems.findViewHolderForAdapterPosition(pos);
-        if (viewHolder != null) {
-          viewHolder.hideItemMenu();
-        }
+    //     ItemViewHolder viewHolder = (ItemViewHolder) listItems.findViewHolderForAdapterPosition(pos);
+    //     if (viewHolder != null) {
+    //       viewHolder.hideItemMenu();
+    //     }
         
-        if (pos != currentPos) {
-          notifyItemChanged(pos);
-        }
-      }
-    }
+    //     if (pos != currentPos) {
+    //       notifyItemChanged(pos);
+    //     }
+    //   }
+    // }
     
     
     public class ItemViewHolder extends RecyclerView.ViewHolder {
@@ -1409,7 +1339,7 @@ public class MainActivity extends AppCompatActivity {
         
         if (action == MotionEvent.ACTION_DOWN) {
           view.setPressed(true);
-          hideActiveMenu(getBindingAdapterPosition());
+          hideActiveMenu();
         }
         else if (action == MotionEvent.ACTION_CANCEL) {
           view.setPressed(false);
@@ -1432,6 +1362,20 @@ public class MainActivity extends AppCompatActivity {
         }
         
         return true;
+      }
+      
+      private void hideActiveMenu() {
+        int currentPos = getBindingAdapterPosition();
+        
+        if (holderWithMenu != -1) {
+          int pos = holderWithMenu;
+          holderWithMenu = -1;
+          hideItemMenu();
+          
+          if (pos != currentPos) {
+            notifyItemChanged(pos);
+          }
+        }
       }
       
       public void select() {
