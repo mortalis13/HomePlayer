@@ -10,13 +10,14 @@ import java.util.HashSet;
 import java.util.Date;
 import java.util.Random;
 import java.io.FileOutputStream;
-import android.app.Notification;
+import java.util.stream.Stream;
 import java.util.Comparator;
 import java.io.FilenameFilter;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;

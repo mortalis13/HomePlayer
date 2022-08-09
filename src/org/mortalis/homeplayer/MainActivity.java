@@ -3,6 +3,10 @@ package org.mortalis.homeplayer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileDescriptor;
+import java.io.FileDescriptor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -11,6 +15,7 @@ import java.util.Set;
 import java.util.Random;
 import java.util.Queue;
 import java.util.ArrayDeque;
+import java.util.stream.Stream;
 
 import android.os.Environment;
 import android.net.Uri;
@@ -275,7 +280,6 @@ public class MainActivity extends AppCompatActivity {
         if (lastAudio != null) {
           Fun.log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
           preloadAudio(lastAudio, lastAudioTime);
-          selectPlayingDirOrFile(lastAudio);
         }
       }
 
@@ -543,10 +547,13 @@ public class MainActivity extends AppCompatActivity {
     
     updateShuffleList(playingFile);
     
-    String currentAudioPath = playerService.getAudioPath();
-    if (currentAudioPath != null && !new File(filePath).getParent().equals(new File(currentAudioPath).getParent())) {
-      Fun.saveSharedPref(context, "TIME_" + new File(currentAudioPath).getParent(), lastAudioTime);
-      Fun.log(String.format("Saved %d time to TIME_%s", lastAudioTime, new File(currentAudioPath).getParent()));
+    if (playerService.hasAudio()) {
+      var playingParent = new File(playerService.getAudioPath()).getParent();
+      var isSameDirectory = playingFile.getParent().equals(playingParent);
+      if (!isSameDirectory) {
+        Fun.saveSharedPref(context, "TIME_" + playingParent, lastAudioTime);
+        Fun.log(String.format("Saved %d time to TIME_%s", lastAudioTime, playingParent));
+      }
     }
     
     Intent playerIntent = new Intent(this, PlayerService.class);
@@ -580,7 +587,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void playNextFile(boolean startPlayback) {
     Fun.logd("playNextFile()");
-    if (playerService == null || playerService.getAudioPath() == null) return;
+    if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
     File file = null;
@@ -593,7 +600,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     if (file != null) {
-      Fun.log("Next file: " + file.toString());
+      Fun.log("Next file: " + file);
       playAudio(file.getPath(), startPlayback);
     }
     else {
@@ -603,10 +610,11 @@ public class MainActivity extends AppCompatActivity {
   
   private void playPrevFile(boolean startPlayback) {
     Fun.logd("playPrevFile()");
-    if (playerService == null || playerService.getAudioPath() == null) return;
+    if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
     File file = getPrevFile(currentFile);
+    
     if (file != null) {
       Fun.log("Previous file: " + file.toString());
       playAudio(file.getPath(), startPlayback);
@@ -622,30 +630,21 @@ public class MainActivity extends AppCompatActivity {
     Fun.logd("changeDir(): " + path);
     if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.cancel(true);
     
-    if (!path.exists()) path = ROOT_STORAGE;
-    currentPath = path;
-    
     fileList.clear();
     itemsQueue.clear();
     
-    File[] dirs = path.listFiles(Fun.dirFilter);
-    if (dirs == null) dirs = new File[0];
-    Arrays.sort(dirs, Fun.nocaseComp);
+    if (!path.exists()) path = ROOT_STORAGE;
+    currentPath = path;
     
-    for (File dir: dirs) {
-      fileList.add(new ListItem(dir.getName(), dir.getAbsolutePath(), false));
-    }
+    File[] dirs = path.listFiles(Fun.dirFilter);
+    Stream.of(dirs).sorted(Fun.nocaseComp)
+      .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), false)));
     
     File[] files = path.listFiles(Fun.fileFilter);
-    if (files == null) files = new File[0];
-    Arrays.sort(files, Fun.nocaseComp);
+    Stream.of(files).sorted(Fun.nocaseComp)
+      .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true)));
     
-    for (File file: files) {
-      fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true));
-    }
-    
-    String title = currentPath.getName();
-    if (currentPath.equals(ROOT_STORAGE)) title = ROOT_DIR_TITLE;
+    String title = currentPath.equals(ROOT_STORAGE) ? ROOT_DIR_TITLE: currentPath.getName();
     activeTitle.setText(title);
     
     titleScroller.fullScroll(View.FOCUS_LEFT);
@@ -656,24 +655,16 @@ public class MainActivity extends AppCompatActivity {
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     
-    listItems.post(() -> {
-      int lastPos = listLayoutManager.findLastCompletelyVisibleItemPosition();
-      int mode = View.OVER_SCROLL_IF_CONTENT_SCROLLS;
-      if (lastPos == filesAdapter.getItemCount() - 1) {
-        mode = View.OVER_SCROLL_NEVER;
-      }
-      listItems.setOverScrollMode(mode);
-    });
-    
+    updateListOverscroll();
     listLayoutManager.scrollToPositionWithOffset(0, 0);
     
     Fun.saveSharedPref(context, "PREF_LAST_FOLDER", path.getPath());
     
-    selectPlayingDirOrFile(files, dirs);
+    selectPlayingDirOrFile();
     resetCurrentDirTime();
 
     markLastPlayedFile(currentPath);
-    markFavorites(files);
+    markFavorites();
   }
   
   private void changeToParentDir() {
@@ -723,10 +714,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void markFavorites(File[] files) {
-    for (File file: files) {
+  private void markFavorites() {
+    for (ListItem item: fileList) {
       for (String favPath: favoritesList) {
-        if (favPath.equals(file.getPath())) {
+        if (favPath.equals(item.path)) {
           filesAdapter.markAsFavorite(favPath);
           break;
         }
@@ -817,58 +808,17 @@ public class MainActivity extends AppCompatActivity {
     return file;
   }
   
-  private void selectPlayingDirOrFile(String filePath) {
-    if (filePath == null) return;
-    
-    File currentFile = new File(filePath);
-    if (!currentFile.getPath().startsWith(currentPath.getPath())) return;
-    
-    File[] dirs = currentPath.listFiles(Fun.dirFilter);
-    if (dirs == null) return;
-    Arrays.sort(dirs, Fun.nocaseComp);
-    
-    int playingItemPos = getCurrentPlayingItemIndex(currentFile, dirs);
+  private void selectPlayingDirOrFile() {
+    if (playerService == null || !playerService.hasAudio()) return;
+    int playingItemPos = filesAdapter.getPositionForSubpath(playerService.getAudioPath());
     
     if (playingItemPos != -1) {
-      Fun.log("Selecting playing folder or file: " + dirs[playingItemPos]);
-      boolean isFile = false;
-      filesAdapter.selectItem(playingItemPos, isFile);
+      Fun.log("Selecting playing folder or file: " + fileList.get(playingItemPos));
+      filesAdapter.selectItem(playingItemPos);
     }
     else {
       Fun.loge("Playing file or folder position is -1");
     }
-  }
-  
-  private void selectPlayingDirOrFile(File[] files, File[] dirs) {
-    if (playerService == null || playerService.getAudioPath() == null) return;
-    
-    File currentFile = new File(playerService.getAudioPath());
-    if (!currentFile.getPath().startsWith(currentPath.getPath())) return;
-    
-    File[] items = currentPath.equals(currentFile.getParentFile()) ? files: dirs;
-    if (items == null) return;
-    
-    int playingItemPos = getCurrentPlayingItemIndex(currentFile, items);
-    
-    if (playingItemPos != -1) {
-      Fun.log("Selecting playing folder or file: " + items[playingItemPos]);
-      boolean isFile = items == files;
-      filesAdapter.selectItem(playingItemPos, isFile);
-    }
-    else {
-      Fun.loge("Playing file or folder position is -1");
-    }
-  }
-  
-  private int getCurrentPlayingItemIndex(File file, File[] items) {
-    if (file == null) return -1;
-    
-    for (int i = 0; i < items.length; i++) {
-      if (items[i].equals(file)) {
-        return i;
-      }
-    }
-    return getCurrentPlayingItemIndex(file.getParentFile(), items);
   }
   
   private boolean isPlayingLastFile() {
@@ -974,13 +924,18 @@ public class MainActivity extends AppCompatActivity {
     File[] files = playingFile.getParentFile().listFiles(Fun.fileFilter);
     Arrays.sort(files, Fun.nocaseComp);
     
-    // Search for playing file in its folder only
-    selectPlayingDirOrFile(files, null);
-    
-    int currentFilePos = getCurrentPlayingItemIndex(playingFile, files);
-    if (currentFilePos != -1) {
-      String stats = String.format("%d/%d", ++currentFilePos, files.length);
+    int playingItemPos = Arrays.binarySearch(files, playingFile);
+
+    if (playingItemPos != -1) {
+      String stats = String.format("%d/%d", playingItemPos + 1, files.length);
       textPlayingStats.setText(stats);
+    }
+    
+    if (playingFile.getParentFile().equals(currentPath)) {
+      filesAdapter.selectItem(playingItemPos);
+    }
+    else {
+      selectPlayingDirOrFile();
     }
     
     loadPlayingDirTime(files);
@@ -1193,6 +1148,14 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
+  private void updateListOverscroll() {
+    listItems.post(() -> {
+      int lastPos = listLayoutManager.findLastCompletelyVisibleItemPosition();
+      int mode = (lastPos == filesAdapter.getItemCount() - 1) ? View.OVER_SCROLL_NEVER: View.OVER_SCROLL_IF_CONTENT_SCROLLS;
+      listItems.setOverScrollMode(mode);
+    });
+  }
+  
 
   // ---------------------- Classes ----------------------
   private class ListItem {
@@ -1293,9 +1256,25 @@ public class MainActivity extends AppCompatActivity {
       selectedItemPos = -1;
     }
     
-    public void selectItem(int itemPos, boolean isFile) {
-      if (isFile) itemPos += getDirsCount();
+    public int getPositionForSubpath(String filePath) {
+      // Finds position of the file in the current list, if the curretn directory path is a subpath of the file
+      if (filePath == null) return -1;
+      int size = this.fileList.size();
+      if (size == 0) return -1;
       
+      // Check if current directory is not a subpath of the requested file
+      String listParent = new File(this.fileList.get(0).path).getParent();
+      if (listParent != null && !filePath.startsWith(listParent)) return -1;
+      
+      for (int i = 0; i < size; i++) {
+        if (this.fileList.get(i).path.equals(filePath)) {
+          return i;
+        }
+      }
+      return getPositionForSubpath(new File(filePath).getParent());
+    }
+    
+    public void selectItem(int itemPos) {
       selectedItemPos = itemPos;
       if (lastItemSelectedPos == -1) {
         lastItemSelectedPos = selectedItemPos;
