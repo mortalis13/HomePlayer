@@ -69,7 +69,7 @@ public class Fun {
   
   
   public static boolean fileExists(String filePath) {
-    return new File(filePath).exists();
+    return filePath != null && new File(filePath).exists();
   }
   
   public static String getParentFolder(String filePath) {

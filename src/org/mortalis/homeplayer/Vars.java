@@ -2,13 +2,6 @@ package org.mortalis.homeplayer;
 
 public class Vars {
   
-  public static boolean DEBUG_MODE;
-  // public static boolean DEBUG_MODE = true;
-  
-  public static int SNOOZE_TIME_DEBUG = 30;
-  
-  // -------------------
-  
   public enum LogLevel {VERBOSE, DEBUG, INFO, WARN, ERROR};
   public static final LogLevel APP_LOG_LEVEL = LogLevel.DEBUG;
   
@@ -20,7 +13,7 @@ public class Vars {
   
   public static final int APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE = 101;
   
-  public static final String EXTRA_AUDIO_PATH = "audio_path";
+  public static final String EXTRA_AUDIO_PATH = "extra_audio_path";
   public static final String EXTRA_AUDIO_TIME = "extra_audio_time";
   public static final String EXTRA_START_PLAYBACK = "extra_start_playback";
   public static final String EXTRA_PLAYBACK_REPEAT = "extra_playback_repeat";

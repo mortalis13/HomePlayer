@@ -98,7 +98,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       if (mediaPlayer != null) mediaPlayer.release();
       mediaPlayer = new MediaPlayer();
       mediaPlayer.setAudioAttributes(playbackAttributes);
-      mediaPlayer.setLooping(repeat);
+      this.setRepeat(repeat);
       
       mediaPlayer.setOnPreparedListener(this);
       mediaPlayer.setOnCompletionListener(this);
@@ -198,15 +198,14 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
     };
   }
-  // -----------------------------
-  
-  
+
+
+  // ----------------------- Actions
   private void preload() {
     sendUpdatePlayingTime();
     sendInitProgress();
     sendUpdateProgress();
   }
-  
   
   private void play() {
     boolean audioFocusGranted = requestAudioFocus();
@@ -272,7 +271,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     Fun.logd("startAudio()");
     
     try {
-      if (audioPath != null && Fun.fileExists(audioPath)) {
+      if (Fun.fileExists(audioPath)) {
         mediaPlayer.setDataSource(audioPath);
         mediaPlayer.prepareAsync();
         playerLoaded = true;
@@ -483,8 +482,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> MediaPlayer.OnErrorListener
   @Override
   public boolean onError(MediaPlayer player, int what, int extra) {
-    Fun.logd("MediaPlayer.onError()");
-    Fun.loge("MediaPlayer Error: " + what + "; " + extra);
+    Fun.logd("MediaPlayer.onError(): " + what + "; " + extra);
     return true;
   }
   
@@ -524,7 +522,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private class HeadphonesUnpluggedReceiver extends BroadcastReceiver {
-    @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
         Fun.log("Headphones unplugged");
