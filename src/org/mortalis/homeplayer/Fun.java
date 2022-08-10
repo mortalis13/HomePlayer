@@ -134,7 +134,7 @@ public class Fun {
   public static void saveSharedPref(Context context, String key, String value) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    var editor = sharedPreferences.edit();
     editor.putString(key, value);
     editor.commit();
   }
@@ -142,7 +142,7 @@ public class Fun {
   public static void saveSharedPref(Context context, String key, long value) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    var editor = sharedPreferences.edit();
     editor.putLong(key, value);
     editor.commit();
   }
@@ -150,7 +150,7 @@ public class Fun {
   public static void saveSharedPref(Context context, String key, int value) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    var editor = sharedPreferences.edit();
     editor.putInt(key, value);
     editor.commit();
   }
@@ -158,7 +158,7 @@ public class Fun {
   public static void saveSharedPref(Context context, String key, boolean value) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    var editor = sharedPreferences.edit();
     editor.putBoolean(key, value);
     editor.commit();
   }
@@ -166,7 +166,7 @@ public class Fun {
   public static void saveSharedPref(Context context, String key, Set<String> values) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    var editor = sharedPreferences.edit();
     editor.remove(key).commit();
     editor.putStringSet(key, values);
     editor.commit();
@@ -320,7 +320,7 @@ public class Fun {
   }
   
   public static Notification buildNotification(Context context, String title, String text) {
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
+    var builder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
     Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.round_audiotrack_white_24);
     
     builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
@@ -337,8 +337,8 @@ public class Fun {
   }
   
   public static void cancelNotification(Context context, int id) {
-    NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-    mNotificationManager.cancel(id);
+    NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+    notificationManager.cancel(id);
   }
   
   
