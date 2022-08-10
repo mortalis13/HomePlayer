@@ -61,9 +61,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.view.WindowManager;
-import android.view.GestureDetector;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.GestureDetectorCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.app.NotificationManager;
@@ -123,8 +121,6 @@ public class MainActivity extends AppCompatActivity {
   private boolean playbackShuffle;
   private List<File> shuffleList;
   private Random randShuffle = new Random();
-  
-  private GestureDetector gestureDetector;
   
   private AudioInfo currrentExtraInfo;
   
@@ -258,8 +254,6 @@ public class MainActivity extends AppCompatActivity {
   private void init() {
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
     
-    gestureDetector = new GestureDetector(context, new ListSwipeManager());
-    
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName className, IBinder service) {
         PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
@@ -332,7 +326,6 @@ public class MainActivity extends AppCompatActivity {
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
     
-    filesAdapter.gestureDetector = gestureDetector;
     filesAdapter.itemClickListener = item -> itemClick(item);
     filesAdapter.iconClickListener = item -> updateItemFavorite(item.path, item.isFavorite);
     filesAdapter.afterRemovedListener = path -> refreshCurrentDir();
@@ -1222,31 +1215,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostExecute(Void result) {
       itemsQueue.clear();
       filesAdapter.notifyDataSetChanged();
-    }
-  }
-  
-  
-  private class ListSwipeManager extends GestureDetector.SimpleOnGestureListener {
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-      View view = listItems.findChildViewUnder(e1.getX(), e1.getY());
-      
-      float moveDiff = e2.getX() - e1.getX();
-      int direction = moveDiff < 0 ? 0: 1;
-      float swipedRatio = Math.abs(moveDiff) / view.getWidth();
-      
-      if (direction == 0) {
-        if (!filesAdapter.itemSwiping) {
-          listItems.requestDisallowInterceptTouchEvent(true);
-          filesAdapter.itemSwiping = true;
-          view.setPressed(true);
-        }
-        
-        // LEFT
-        if (swipedRatio >= 0.25f) {
-          filesAdapter.itemSwipedLeft = true;
-        }
-      }
-      return true;
     }
   }
   

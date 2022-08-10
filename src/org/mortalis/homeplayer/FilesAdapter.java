@@ -26,6 +26,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   
   private List<ListItem> fileList;
+  private RecyclerView recyclerView;
+  
+  private GestureDetector gestureDetector;
+  private boolean itemSwipedLeft;
+  private boolean itemSwiping;
   
   private int lastItemSelectedPos = -1;
   private int selectedItemPos = -1;
@@ -41,17 +46,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   ItemClickListener itemClickListener;
   ItemBindListener itemBindListener;
   
-  GestureDetector gestureDetector;
-  
-  boolean itemSwipedLeft;
-  boolean itemSwiping;
-  
   
   public FilesAdapter(List<ListItem> fileList, Context context) {
     this.fileList = fileList;
     
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
+    
+    gestureDetector = new GestureDetector(context, new ListSwipeManager());
   }
   
   @Override
@@ -85,6 +87,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   @Override
   public int getItemCount() {
     return this.fileList.size();
+  }
+  
+  @Override
+  public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    this.recyclerView = recyclerView;
   }
   
   private int getDirsCount() {
@@ -344,6 +351,31 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       itemIcon.setColorFilter(iconColor);
     }
   } // ItemViewHolder
+  
+  
+  private class ListSwipeManager extends GestureDetector.SimpleOnGestureListener {
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+      View view = recyclerView.findChildViewUnder(e1.getX(), e1.getY());
+      
+      float moveDiff = e2.getX() - e1.getX();
+      int direction = moveDiff < 0 ? 0: 1;
+      float swipedRatio = Math.abs(moveDiff) / view.getWidth();
+      
+      if (direction == 0) {
+        if (!itemSwiping) {
+          recyclerView.requestDisallowInterceptTouchEvent(true);
+          itemSwiping = true;
+          view.setPressed(true);
+        }
+        
+        // LEFT
+        if (swipedRatio >= 0.25f) {
+          itemSwipedLeft = true;
+        }
+      }
+      return true;
+    }
+  }
   
   
   public interface IconClickListener {
