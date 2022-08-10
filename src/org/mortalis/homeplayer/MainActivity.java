@@ -335,11 +335,11 @@ public class MainActivity extends AppCompatActivity {
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
     
-    filesAdapter.itemClickListener = item -> itemClick(item);
-    filesAdapter.iconClickListener = item -> updateItemFavorite(item.path, item.isFavorite);
-    filesAdapter.afterRemovedListener = path -> refreshCurrentDir();
-    filesAdapter.infoClickListener = path -> showExtraAudioInfo(path);
-    filesAdapter.itemBindListener = position -> {
+    filesAdapter.itemClickAction = (item) -> itemClick(item);
+    filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
+    filesAdapter.afterFileRemovedAction = (path) -> refreshCurrentDir();
+    filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
+    filesAdapter.itemBeforeBindAction = (position) -> {
       if (!itemsQueue.contains(position)) {
         itemsQueue.add(position);
       }

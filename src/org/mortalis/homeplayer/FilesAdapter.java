@@ -19,6 +19,9 @@ import android.view.GestureDetector;
 import androidx.core.content.ContextCompat;
 
 import org.mortalis.homeplayer.components.SimplePaintView;
+import org.mortalis.homeplayer.actions.Action;
+import org.mortalis.homeplayer.actions.DoubleAction;
+import org.mortalis.homeplayer.actions.SimpleAction;
 
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
@@ -40,11 +43,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private int item_icon_color_default;
   private int item_icon_color_lastplayed;
   
-  IconClickListener iconClickListener;
-  AfterRemovedListener afterRemovedListener;
-  InfoClickListener infoClickListener;
-  ItemClickListener itemClickListener;
-  ItemBindListener itemBindListener;
+  Action<ListItem> itemClickAction;
+  Action<ListItem> iconClickAction;
+  Action<String> afterFileRemovedAction;
+  Action<String> infoClickAction;
+  Action<Integer> itemBeforeBindAction;
   
   
   public FilesAdapter(List<ListItem> fileList, Context context) {
@@ -72,7 +75,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     ListItem item = this.fileList.get(position);
     
     if (item.isFile && item.time == null) {
-      if (itemBindListener != null) itemBindListener.itemBeforeBind(position);
+      itemBeforeBindAction.execute(position);
     }
     
     holder.bind(item);
@@ -205,7 +208,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       iconContainer.setOnClickListener(v -> {
         this.item.isFavorite = !this.item.isFavorite;
         itemIndicator.setVisibility(this.item.isFavorite ? View.VISIBLE: View.GONE);
-        if (iconClickListener != null) iconClickListener.iconClicked(this.item);
+        iconClickAction.execute(this.item);
       });
       
       bRemoveFile.setOnClickListener(v -> {
@@ -214,7 +217,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         }
         else {
           if (Fun.removeFile(this.item.path)) {
-            if (afterRemovedListener != null) afterRemovedListener.fileRemoved(this.item.path);
+            afterFileRemovedAction.execute(this.item.path);
           }
           else {
             resetRemoveState();
@@ -223,7 +226,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       });
       
       bFileInfo.setOnClickListener(v -> {
-        if (infoClickListener != null) infoClickListener.infoClicked(this.item.path);
+        infoClickAction.execute(this.item.path);
         hideItemMenu();
       });
       
@@ -266,7 +269,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
           holderWithMenu = getBindingAdapterPosition();
         }
         else if (!itemSwiping) {
-          if (itemClickListener != null) itemClickListener.itemClicked(this.item);
+          itemClickAction.execute(this.item);
         }
         
         itemSwipedLeft = false;
@@ -375,27 +378,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       }
       return true;
     }
-  }
-  
-  
-  public interface IconClickListener {
-    public void iconClicked(ListItem item);
-  }
-
-  public interface AfterRemovedListener {
-    public void fileRemoved(String path);
-  }
-
-  public interface InfoClickListener {
-    public void infoClicked(String path);
-  }
-
-  public interface ItemClickListener {
-    public void itemClicked(ListItem item);
-  }
-
-  public interface ItemBindListener {
-    public void itemBeforeBind(int position);
   }
 
 }
