@@ -51,8 +51,9 @@ public class Fun {
     return (file.isDirectory() && file.canRead() && !file.isHidden());
   };
   
-  public static FilenameFilter fileFilter = (dirName, fileName) -> {
-    return Arrays.stream(Vars.AUDIO_EXTS).anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
+  public static FileFilter fileFilter = (file) -> {
+    boolean isAudio = Stream.of(Vars.AUDIO_EXTS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
+    return (file.isFile() && !file.isHidden() && isAudio);
   };
   
   public static Comparator<File> nocaseComp = (item1, item2) -> {
