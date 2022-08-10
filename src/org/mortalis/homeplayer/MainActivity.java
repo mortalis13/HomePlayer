@@ -180,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
     setContentView(R.layout.activity_main);
     
     context = this;
-    MainService.init(this);
     
     requestAppPermissions(context);
     Fun.createNotificationChannel(context);
@@ -194,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
   protected void onStart() {
     Fun.logd("MainActivity.onStart()");
     super.onStart();
-    MainService.init(this);
   }
   
   @Override
@@ -258,6 +256,17 @@ public class MainActivity extends AppCompatActivity {
       public void onServiceConnected(ComponentName className, IBinder service) {
         PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
         playerService = binder.getService();
+        
+        playerService.exitAction = () -> exitApp();
+        playerService.progressSetupAction = (time) -> initProgress(time);
+        playerService.progressUpdateAction = (time) -> updateProgress(time);
+        playerService.timeUpdateAction = (time, timeTotal) -> updatePlayingTime(time, timeTotal);
+        playerService.onPlayerPreloadedAction = () -> onPlayerPreloaded();
+        playerService.onPlayerStartedAction = () -> onPlayerStarted();
+        playerService.onPlayerPausedAction = () -> onPlayerPaused();
+        playerService.onPlayerResumedAction = () -> onPlayerResumed();
+        playerService.onPlayerStoppedAction = () -> onPlayerStopped();
+        
         serviceBound = true;
         
         if (lastAudio != null) {

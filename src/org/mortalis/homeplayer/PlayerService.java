@@ -35,6 +35,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 
+import org.mortalis.homeplayer.actions.Action;
+import org.mortalis.homeplayer.actions.DoubleAction;
+import org.mortalis.homeplayer.actions.SimpleAction;
+
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
   
@@ -71,6 +75,15 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private Handler progressHandler = new Handler();
   private Runnable progressRunnable;
   
+  public SimpleAction exitAction;
+  public Action<Integer> progressSetupAction;
+  public Action<Integer> progressUpdateAction;
+  public DoubleAction<Integer> timeUpdateAction;
+  public SimpleAction onPlayerPreloadedAction;
+  public SimpleAction onPlayerStartedAction;
+  public SimpleAction onPlayerPausedAction;
+  public SimpleAction onPlayerResumedAction;
+  public SimpleAction onPlayerStoppedAction;
   
   @Override
   public void onCreate() {
@@ -173,7 +186,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       }
       public void onMsgExit() {
         progressHandler.removeCallbacks(progressRunnable);
-        MainService.get().exitApp();
+        exitAction.execute();
         sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
       }
     });
@@ -369,40 +382,40 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   // ----- External calls
   private void sendInitProgress() {
-    MainService.get().initProgress(mediaPlayer.getDuration());
+    progressSetupAction.execute(mediaPlayer.getDuration());
   }
 
   private void sendUpdateStoppedTime() {
-    MainService.get().updatePlayingTime(mediaPlayer.getDuration(), mediaPlayer.getDuration());
-    MainService.get().updateProgress(mediaPlayer.getDuration());
+    timeUpdateAction.execute(mediaPlayer.getDuration(), mediaPlayer.getDuration());
+    progressUpdateAction.execute(mediaPlayer.getDuration());
   }
   
   private void sendUpdatePlayingTime() {
-    MainService.get().updatePlayingTime(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+    timeUpdateAction.execute(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
   }
   
   private void sendUpdateProgress() {
-    MainService.get().updateProgress(mediaPlayer.getCurrentPosition());
+    progressUpdateAction.execute(mediaPlayer.getCurrentPosition());
   }
   
   private void sendPlayerPreloaded() {
-    MainService.get().onPlayerPreloaded();
+    onPlayerPreloadedAction.execute();
   }
   
   private void sendPlayerStarted() {
-    MainService.get().onPlayerStarted();
+    onPlayerStartedAction.execute();
   }
   
   private void sendPlayerPaused() {
-    MainService.get().onPlayerPaused();
+    onPlayerPausedAction.execute();
   }
   
   private void sendPlayerResumed() {
-    MainService.get().onPlayerResumed();
+    onPlayerResumedAction.execute();
   }
   
   private void sendPlayerStopped() {
-    MainService.get().onPlayerStopped();
+    onPlayerStoppedAction.execute();
   }
   
   
