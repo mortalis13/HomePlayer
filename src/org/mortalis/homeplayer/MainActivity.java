@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
         super.onLayoutCompleted(state);
         Fun.log("-- onLayoutCompleted");
         if (!itemsQueue.isEmpty()) {
-          new LoadItemsInfoTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+          new ProcessItemsQueueTask(fileList).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
       }
     };
@@ -1117,9 +1117,9 @@ public class MainActivity extends AppCompatActivity {
 
   // ---------------------- Classes ----------------------
   private class LoadCurrentDirTimeTask extends AsyncTask<Void, Void, Void> {
-    List<ListItem> items;
-    int totalTime;
-    boolean updatePlayingDir;
+    private List<ListItem> items;
+    private int totalTime;
+    private boolean updatePlayingDir;
     
     public LoadCurrentDirTimeTask(List<ListItem> items) {
       this.items = List.copyOf(items);
@@ -1136,8 +1136,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected Void doInBackground(Void... params) {
-      for (int i = 0; i < items.size(); i++) {
-        ListItem item = items.get(i);
+      for (var item: items) {
         if (!item.isFile) continue;
         
         int time = extractAudioTime(item.path);
@@ -1164,16 +1163,15 @@ public class MainActivity extends AppCompatActivity {
   
 
   private class LoadPLayingDirTimeTask extends AsyncTask<Void, Void, Void> {
-    File[] files;
-    int totalTime;
+    private File[] files;
+    private int totalTime;
     
     public LoadPLayingDirTimeTask(File[] files) {
       this.files = files;
     }
     
     protected Void doInBackground(Void... params) {
-      for (int i = 0; i < files.length; i++) {
-        File file = files[i];
+      for (var file: files) {
         if (!file.isFile()) continue;
         
         int time = extractAudioTime(file.getPath());
@@ -1195,13 +1193,19 @@ public class MainActivity extends AppCompatActivity {
   }
   
 
-  private class LoadItemsInfoTask extends AsyncTask<Void, Void, Void> {
+  private class ProcessItemsQueueTask extends AsyncTask<Void, Void, Void> {
+    private List<ListItem> items;
+    
+    public ProcessItemsQueueTask(List<ListItem> items) {
+      this.items = List.copyOf(items);
+    }
+    
     protected Void doInBackground(Void... params) {
       while (!itemsQueue.isEmpty()) {
         int pos = itemsQueue.remove();
-        if (pos >= fileList.size()) continue;
+        if (pos >= this.items.size()) continue;
         
-        ListItem item = fileList.get(pos);
+        ListItem item = this.items.get(pos);
         
         if (item.isFile) {
           int time = extractAudioTime(item.path);
