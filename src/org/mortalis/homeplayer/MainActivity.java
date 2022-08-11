@@ -903,12 +903,7 @@ public class MainActivity extends AppCompatActivity {
       textPlayingStats.setText(stats);
     }
     
-    if (playingFile.getParentFile().equals(currentPath)) {
-      filesAdapter.selectItem(playingItemPos);
-    }
-    else {
-      selectPlayingDirOrFile();
-    }
+    selectPlayingDirOrFile();
   }
   
   public void updatePlayingTime(int playingPos, int totalTime) {
