@@ -91,7 +91,6 @@ import org.mortalis.homeplayer.components.SimplePaintView;
 
 public class MainActivity extends AppCompatActivity {
 
-  private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   private static final String ROOT_DIR_TITLE = "storage";
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
   private static final File START_DIR = new File(Environment.getExternalStorageDirectory(), "_music");
@@ -112,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
   private File previouslyPlayedFile;
   private int scrollPos;
   
+  private File[] playingList;
   private String lastFolder;
   private String lastAudio;
   private int lastAudioTime;
@@ -187,6 +187,9 @@ public class MainActivity extends AppCompatActivity {
     init();
     configUI();
     restoreState();
+    
+    File dir = lastFolder == null ? START_DIR: new File(lastFolder);
+    changeDir(dir);
   }
   
   @Override
@@ -474,9 +477,6 @@ public class MainActivity extends AppCompatActivity {
       Fun.log("PREF playbackShuffle: " + playbackShuffle);
       bShuffle.setSelected(playbackShuffle);
       playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
-      
-      File dir = lastFolder == null ? START_DIR: new File(lastFolder);
-      changeDir(dir);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -553,14 +553,7 @@ public class MainActivity extends AppCompatActivity {
     
     updateShuffleList(playingFile);
     
-    if (playerService.hasAudio()) {
-      var playingParent = new File(playerService.getAudioPath()).getParent();
-      var isSameDirectory = playingFile.getParent().equals(playingParent);
-      if (!isSameDirectory) {
-        Fun.saveSharedPref(context, "TIME_" + playingParent, lastAudioTime);
-        Fun.log(String.format("Saved %d time to TIME_%s", lastAudioTime, playingParent));
-      }
-    }
+    processPlayingDirChange(playingFile);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
@@ -650,13 +643,13 @@ public class MainActivity extends AppCompatActivity {
     Stream.of(files).sorted(Fun.nocaseComp)
       .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true)));
     
+    filesAdapter.resetSelection();
+    filesAdapter.notifyDataSetChanged();
+
     String title = currentPath.equals(ROOT_STORAGE) ? ROOT_DIR_TITLE: currentPath.getName();
     activeTitle.setText(title);
     
     titleScroller.fullScroll(View.FOCUS_LEFT);
-
-    filesAdapter.resetSelection();
-    filesAdapter.notifyDataSetChanged();
     
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -772,17 +765,14 @@ public class MainActivity extends AppCompatActivity {
       return null;
     }
     
-    File[] files = parent.listFiles(Fun.fileFilter);
-    Arrays.sort(files, Fun.nocaseComp);
-    
-    int len = files.length;
+    int len = playingList.length;
     for (int i = 0; i < len; i++) {
-      if (files[i].getName().equals(file.getName())) {
+      if (playingList[i].getName().equals(file.getName())) {
         if (next) {
-          file = files[i == len-1 ? 0: i+1];
+          file = playingList[i == len-1 ? 0: i+1];
         }
         else {
-          file = files[i == 0 ? len-1: i-1];
+          file = playingList[i == 0 ? len-1: i-1];
         }
         
         return file;
@@ -821,15 +811,8 @@ public class MainActivity extends AppCompatActivity {
   
   private boolean isPlayingLastFile() {
     if (playerService == null || !playerService.hasAudio()) return true;
-    
-    File currentFile = new File(playerService.getAudioPath());
-    File[] files = currentFile.getParentFile().listFiles(Fun.fileFilter);
-    Arrays.sort(files, Fun.nocaseComp);
-    
-    int len = files.length;
-    if (len == 0) return true;
-    
-    return currentFile.equals(files[len-1]);
+    File lastFile = playingList[playingList.length - 1];
+    return playerService.getAudioPath().equals(lastFile.getPath());
   }
   
   public int extractAudioTime(String filePath) {
@@ -853,17 +836,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void generateShuffleList(File audioFile) {
     Fun.logd("generateShuffleList(): " + audioFile);
-    File parent = audioFile.getParentFile();
-    
-    if (!parent.exists()) {
-      Fun.loge("The parent does not exist for file " + audioFile);
-      return;
-    }
-    
-    File[] files = parent.listFiles(Fun.fileFilter);
-    Arrays.sort(files, Fun.nocaseComp);
-    
-    shuffleList = new ArrayList<>(Arrays.asList(files));
+    shuffleList = new ArrayList<>(Arrays.asList(playingList));
     removeFromShuffleList(audioFile);
   }
   
@@ -887,19 +860,46 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Utils ------------------------------
-  private void resetCurrentDirTime() {
-    textCurrentFolderTime.setText("00:00:00");
+  private void processPlayingDirChange(File newAudioFile) {
+    Fun.logd("processPlayingDirChange(): " + newAudioFile);
+    
+    if (playerService.hasAudio()) {
+      var currentAudio = new File(playerService.getAudioPath());
+      var currentAudioParent = currentAudio.getParent();
+      var isDirectoryChanged = !newAudioFile.getParent().equals(currentAudioParent);
+      
+      if (isDirectoryChanged) {
+        Fun.log("Directory changed");
+        Fun.saveSharedPref(context, "TIME_" + currentAudioParent, lastAudioTime);
+        Fun.log(String.format("Saved %d time to TIME_%s", lastAudioTime, currentAudioParent));
+        
+        cachePlayingList(newAudioFile);
+        resetPlayingDirTime();
+        if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.copyToPlayingDirTime();
+      }
+    }
+    else {
+      Fun.log("playerService without audio, initial state");
+      cachePlayingList(newAudioFile);
+      resetPlayingDirTime();
+      
+      if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
+      loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(playingList);
+      loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+  }
+  
+  private void cachePlayingList(File file) {
+    playingList = file.getParentFile().listFiles(Fun.fileFilter);
+    Arrays.sort(playingList, Fun.nocaseComp);
   }
   
   private void updatePlayingStats() {
     File playingFile = new File(playerService.getAudioPath());
-    File[] files = playingFile.getParentFile().listFiles(Fun.fileFilter);
-    Arrays.sort(files, Fun.nocaseComp);
-    
-    int playingItemPos = Arrays.binarySearch(files, playingFile);
+    int playingItemPos = Arrays.binarySearch(playingList, playingFile);
 
     if (playingItemPos != -1) {
-      String stats = String.format("%d/%d", playingItemPos + 1, files.length);
+      String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
       textPlayingStats.setText(stats);
     }
     
@@ -908,23 +908,6 @@ public class MainActivity extends AppCompatActivity {
     }
     else {
       selectPlayingDirOrFile();
-    }
-    
-    loadPlayingDirTime(files);
-  }
-  
-  public void loadPlayingDirTime(File[] files) {
-    textPlayingFolderTime.setText("00:00:00");
-    
-    File playingFile = new File(playerService.getAudioPath());
-    if (playingFile.getParentFile().equals(currentPath) && loadCurrentDirTimeTask != null) {
-      // Reuse already calculated time value or request to copy that value when the current dir task is completed
-      loadCurrentDirTimeTask.copyToPlayingDirTime();
-    }
-    else {
-      if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
-      loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(files);
-      loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
   }
   
@@ -1123,6 +1106,14 @@ public class MainActivity extends AppCompatActivity {
     });
   }
   
+  private void resetCurrentDirTime() {
+    textCurrentFolderTime.setText("00:00:00");
+  }
+  
+  private void resetPlayingDirTime() {
+    textPlayingFolderTime.setText("00:00:00");
+  }
+  
 
   // ---------------------- Classes ----------------------
   private class LoadCurrentDirTimeTask extends AsyncTask<Void, Void, Void> {
@@ -1134,8 +1125,12 @@ public class MainActivity extends AppCompatActivity {
       this.items = List.copyOf(items);
     }
     
+    public boolean isRunning() {
+      return getStatus() == AsyncTask.Status.RUNNING;
+    }
+    
     public void copyToPlayingDirTime() {
-      if (getStatus() == AsyncTask.Status.RUNNING) {
+      if (isRunning()) {
         updatePlayingDir = true;
       }
       else {
@@ -1163,6 +1158,8 @@ public class MainActivity extends AppCompatActivity {
     
     protected void onPostExecute(Void result) {
       String folderTime = Fun.formatTime(totalTime / 1000, true);
+      Fun.log(String.format("Total time for dir '%s': %s", new File(this.items.get(0).path).getParent(), folderTime));
+      
       textCurrentFolderTime.setText(folderTime);
       if (updatePlayingDir) {
         textPlayingFolderTime.setText(folderTime);
@@ -1180,6 +1177,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected Void doInBackground(Void... params) {
+      Fun.log("START LoadPLayingDirTimeTask");
       for (var file: files) {
         if (!file.isFile()) continue;
         
