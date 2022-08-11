@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
   private List<File> shuffleList;
   private Random randShuffle = new Random();
   
-  private AudioInfo currrentExtraInfo;
+  private AudioInfo currentExtraInfo;
   
   private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
   private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
@@ -437,13 +437,13 @@ public class MainActivity extends AppCompatActivity {
     
     extraInfoPanel.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
-        if (currrentExtraInfo != null && currrentExtraInfo.file != null) {
-          showExtraAudioInfo(getNextFile(currrentExtraInfo.file).getPath());
+        if (currentExtraInfo != null && currentExtraInfo.file != null) {
+          showExtraAudioInfo(getNextFile(currentExtraInfo.file).getPath());
         }
       }
       public void onSwipeRight() {
-        if (currrentExtraInfo != null && currrentExtraInfo.file != null) {
-          showExtraAudioInfo(getPrevFile(currrentExtraInfo.file).getPath());
+        if (currentExtraInfo != null && currentExtraInfo.file != null) {
+          showExtraAudioInfo(getPrevFile(currentExtraInfo.file).getPath());
         }
       }
       public void onSwipeUp() {
@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Actions ------------------------------
-  public void playPauseAction() {
+  private void playPauseAction() {
     if (playerService == null || !playerService.hasAudio()) return;
     
     if (playerService.isPlaying()) {
@@ -501,29 +501,29 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  public void playPrevFileAction() {
+  private void playPrevFileAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     boolean startPlayback = playerService.isPlaying();
     playPrevFile(startPlayback);
   }
   
-  public void playNextFileAction() {
+  private void playNextFileAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     boolean startPlayback = playerService.isPlaying();
     playNextFile(startPlayback);
   }
   
-  public void fastRewindAction() {
+  private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     playerService.fastRewind(5);
   }
   
-  public void fastForwardAction() {
+  private void fastForwardAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     playerService.fastForward(5);
   }
   
-  public void playbackShuffleAction() {
+  private void playbackShuffleAction() {
     playbackShuffle = !playbackShuffle;
     Fun.saveSharedPref(context, "PLAYBACK_SHUFFLE", playbackShuffle);
     playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
@@ -531,7 +531,7 @@ public class MainActivity extends AppCompatActivity {
     if (shuffleList != null) shuffleList.clear();
   }
   
-  public void playbackRepeatAction() {
+  private void playbackRepeatAction() {
     playbackRepeat = !playbackRepeat;
     Fun.saveSharedPref(context, "PLAYBACK_REPEAT", playbackRepeat);
     
@@ -717,28 +717,29 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Events ------------------------------
-  public void onPlayerStarted() {
+  private void onPlayerStarted() {
     onPlayerPreloaded();
     setPlayButtonAsPause();
   }
   
-  public void onPlayerPreloaded() {
+  private void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
+    selectPlayingDirOrFile();
     if (extraInfoPanel.getVisibility() == View.VISIBLE) {
       showExtraAudioInfo();
     }
   }
   
-  public void onPlayerPaused() {
+  private void onPlayerPaused() {
     setPlayButtonDefault();
   }
   
-  public void onPlayerResumed() {
+  private void onPlayerResumed() {
     setPlayButtonAsPause();
   }
   
-  public void onPlayerStopped() {
+  private void onPlayerStopped() {
     if (!playbackShuffle && isPlayingLastFile()) {
       progressSlider.disable();
       setPlayButtonDefault();
@@ -782,7 +783,7 @@ public class MainActivity extends AppCompatActivity {
     return null;
   }
   
-  public File getNextRandomFile(File file) {
+  private File getNextRandomFile(File file) {
     if (shuffleList == null || shuffleList.size() == 0) {
       generateShuffleList(file);
     }
@@ -815,7 +816,7 @@ public class MainActivity extends AppCompatActivity {
     return playerService.getAudioPath().equals(lastFile.getPath());
   }
   
-  public int extractAudioTime(String filePath) {
+  private int extractAudioTime(String filePath) {
     int time = 0;
     
     try {
@@ -860,6 +861,34 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Utils ------------------------------
+  private void cachePlayingList(File file) {
+    playingList = file.getParentFile().listFiles(Fun.fileFilter);
+    Arrays.sort(playingList, Fun.nocaseComp);
+  }
+  
+  private void itemClick(ListItem item) {
+    try {
+      hideExtraPanels();
+      
+      File clickedFile = new File(item.path);
+      if (clickedFile.isDirectory()) {
+        changeDir(clickedFile);
+      }
+      else {
+        int time = 0;
+        if (item.isLastPlayed && !item.path.equals(playerService.getAudioPath())) {
+          int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
+          if (lastTime != -1) time = lastTime;
+        }
+        
+        playAudio(item.path, time, true);
+      }
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
   private void processPlayingDirChange(File newAudioFile) {
     Fun.logd("processPlayingDirChange(): " + newAudioFile);
     
@@ -879,7 +908,6 @@ public class MainActivity extends AppCompatActivity {
       }
     }
     else {
-      Fun.log("playerService without audio, initial state");
       cachePlayingList(newAudioFile);
       resetPlayingDirTime();
       
@@ -889,9 +917,28 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void cachePlayingList(File file) {
-    playingList = file.getParentFile().listFiles(Fun.fileFilter);
-    Arrays.sort(playingList, Fun.nocaseComp);
+  private void cleanFavorites() {
+    // Removes files that don't exist
+    if (favoritesList == null) return;
+    var listCopy = List.copyOf(favoritesList);
+    
+    for (String favPath: listCopy) {
+      if (!new File(favPath).exists()) {
+        favoritesList.remove(favPath);
+      }
+    }
+    
+    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
+  }
+  
+  private void updateItemFavorite(String filePath, boolean isFavorite) {
+    if (isFavorite) {
+      favoritesList.add(filePath);
+    }
+    else {
+      favoritesList.remove(filePath);
+    }
+    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
   private void updatePlayingStats() {
@@ -902,11 +949,9 @@ public class MainActivity extends AppCompatActivity {
       String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
       textPlayingStats.setText(stats);
     }
-    
-    selectPlayingDirOrFile();
   }
   
-  public void updatePlayingTime(int playingPos, int totalTime) {
+  private void updatePlayingTime(int playingPos, int totalTime) {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingPos);
     lastAudioTime = playingPos;
     
@@ -963,7 +1008,7 @@ public class MainActivity extends AppCompatActivity {
     
     fillAudioInfo(info);
     extraInfoPanel.setVisibility(View.VISIBLE);
-    currrentExtraInfo = info;
+    currentExtraInfo = info;
   }
   
   private void fillAudioInfo(AudioInfo info) {
@@ -980,20 +1025,25 @@ public class MainActivity extends AppCompatActivity {
     textExtraChannels.setText(String.valueOf(info.channels));
   }
   
-  public void initProgress(int time) {
+  private void exitApp() {
+    Fun.logd("exitApp()");
+    finishAndRemoveTask();
+  }
+  
+  private void initProgress(int time) {
     progressSlider.setMax(time);
     progressSlider.setProgress(0);
   }
   
-  public void updateProgress(int time) {
+  private void updateProgress(int time) {
     progressSlider.setProgress(time);
   }
   
-  public void setPlayButtonDefault() {
+  private void setPlayButtonDefault() {
     bPlayPause.setImageResource(R.drawable.baseline_play_arrow_black_36);
   }
   
-  public void setPlayButtonAsPause() {
+  private void setPlayButtonAsPause() {
     bPlayPause.setImageResource(R.drawable.baseline_pause_black_36);
   }
   
@@ -1039,58 +1089,6 @@ public class MainActivity extends AppCompatActivity {
   
   private void hideExtraInfoPanel() {
     hideExtraInfoPanel(false);
-  }
-  
-  public void exitApp() {
-    Fun.logd("exitApp()");
-    finishAndRemoveTask();
-  }
-  
-  private void itemClick(ListItem item) {
-    try {
-      hideExtraPanels();
-      
-      File clickedFile = new File(item.path);
-      if (clickedFile.isDirectory()) {
-        changeDir(clickedFile);
-      }
-      else {
-        int time = 0;
-        if (item.isLastPlayed && !item.path.equals(playerService.getAudioPath())) {
-          int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
-          if (lastTime != -1) time = lastTime;
-        }
-        
-        playAudio(item.path, time, true);
-      }
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-  
-  private void cleanFavorites() {
-    // Removes files that don't exist
-    if (favoritesList == null) return;
-    var listCopy = List.copyOf(favoritesList);
-    
-    for (String favPath: listCopy) {
-      if (!new File(favPath).exists()) {
-        favoritesList.remove(favPath);
-      }
-    }
-    
-    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
-  }
-  
-  private void updateItemFavorite(String filePath, boolean isFavorite) {
-    if (isFavorite) {
-      favoritesList.add(filePath);
-    }
-    else {
-      favoritesList.remove(filePath);
-    }
-    Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
   private void updateListOverscroll() {
