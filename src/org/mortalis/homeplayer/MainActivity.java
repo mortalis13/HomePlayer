@@ -1141,7 +1141,7 @@ public class MainActivity extends AppCompatActivity {
         item.time = Fun.formatTime(time / 1000, false);
         
         if (isCancelled()) {
-          Fun.logw("Task is cancelled: " + hashCode());
+          Fun.logw("Task is cancelled: " + this);
           break;
         }
       }
@@ -1170,7 +1170,6 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected Void doInBackground(Void... params) {
-      Fun.log("START LoadPLayingDirTimeTask");
       for (var file: files) {
         if (!file.isFile()) continue;
         
@@ -1178,7 +1177,7 @@ public class MainActivity extends AppCompatActivity {
         totalTime += time;
         
         if (isCancelled()) {
-          Fun.logw("Task is cancelled: " + hashCode());
+          Fun.logw("Task is cancelled: " + this);
           break;
         }
       }

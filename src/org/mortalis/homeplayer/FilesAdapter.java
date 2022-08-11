@@ -27,6 +27,7 @@ import org.mortalis.homeplayer.actions.SimpleAction;
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
   
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
+  private static final int ITEM_MENU_BUTTONS = 2;
   
   private List<ListItem> fileList;
   private RecyclerView recyclerView;
@@ -42,6 +43,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   private int item_icon_color_default;
   private int item_icon_color_lastplayed;
+  private float itemMenuWidth;
   
   Action<ListItem> itemClickAction;
   Action<ListItem> iconClickAction;
@@ -55,6 +57,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
+    itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
     
     gestureDetector = new GestureDetector(context, new ListSwipeManager());
   }
@@ -97,12 +100,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     this.recyclerView = recyclerView;
   }
   
-  private int getDirsCount() {
-    int result = 0;
-    for (ListItem item: this.fileList) if (!item.isFile) result ++; else break;
-    return result;
-  }
-  
   public void resetSelection() {
     lastItemSelectedPos = -1;
     selectedItemPos = -1;
@@ -123,6 +120,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         return i;
       }
     }
+    
     return getPositionForSubpath(new File(filePath).getParent());
   }
   
@@ -142,7 +140,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   public void markLastPlayedItem(String filePath) {
     if (filePath == null) return;
     
-    for (int i = 0; i < this.fileList.size(); i++) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
       if (!item.isFile) continue;
     
@@ -158,9 +158,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   }
   
   public void markAsFavorite(String filePath) {
-    for (int i = 0; i < this.fileList.size(); i++) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
       if (!item.isFile) continue;
+      
       if (item.path.equals(filePath)) {
         item.isFavorite = true;
         notifyItemChanged(i);
@@ -169,10 +172,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   }
   
   public int getItemPosition(String path) {
-    for (int i = 0; i < this.fileList.size(); i++) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
       if (item.path.equals(path)) return i;
     }
+    
     return -1;
   }
   
@@ -190,7 +196,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     ListItem item;
     
-    boolean isRemovePressed;
+    private boolean isRemovePressed;
+    
     
     public ItemViewHolder(View rootView) {
       super(rootView);
@@ -232,6 +239,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       
       itemView.setOnTouchListener((view, event) -> {
         if (this.item.isFile) {
+          // Build a new event with coordinates relative to the parent list view
           float x = event.getX();
           float y = view.getTop() + event.getY();
           event = MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(), x, y, event.getMetaState());
@@ -240,7 +248,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
           if (result) return true;
         }
         
-        return this.processOnTouch(view, event);
+        return processOnTouch(view, event);
       });
     }
     
@@ -310,8 +318,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       if (itemMenuPanel.getVisibility() != View.VISIBLE) {
         itemMenuPanel.setVisibility(View.VISIBLE);
         
-        float menuWidth = Fun.dpToPx(141);
-        TranslateAnimation animation = new TranslateAnimation(menuWidth, 0, 0, 0);
+        // float itemMenuWidth = Fun.dpToPx(141);
+        TranslateAnimation animation = new TranslateAnimation(itemMenuWidth, 0, 0, 0);
         animation.setDuration(150);
         itemMenuPanel.startAnimation(animation);
       }
