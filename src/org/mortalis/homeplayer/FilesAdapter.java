@@ -1,27 +1,26 @@
 package org.mortalis.homeplayer;
 
+import android.content.Context;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.TranslateAnimation;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.mortalis.homeplayer.actions.Action;
+import org.mortalis.homeplayer.components.SimplePaintView;
+
 import java.io.File;
 import java.util.List;
-
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.ViewGroup;
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.animation.TranslateAnimation;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
-import android.widget.ImageButton;
-import android.view.MotionEvent;
-import android.view.GestureDetector;
-import androidx.core.content.ContextCompat;
-
-import org.mortalis.homeplayer.components.SimplePaintView;
-import org.mortalis.homeplayer.actions.Action;
-import org.mortalis.homeplayer.actions.DoubleAction;
-import org.mortalis.homeplayer.actions.SimpleAction;
 
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {

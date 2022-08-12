@@ -1,31 +1,21 @@
 package org.mortalis.homeplayer.fastscroll;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Interpolator;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import androidx.core.view.ViewCompat;
-import android.text.TextUtils.TruncateAt;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
-import android.widget.PopupWindow;
-import android.widget.TextView;
+
+import androidx.core.view.ViewCompat;
+
 
 /**
  * 

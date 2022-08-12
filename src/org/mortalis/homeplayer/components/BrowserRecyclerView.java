@@ -1,13 +1,13 @@
 package org.mortalis.homeplayer.components;
 
-import org.mortalis.homeplayer.fastscroll.FastScrollDelegate;
-import org.mortalis.homeplayer.fastscroll.FastScrollRecyclerView;
-import org.mortalis.homeplayer.Fun;
-import org.mortalis.homeplayer.R;
-
 import android.content.Context;
 import android.util.AttributeSet;
+
 import androidx.core.content.ContextCompat;
+
+import org.mortalis.homeplayer.R;
+import org.mortalis.homeplayer.fastscroll.FastScrollDelegate;
+import org.mortalis.homeplayer.fastscroll.FastScrollRecyclerView;
 
 
 public class BrowserRecyclerView extends FastScrollRecyclerView {

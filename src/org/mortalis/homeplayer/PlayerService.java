@@ -1,36 +1,22 @@
 package org.mortalis.homeplayer;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.Iterator;
-import java.io.File;
-
-import android.app.Service;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.Intent;
-import android.content.Context;
+import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaFormat;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.IBinder;
+import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Build;
-import android.os.PowerManager;
-import android.util.Log;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
+import android.os.Handler;
+import android.os.IBinder;
 
-import androidx.core.content.ContextCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
@@ -38,6 +24,8 @@ import androidx.media.app.NotificationCompat.MediaStyle;
 import org.mortalis.homeplayer.actions.Action;
 import org.mortalis.homeplayer.actions.DoubleAction;
 import org.mortalis.homeplayer.actions.SimpleAction;
+
+import java.io.File;
 
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {

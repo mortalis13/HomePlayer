@@ -1,23 +1,16 @@
 package org.mortalis.homeplayer.components;
 
-import org.mortalis.homeplayer.R;
-import org.mortalis.homeplayer.Fun;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Path;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
+import android.graphics.Path;
 import android.graphics.RectF;
-import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.ImageView;
+
+import androidx.core.content.ContextCompat;
+
+import org.mortalis.homeplayer.R;
 
 
 public class SimplePaintView extends ImageView {

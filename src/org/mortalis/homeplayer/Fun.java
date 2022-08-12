@@ -1,46 +1,33 @@
 package org.mortalis.homeplayer;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Date;
-import java.util.Random;
-import java.io.FileOutputStream;
-import java.util.stream.Stream;
-import java.util.Comparator;
-import java.io.FilenameFilter;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.io.FilenameUtils;
-
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import androidx.core.app.NotificationCompat;
-import androidx.media.app.NotificationCompat.MediaStyle;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
+import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.widget.Toast;
-import android.os.PowerManager;
 import android.view.View;
 import android.view.View.MeasureSpec;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.util.DisplayMetrics;
-import android.content.res.Resources;
-import android.app.NotificationChannel;
-import android.os.Build;
+import android.widget.Toast;
+
+import androidx.core.app.NotificationCompat;
+
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Stream;
 
 
 public class Fun {

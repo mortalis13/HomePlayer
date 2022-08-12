@@ -3,10 +3,12 @@ package org.mortalis.homeplayer.fastscroll;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.recyclerview.widget.RecyclerView;
+
 
 /**
  * https://github.com/Mixiaoxiao/FastScroll-Everywhere FastScrollRecyclerView
