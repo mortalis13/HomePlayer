@@ -1,0 +1,67 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+<LinearLayout
+  android:id="@+id/status_block"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:layout_alignParentBottom="true"
+>
+  <include layout="@layout/divider_horizontal_include"/>
+  
+  <RelativeLayout
+    android:id="@+id/panelStatus"
+    android:layout_width="match_parent"
+    android:layout_height="30dp"
+    android:paddingLeft="6dp"
+    android:paddingRight="6dp"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:background="@color/status_background"
+  >
+    <TextView
+      android:id="@+id/textTotalFiles"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:gravity="center_vertical"
+      android:textSize="16dp"
+      android:textColor="#444"
+      android:text="15"
+      android:layout_alignParentLeft="true"
+    />
+    <TextView
+      android:id="@+id/textTotalSize"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginLeft="16dp"
+      android:gravity="center_vertical"
+      android:textSize="16dp"
+      android:textColor="#444"
+      android:text="128.3 MB"
+      android:layout_toRightOf="@+id/textTotalFiles"
+    />
+    <TextView
+      android:id="@+id/textTotalTime"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginLeft="16dp"
+      android:gravity="center_vertical"
+      android:textSize="16dp"
+      android:textColor="#444"
+      android:text="00:41:27"
+      android:layout_toRightOf="@+id/textTotalSize"
+    />
+    <TextView
+      android:id="@+id/textVolumeLevel"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:gravity="center_vertical"
+      android:textSize="16dp"
+      android:textColor="#444"
+      android:text="63%"
+      android:layout_alignParentRight="true"
+    />
+  </RelativeLayout>
+</LinearLayout>
+  
+</merge>
