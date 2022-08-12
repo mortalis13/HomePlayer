@@ -18,8 +18,6 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
@@ -59,10 +57,6 @@ public class Fun {
     return filePath != null && new File(filePath).exists();
   }
   
-  public static String getParentFolder(String filePath) {
-    return new File(filePath).getParentFile().getAbsolutePath();
-  }
-  
   public static boolean removeFile(String filePath) {
     try {
       return new File(filePath).delete();
@@ -72,14 +66,6 @@ public class Fun {
     }
     
     return false;
-  }
-  
-  public static String getBaseFileName(String filePath) {
-    return FilenameUtils.getBaseName(filePath);
-  }
-  
-  public static String getFileExt(String filePath) {
-    return FilenameUtils.getExtension(filePath);
   }
   
   

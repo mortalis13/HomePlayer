@@ -6,14 +6,14 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 
 import org.mortalis.homeplayer.R;
 
 
-public class SimplePaintView extends ImageView {
+public class SimplePaintView extends AppCompatImageView {
   
   private Paint canvasPaint;
   

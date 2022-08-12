@@ -64,12 +64,7 @@ public class MainActivity extends AppCompatActivity {
   private FilesAdapter filesAdapter;
   private LinearLayoutManager listLayoutManager;
   private List<ListItem> fileList;
-  private List<AudioInfo> dirAudioData;
-  private List<AudioInfo> playingDirAudioData;
-  
   private File currentPath;
-  private File previouslyPlayedFile;
-  private int scrollPos;
   
   private File[] playingList;
   private String lastFolder;
@@ -350,9 +345,7 @@ public class MainActivity extends AppCompatActivity {
     textPlayingPosition.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
     
-    activeTitle.setOnClickListener(v -> {
-      changeToParentDir();
-    });
+    activeTitle.setOnClickListener(v -> changeToParentDir());
     
     progressSlider.setProgressChangeListener(new SliderView.ProgressChangeListener() {
       public void onChanging(int value) {
@@ -368,18 +361,9 @@ public class MainActivity extends AppCompatActivity {
     });
     
     
-    panelInfoLeft.setOnClickListener(v -> {
-      toggleExtraControlPanel();
-    });
-    
-    panelInfoCenter.setOnClickListener(v -> {
-      toggleExtraInfoPanel();
-    });
-    
-    panelInfoRight.setOnClickListener(v -> {
-      changeToPlayingDir();
-    });
-    
+    panelInfoLeft.setOnClickListener(v -> toggleExtraControlPanel());
+    panelInfoCenter.setOnClickListener(v -> toggleExtraInfoPanel());
+    panelInfoRight.setOnClickListener(v -> changeToPlayingDir());
     
     bShuffle.setOnClickListener(v -> {
       v.setSelected(!v.isSelected());
@@ -392,25 +376,11 @@ public class MainActivity extends AppCompatActivity {
     });
     
     
-    bPrevFile.setOnClickListener(v -> {
-      playPrevFileAction();
-    });
-    
-    bPlayPause.setOnClickListener(v -> {
-      playPauseAction();
-    });
-    
-    bNextFile.setOnClickListener(v -> {
-      playNextFileAction();
-    });
-    
-    bFastRewind.setOnClickListener(v -> {
-      fastRewindAction();
-    });
-    
-    bFastForward.setOnClickListener(v -> {
-      fastForwardAction();
-    });
+    bPrevFile.setOnClickListener(v -> playPrevFileAction());
+    bPlayPause.setOnClickListener(v -> playPauseAction());
+    bNextFile.setOnClickListener(v -> playNextFileAction());
+    bFastRewind.setOnClickListener(v -> fastRewindAction());
+    bFastForward.setOnClickListener(v -> fastForwardAction());
     
     extraInfoPanel.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
@@ -594,7 +564,7 @@ public class MainActivity extends AppCompatActivity {
     File file = getPrevFile(currentFile);
     
     if (file != null) {
-      Fun.log("Previous file: " + file.toString());
+      Fun.log("Previous file: " + file);
       playAudio(file.getPath(), startPlayback);
     }
     else {
@@ -1245,7 +1215,7 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onRestart() {
     Fun.logd("MainActivity.onRestart()");
-    super.onStop();
+    super.onRestart();
   }
   // --------------------
   
