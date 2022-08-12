@@ -92,6 +92,7 @@ import org.mortalis.homeplayer.components.SimplePaintView;
 public class MainActivity extends AppCompatActivity {
 
   private static final String ROOT_DIR_TITLE = "storage";
+  private static final String VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION";
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
   private static final File START_DIR = new File(Environment.getExternalStorageDirectory(), "_music");
   
@@ -128,6 +129,9 @@ public class MainActivity extends AppCompatActivity {
   private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
   private Queue<Integer> itemsQueue = new ArrayDeque<>(50);
   
+  private AudioManager audioManager;
+  private VolumeReceiver volumeReceiver = new VolumeReceiver();
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -139,8 +143,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTimePlaying;
   private TextView textTimeTotal;
   
-  private TextView textCurrentFolderTime;
-  private TextView textPlayingStats;
+  private TextView textCurrentFileSize;
+  private TextView textPlayingPosition;
   private TextView textPlayingFolderTime;
   
   private ImageButton bPrevFile;
@@ -171,6 +175,11 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraChannels;
   private TextView textExtraSize;
   private TextView textExtraPath;
+  
+  private TextView textTotalFiles;
+  private TextView textTotalSize;
+  private TextView textTotalTime;
+  private TextView textVolumeLevel;
   
 
   @Override
@@ -217,6 +226,8 @@ public class MainActivity extends AppCompatActivity {
       Intent playerIntent = new Intent(this, PlayerService.class);
       playerService.stopService(playerIntent);
     }
+    
+    unregisterReceiver(volumeReceiver);
   }
   
   @Override
@@ -254,6 +265,8 @@ public class MainActivity extends AppCompatActivity {
   
   private void init() {
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
+    audioManager = context.getSystemService(AudioManager.class);
+    registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
     
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName className, IBinder service) {
@@ -298,8 +311,8 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft = findViewById(R.id.textTimeLeft);
     textTimeTotal = findViewById(R.id.textTimeTotal);
     
-    textCurrentFolderTime = findViewById(R.id.textCurrentFolderTime);
-    textPlayingStats = findViewById(R.id.textPlayingStats);
+    textCurrentFileSize = findViewById(R.id.textCurrentFileSize);
+    textPlayingPosition = findViewById(R.id.textPlayingPosition);
     textPlayingFolderTime = findViewById(R.id.textPlayingFolderTime);
     
     panelInfoLeft = findViewById(R.id.panelInfoLeft);
@@ -331,6 +344,11 @@ public class MainActivity extends AppCompatActivity {
     
     playExtraIconShuffle = findViewById(R.id.playExtraIconShuffle);
     playExtraIconRepeat = findViewById(R.id.playExtraIconRepeat);
+    
+    textTotalFiles = findViewById(R.id.textTotalFiles);
+    textTotalSize = findViewById(R.id.textTotalSize);
+    textTotalTime = findViewById(R.id.textTotalTime);
+    textVolumeLevel = findViewById(R.id.textVolumeLevel);
     
     
     titleScroller.setSmoothScrollingEnabled(false);
@@ -369,8 +387,8 @@ public class MainActivity extends AppCompatActivity {
     textTimePlaying.setTypeface(typeface);
     textTimeLeft.setTypeface(typeface);
     textTimeTotal.setTypeface(typeface);
-    textCurrentFolderTime.setTypeface(typeface);
-    textPlayingStats.setTypeface(typeface);
+    textCurrentFileSize.setTypeface(typeface);
+    textPlayingPosition.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
     
     activeTitle.setOnClickListener(v -> {
@@ -450,6 +468,8 @@ public class MainActivity extends AppCompatActivity {
         hideExtraInfoPanel(true);
       }
     });
+    
+    updateVolumeLevel();
   }
   
   private void restoreState() {
@@ -650,6 +670,13 @@ public class MainActivity extends AppCompatActivity {
     activeTitle.setText(title);
     
     titleScroller.fullScroll(View.FOCUS_LEFT);
+    
+    textTotalFiles.setText(String.valueOf(fileList.size()));
+    
+    long totalSize = Stream.of(files)
+      .mapToLong(file -> file.length())
+      .reduce(0, (total, size) -> total + size);
+    textTotalSize.setText(Fun.formatSize(totalSize));
     
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -947,8 +974,11 @@ public class MainActivity extends AppCompatActivity {
 
     if (playingItemPos != -1) {
       String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
-      textPlayingStats.setText(stats);
+      textPlayingPosition.setText(stats);
     }
+    
+    String fileSize = Fun.formatSize(playingFile.length());
+    textCurrentFileSize.setText(fileSize);
   }
   
   private void updatePlayingTime(int playingPos, int totalTime) {
@@ -1100,11 +1130,20 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void resetCurrentDirTime() {
-    textCurrentFolderTime.setText("00:00:00");
+    textTotalTime.setText("00:00:00");
   }
   
   private void resetPlayingDirTime() {
     textPlayingFolderTime.setText("00:00:00");
+  }
+  
+  private void updateVolumeLevel() {
+    int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    float volumePercent = (float) volume / maxVolume * 100;
+   
+    String volumeLevel = String.format("%d%%", (int) volumePercent);
+    textVolumeLevel.setText(volumeLevel);
   }
   
 
@@ -1151,9 +1190,8 @@ public class MainActivity extends AppCompatActivity {
     
     protected void onPostExecute(Void result) {
       String folderTime = Fun.formatTime(totalTime / 1000, true);
-      Fun.log(String.format("Total time for dir '%s': %s", new File(this.items.get(0).path).getParent(), folderTime));
+      textTotalTime.setText(folderTime);
       
-      textCurrentFolderTime.setText(folderTime);
       if (updatePlayingDir) {
         textPlayingFolderTime.setText(folderTime);
       }
@@ -1218,6 +1256,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostExecute(Void result) {
       itemsQueue.clear();
       filesAdapter.notifyDataSetChanged();
+    }
+  }
+  
+  
+  private class VolumeReceiver extends BroadcastReceiver {
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(VOLUME_CHANGED_ACTION)) {
+        Fun.log("Volume changed");
+        updateVolumeLevel();
+      }
     }
   }
   
