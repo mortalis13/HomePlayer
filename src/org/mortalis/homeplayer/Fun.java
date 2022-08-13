@@ -68,6 +68,47 @@ public class Fun {
     return false;
   }
   
+  public static String getPrevFilePath(File file) {
+    file = getPrevFile(file);
+    return file != null ? file.getPath(): null;
+  }
+  
+  public static String getNextFilePath(File file) {
+    file = getNextFile(file);
+    return file != null ? file.getPath(): null;
+  }
+  
+  public static File getPrevFile(File file) {
+    return getPrevNextFile(file, false);
+  }
+  
+  public static File getNextFile(File file) {
+    return getPrevNextFile(file, true);
+  }
+  
+  private static File getPrevNextFile(File file, boolean next) {
+    File parent = file.getParentFile();
+    if (!parent.exists()) {
+      Fun.loge("The parent does not exist for file " + file);
+      return null;
+    }
+    
+    File[] files = parent.listFiles(fileFilter);
+    Arrays.sort(files, nocaseComp);
+    
+    int len = files.length;
+    for (int i = 0; i < len; i++) {
+      if (files[i].equals(file)) {
+        if (next) {
+          return files[i == len-1 ? 0: i+1];
+        }
+        return file = files[i == 0 ? len-1: i-1];
+      }
+    }
+    
+    return null;
+  }
+  
   
   public static String formatTime(int time, boolean includeHours) {  // time in s
     int _time  = time < 0 ? -time: time;

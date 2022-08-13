@@ -385,12 +385,12 @@ public class MainActivity extends AppCompatActivity {
     extraInfoPanel.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
         if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          showExtraAudioInfo(getNextFile(currentExtraInfo.file).getPath());
+          showExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
         }
       }
       public void onSwipeRight() {
         if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          showExtraAudioInfo(getPrevFile(currentExtraInfo.file).getPath());
+          showExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
         }
       }
       public void onSwipeUp() {
@@ -544,7 +544,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     if (file == null) {
-      file = getNextFile(currentFile);
+      file = getNextPlaylistFile(currentFile);
     }
     
     if (file != null) {
@@ -561,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
     if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
-    File file = getPrevFile(currentFile);
+    File file = getPrevPlaylistFile(currentFile);
     
     if (file != null) {
       Fun.log("Previous file: " + file);
@@ -707,32 +707,22 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Audio Utils ------------------------------
-  private File getPrevFile(File file) {
+  private File getPrevPlaylistFile(File file) {
     return getPrevNextFile(file, false);
   }
   
-  private File getNextFile(File file) {
+  private File getNextPlaylistFile(File file) {
     return getPrevNextFile(file, true);
   }
   
   private File getPrevNextFile(File file, boolean next) {
-    File parent = file.getParentFile();
-    if (!parent.exists()) {
-      Fun.loge("The parent does not exist for file " + file);
-      return null;
-    }
-    
     int len = playingList.length;
     for (int i = 0; i < len; i++) {
-      if (playingList[i].getName().equals(file.getName())) {
+      if (playingList[i].equals(file)) {
         if (next) {
-          file = playingList[i == len-1 ? 0: i+1];
+          return playingList[i == len-1 ? 0: i+1];
         }
-        else {
-          file = playingList[i == 0 ? len-1: i-1];
-        }
-        
-        return file;
+        return file = playingList[i == 0 ? len-1: i-1];
       }
     }
     
@@ -935,6 +925,10 @@ public class MainActivity extends AppCompatActivity {
   private void showExtraAudioInfo(String filePath) {
     Fun.logd("showExtraAudioInfo()");
     
+    if (filePath == null) {
+      Fun.loge("filePath is null");
+      return;
+    }
     if (!Fun.fileExists(filePath)) {
       Fun.loge("File doesn't exist: " + filePath);
       return;
