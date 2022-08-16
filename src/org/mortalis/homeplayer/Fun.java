@@ -89,7 +89,7 @@ public class Fun {
   private static File getPrevNextFile(File file, boolean next) {
     File parent = file.getParentFile();
     if (!parent.exists()) {
-      Fun.loge("The parent does not exist for file " + file);
+      loge("The parent does not exist for file " + file);
       return null;
     }
     

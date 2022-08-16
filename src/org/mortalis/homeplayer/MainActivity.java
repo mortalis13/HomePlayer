@@ -37,6 +37,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.mortalis.homeplayer.components.SliderView;
 
+import static org.mortalis.homeplayer.Fun.log;
+import static org.mortalis.homeplayer.Fun.logd;
+import static org.mortalis.homeplayer.Fun.loge;
+import static org.mortalis.homeplayer.Fun.logw;
+
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -140,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    Fun.logd("MainActivity.onCreate()");
+    logd("MainActivity.onCreate()");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     
@@ -159,20 +164,20 @@ public class MainActivity extends AppCompatActivity {
   
   @Override
   protected void onStart() {
-    Fun.logd("MainActivity.onStart()");
+    logd("MainActivity.onStart()");
     super.onStart();
   }
   
   @Override
   protected void onResume() {
-    Fun.logd("MainActivity.onResume()");
+    logd("MainActivity.onResume()");
     super.onResume();
     bindPlayerService();
   }
   
   @Override
   protected void onDestroy() {
-    Fun.logd("MainActivity.onDestroy()");
+    logd("MainActivity.onDestroy()");
     super.onDestroy();
 
     if (serviceBound) {
@@ -195,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
   // -----------------------------------------------------------
   private void bindPlayerService() {
     if (serviceBound) return;
-    Fun.log("Binding PlayerService");
+    log("Binding PlayerService");
     Intent intent = new Intent(this, PlayerService.class);
     bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
   }
@@ -243,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
         serviceBound = true;
         
         if (lastAudio != null) {
-          Fun.log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
+          log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
           preloadAudio(lastAudio, lastAudioTime);
         }
       }
@@ -322,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
         itemsQueue.add(position);
       }
       else {
-        Fun.logw("itemsQueue already contains pos " + position);
+        logw("itemsQueue already contains pos " + position);
       }
     };
     
@@ -332,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
       public void onLayoutCompleted(final RecyclerView.State state) {
         // All visible items are shown and loaded
         super.onLayoutCompleted(state);
-        Fun.log("-- onLayoutCompleted");
+        log("-- onLayoutCompleted");
         if (!itemsQueue.isEmpty()) {
           new ProcessItemsQueueTask(fileList).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
@@ -407,26 +412,26 @@ public class MainActivity extends AppCompatActivity {
   private void restoreState() {
     try {
       lastFolder = Fun.getSharedPref(context, "PREF_LAST_FOLDER");
-      Fun.log("PREF lastFolder: " + lastFolder);
+      log("PREF lastFolder: " + lastFolder);
       
       lastAudio = Fun.getSharedPref(context, "PREF_LAST_AUDIO");
-      Fun.log("PREF lastAudio: " + lastAudio);
+      log("PREF lastAudio: " + lastAudio);
       
       lastAudioTime = Fun.getSharedPrefInt(context, "PREF_LAST_AUDIO_TIME");
       if (lastAudioTime == -1) lastAudioTime = 0;
-      Fun.log("PREF lastAudioTime: " + lastAudioTime);
+      log("PREF lastAudioTime: " + lastAudioTime);
       
       favoritesList = Fun.getSharedPrefList(context, "PREF_FAVORITES_LIST");
-      // Fun.log("PREF favoritesList: " + favoritesList);
+      // log("PREF favoritesList: " + favoritesList);
       cleanFavorites();
       
       playbackRepeat = Fun.getSharedPrefBool(context, "PLAYBACK_REPEAT");
-      Fun.log("PREF playbackRepeat: " + playbackRepeat);
+      log("PREF playbackRepeat: " + playbackRepeat);
       bRepeat.setSelected(playbackRepeat);
       playExtraIconRepeat.setVisibility(playbackRepeat ? View.VISIBLE: View.GONE);
       
       playbackShuffle = Fun.getSharedPrefBool(context, "PLAYBACK_SHUFFLE");
-      Fun.log("PREF playbackShuffle: " + playbackShuffle);
+      log("PREF playbackShuffle: " + playbackShuffle);
       bShuffle.setSelected(playbackShuffle);
       playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
     }
@@ -496,10 +501,10 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
-    Fun.logd("playAudio()");
+    logd("playAudio()");
     File playingFile = new File(filePath);
     if (!playingFile.exists()) {
-      Fun.loge("The file does not exist: " + filePath);
+      loge("The file does not exist: " + filePath);
       return;
     }
     
@@ -532,12 +537,12 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void preloadAudio(String filePath, int time) {
-    Fun.logd("preloadAudio()");
+    logd("preloadAudio()");
     playAudio(filePath, time, false);
   }
   
   private void playNextFile(boolean startPlayback) {
-    Fun.logd("playNextFile()");
+    logd("playNextFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
@@ -551,34 +556,34 @@ public class MainActivity extends AppCompatActivity {
     }
     
     if (file != null) {
-      Fun.log("Next file: " + file);
+      log("Next file: " + file);
       playAudio(file.getPath(), startPlayback);
     }
     else {
-      Fun.loge("Next file is null");
+      loge("Next file is null");
     }
   }
   
   private void playPrevFile(boolean startPlayback) {
-    Fun.logd("playPrevFile()");
+    logd("playPrevFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
     File file = getPrevPlaylistFile(currentFile);
     
     if (file != null) {
-      Fun.log("Previous file: " + file);
+      log("Previous file: " + file);
       playAudio(file.getPath(), startPlayback);
     }
     else {
-      Fun.loge("Previous file is null");
+      loge("Previous file is null");
     }
   }
   
   
   // ------------------------------ Navigation ------------------------------
   private void changeDir(File path) {
-    Fun.logd("changeDir(): " + path);
+    logd("changeDir(): " + path);
     if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.cancel(true);
     
     fileList.clear();
@@ -627,7 +632,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void changeToParentDir() {
     if (currentPath.equals(ROOT_STORAGE)) {
-      Fun.log("In the root folder, cannot go to parent");
+      log("In the root folder, cannot go to parent");
       return;
     }
     
@@ -641,7 +646,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void changeToPlayingDir() {
-    Fun.logd("changeToPlayingDir()");
+    logd("changeToPlayingDir()");
     if (playerService == null || !playerService.hasAudio()) return;
     File currentFile = new File(playerService.getAudioPath());
     
@@ -664,7 +669,7 @@ public class MainActivity extends AppCompatActivity {
     String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
     int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
 
-    Fun.log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFile, lastTime));
+    log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFile, lastTime));
     filesAdapter.markLastPlayedItem(lastFile);
   }
   
@@ -755,11 +760,11 @@ public class MainActivity extends AppCompatActivity {
     int playingItemPos = filesAdapter.getPositionForSubpath(playerService.getAudioPath());
     
     if (playingItemPos != -1) {
-      Fun.log("Selecting playing folder or file: " + fileList.get(playingItemPos));
+      log("Selecting playing folder or file: " + fileList.get(playingItemPos));
       filesAdapter.selectItem(playingItemPos);
     }
     else {
-      Fun.loge("Playing file or folder position is -1");
+      loge("Playing file or folder position is -1");
     }
   }
   
@@ -789,14 +794,14 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void generateShuffleList(File audioFile) {
-    Fun.logd("generateShuffleList(): " + audioFile);
+    logd("generateShuffleList(): " + audioFile);
     shuffleList = new ArrayList<>(Arrays.asList(playingList));
     removeFromShuffleList(audioFile);
   }
   
   private void removeFromShuffleList(File audioFile) {
     if (!playbackShuffle) return;
-    Fun.logd("removeFromShuffleList(): " + audioFile);
+    logd("removeFromShuffleList(): " + audioFile);
     if (shuffleList == null) return;
 
     shuffleList.remove(audioFile);
@@ -804,7 +809,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateShuffleList(File audioFile) {
     if (!playbackShuffle) return;
-    Fun.logd("updateShuffleList(): " + audioFile);
+    logd("updateShuffleList(): " + audioFile);
     
     String currentAudioPath = playerService.getAudioPath();
     if (currentAudioPath == null || !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
@@ -843,7 +848,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void processPlayingDirChange(File newAudioFile) {
-    Fun.logd("processPlayingDirChange(): " + newAudioFile);
+    logd("processPlayingDirChange(): " + newAudioFile);
     
     if (playerService.hasAudio()) {
       var currentAudio = new File(playerService.getAudioPath());
@@ -851,9 +856,9 @@ public class MainActivity extends AppCompatActivity {
       var isDirectoryChanged = !newAudioFile.getParent().equals(currentAudioParent);
       
       if (isDirectoryChanged) {
-        Fun.log("Directory changed");
+        log("Directory changed");
         Fun.saveSharedPref(context, "TIME_" + currentAudioParent, lastAudioTime);
-        Fun.log(String.format("Saved %d time to TIME_%s", lastAudioTime, currentAudioParent));
+        log(String.format("Saved %d time to TIME_%s", lastAudioTime, currentAudioParent));
         
         cachePlayingList(newAudioFile);
         resetPlayingDirTime();
@@ -930,14 +935,14 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void showExtraAudioInfo(String filePath) {
-    Fun.logd("showExtraAudioInfo()");
+    logd("showExtraAudioInfo()");
     
     if (filePath == null) {
-      Fun.loge("filePath is null");
+      loge("filePath is null");
       return;
     }
     if (!Fun.fileExists(filePath)) {
-      Fun.loge("File doesn't exist: " + filePath);
+      loge("File doesn't exist: " + filePath);
       return;
     }
     
@@ -986,7 +991,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void exitApp() {
-    Fun.logd("exitApp()");
+    logd("exitApp()");
     finishAndRemoveTask();
   }
   
@@ -1110,7 +1115,7 @@ public class MainActivity extends AppCompatActivity {
         item.time = Fun.formatTime(time / 1000, false);
         
         if (isCancelled()) {
-          Fun.logw("Task is cancelled: " + this);
+          logw("Task is cancelled: " + this);
           break;
         }
       }
@@ -1145,7 +1150,7 @@ public class MainActivity extends AppCompatActivity {
         totalTime += time;
         
         if (isCancelled()) {
-          Fun.logw("Task is cancelled: " + this);
+          logw("Task is cancelled: " + this);
           break;
         }
       }
@@ -1193,7 +1198,7 @@ public class MainActivity extends AppCompatActivity {
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(VOLUME_CHANGED_ACTION) && intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC) {
-        Fun.log("Volume changed");
+        log("Volume changed");
         updateVolumeLevel();
       }
     }
@@ -1203,19 +1208,19 @@ public class MainActivity extends AppCompatActivity {
   // --------------------
   @Override
   protected void onPause() {
-    Fun.logd("MainActivity.onPause()");
+    logd("MainActivity.onPause()");
     super.onPause();
   }
   
   @Override
   protected void onStop() {
-    Fun.logd("MainActivity.onStop()");
+    logd("MainActivity.onStop()");
     super.onStop();
   }
   
   @Override
   protected void onRestart() {
-    Fun.logd("MainActivity.onRestart()");
+    logd("MainActivity.onRestart()");
     super.onRestart();
   }
   // --------------------

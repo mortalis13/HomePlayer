@@ -25,6 +25,10 @@ import org.mortalis.homeplayer.actions.Action;
 import org.mortalis.homeplayer.actions.DoubleAction;
 import org.mortalis.homeplayer.actions.SimpleAction;
 
+import static org.mortalis.homeplayer.Fun.log;
+import static org.mortalis.homeplayer.Fun.logd;
+import static org.mortalis.homeplayer.Fun.loge;
+
 import java.io.File;
 
 
@@ -76,7 +80,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   @Override
   public void onCreate() {
-    Fun.logd("PlayerService.onCreate()");
+    logd("PlayerService.onCreate()");
     super.onCreate();
     
     init();
@@ -84,10 +88,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    Fun.logd("PlayerService.onStartCommand()");
+    logd("PlayerService.onStartCommand()");
     
     if (intent == null) {
-      Fun.loge("intent is null");
+      loge("intent is null");
       return START_STICKY;
     }
     
@@ -119,7 +123,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   @Override
   public void onDestroy() {
-    Fun.logd("PlayerService.onDestroy()");
+    logd("PlayerService.onDestroy()");
     super.onDestroy();
     
     unregisterReceiver(playerServiceReceiver);
@@ -130,13 +134,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   @Override
   public IBinder onBind(Intent intent) {
-    Fun.logd("PlayerService.onBind()");
+    logd("PlayerService.onBind()");
     return binder;
   }
   
   @Override
   public boolean onUnbind(Intent intent) {
-    Fun.logd("PlayerService.onUnbind()");
+    logd("PlayerService.onUnbind()");
     stopForeground(true);
     stopSelf();
     return super.onUnbind(intent);
@@ -144,7 +148,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   
   @Override
   public void onRebind(Intent intent) {
-    Fun.logd("PlayerService.onRebind()");
+    logd("PlayerService.onRebind()");
   }
   
   
@@ -215,13 +219,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private void play() {
     boolean audioFocusGranted = requestAudioFocus();
     if (!audioFocusGranted) {
-      Fun.loge("Audio focus is not granted");
+      loge("Audio focus is not granted");
       return;
     }
     
     mediaPlayer.start();
     updateNotification(ACTION_PAUSE_ID);
-    Fun.log("Playback started");
+    log("Playback started");
   }
   
   public void resume() {
@@ -241,14 +245,14 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     mediaPlayer.stop();
     mediaPlayer.reset();
     updateNotification(ACTION_PLAY_ID);
-    Fun.log("Playback stopped");
+    log("Playback stopped");
   }
   
   public void pause() {
     mediaPlayer.pause();
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
-    Fun.log("Playback paused");
+    log("Playback paused");
   }
   
   public void fastRewind(int s) {
@@ -273,7 +277,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private void startAudio(String audioPath) {
-    Fun.logd("startAudio()");
+    logd("startAudio()");
     
     try {
       if (Fun.fileExists(audioPath)) {
@@ -288,7 +292,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private void startProgress() {
-    Fun.logd("startProgress()");
+    logd("startProgress()");
     progressHandler.removeCallbacks(progressRunnable);
     
     progressRunnable = new Runnable() {
@@ -317,7 +321,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
     
-    Fun.log("Audio focus request: " + result);
+    log("Audio focus request: " + result);
     return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
   }
 
@@ -326,7 +330,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   private Notification buildPlayerNotification() {
-    Fun.logd("buildPlayerNotification()");
+    logd("buildPlayerNotification()");
     
     String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
     
@@ -448,10 +452,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> MediaPlayer.OnPreparedListener
   @Override
   public void onPrepared(MediaPlayer player) {
-    Fun.logd("MediaPlayer.onPrepared()");
+    logd("MediaPlayer.onPrepared()");
     
     if (audioTime > 0) {
-      Fun.log("Seeking to time: " + audioTime);
+      log("Seeking to time: " + audioTime);
       changePlayPosition(audioTime);
     }
     
@@ -476,7 +480,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> MediaPlayer.OnCompletionListener
   @Override
   public void onCompletion(MediaPlayer player) {
-    Fun.logd("MediaPlayer.onCompletion()");
+    logd("MediaPlayer.onCompletion()");
     stop();
     playerLoaded = false;
     stopSelf();
@@ -487,7 +491,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> MediaPlayer.OnErrorListener
   @Override
   public boolean onError(MediaPlayer player, int what, int extra) {
-    Fun.logd("MediaPlayer.onError(): " + what + "; " + extra);
+    logd("MediaPlayer.onError(): " + what + "; " + extra);
     return true;
   }
   
@@ -495,25 +499,25 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> AudioManager.OnAudioFocusChangeListener
   @Override
   public void onAudioFocusChange(int focusChange) {
-    Fun.logd("onAudioFocusChange()");
+    logd("onAudioFocusChange()");
     
     switch (focusChange) {
       case AudioManager.AUDIOFOCUS_GAIN:
-        Fun.log("AUDIOFOCUS_GAIN");
+        log("AUDIOFOCUS_GAIN");
         break;
       
       case AudioManager.AUDIOFOCUS_LOSS:
-        Fun.log("AUDIOFOCUS_LOSS");
+        log("AUDIOFOCUS_LOSS");
         pause();
         break;
       
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-        Fun.log("AUDIOFOCUS_LOSS_TRANSIENT");
+        log("AUDIOFOCUS_LOSS_TRANSIENT");
         pause();
         break;
       
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-        Fun.log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+        log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
         pause();
         break;
     }
@@ -530,13 +534,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
       if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
-        Fun.log("Headphones unplugged");
+        log("Headphones unplugged");
         pause();
       }
       else if (action.equals(AudioManager.ACTION_HEADSET_PLUG)) {
         int state = intent.getIntExtra("state", 0);
         if (state == 1) {
-          Fun.log("Headphones plugged");
+          log("Headphones plugged");
         }
         onHeadphonesPlugAction.execute(state);
       }
