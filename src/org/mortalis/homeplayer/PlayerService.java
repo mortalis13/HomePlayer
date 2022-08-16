@@ -45,7 +45,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
   private AudioFocusRequest focusRequest;
-  private HeadphonesUnpluggedReceiver headphonesUnpluggedReceiver = new HeadphonesUnpluggedReceiver();
+  private HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();
   
   private NotificationManagerCompat notificationManager;
   private NotificationCompat.Builder notifBuilder;
@@ -72,6 +72,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public SimpleAction onPlayerPausedAction;
   public SimpleAction onPlayerResumedAction;
   public SimpleAction onPlayerStoppedAction;
+  public Action<Integer> onHeadphonesPlugAction = (state) -> {};
   
   @Override
   public void onCreate() {
@@ -122,7 +123,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     super.onDestroy();
     
     unregisterReceiver(playerServiceReceiver);
-    unregisterReceiver(headphonesUnpluggedReceiver);
+    unregisterReceiver(headphonesPlugReceiver);
     removeAudioFocus();
     if (mediaPlayer != null) mediaPlayer.release();
   }
@@ -179,13 +180,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       }
     });
     
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(ACTION_PLAY);
-    filter.addAction(ACTION_PAUSE);
-    filter.addAction(ACTION_EXIT);
-    registerReceiver(playerServiceReceiver, filter);
+    IntentFilter serviceFilter = new IntentFilter();
+    serviceFilter.addAction(ACTION_PLAY);
+    serviceFilter.addAction(ACTION_PAUSE);
+    serviceFilter.addAction(ACTION_EXIT);
+    registerReceiver(playerServiceReceiver, serviceFilter);
     
-    registerReceiver(headphonesUnpluggedReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+    IntentFilter headphonesFilter = new IntentFilter();
+    headphonesFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+    headphonesFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
+    registerReceiver(headphonesPlugReceiver, headphonesFilter);
     
     notificationManager = NotificationManagerCompat.from(this);
     
@@ -522,11 +526,19 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     }
   }
   
-  private class HeadphonesUnpluggedReceiver extends BroadcastReceiver {
+  private class HeadphonesPlugReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
-      if (intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+      String action = intent.getAction();
+      if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
         Fun.log("Headphones unplugged");
         pause();
+      }
+      else if (action.equals(AudioManager.ACTION_HEADSET_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        if (state == 1) {
+          Fun.log("Headphones plugged");
+        }
+        onHeadphonesPlugAction.execute(state);
       }
     }
   }

@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
   private static final String ROOT_DIR_TITLE = "storage";
   private static final String VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION";
+  private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
+  
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
   private static final File START_DIR = new File(Environment.getExternalStorageDirectory(), "_music");
   
@@ -236,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.onPlayerPausedAction = () -> onPlayerPaused();
         playerService.onPlayerResumedAction = () -> onPlayerResumed();
         playerService.onPlayerStoppedAction = () -> onPlayerStopped();
+        playerService.onHeadphonesPlugAction = (state) -> onHeadphonesPlug(state);
         
         serviceBound = true;
         
@@ -703,6 +706,10 @@ public class MainActivity extends AppCompatActivity {
     else {
       playNextFile(true);
     }
+  }
+  
+  private void onHeadphonesPlug(int state) {
+    updateVolumeLevel();
   }
   
   
@@ -1185,7 +1192,7 @@ public class MainActivity extends AppCompatActivity {
   
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
-      if (intent.getAction().equals(VOLUME_CHANGED_ACTION)) {
+      if (intent.getAction().equals(VOLUME_CHANGED_ACTION) && intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC) {
         Fun.log("Volume changed");
         updateVolumeLevel();
       }
