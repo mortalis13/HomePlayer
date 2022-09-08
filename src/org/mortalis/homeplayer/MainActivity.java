@@ -633,6 +633,7 @@ public class MainActivity extends AppCompatActivity {
   private void changeToParentDir() {
     if (currentPath.equals(ROOT_STORAGE)) {
       log("In the root folder, cannot go to parent");
+      listLayoutManager.scrollToPositionWithOffset(0, 0);
       return;
     }
     
