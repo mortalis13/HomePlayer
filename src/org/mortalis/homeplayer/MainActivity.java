@@ -508,9 +508,8 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    updateShuffleList(playingFile);
-    
     processPlayingDirChange(playingFile);
+    updateShuffleList(playingFile);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
@@ -669,8 +668,10 @@ public class MainActivity extends AppCompatActivity {
   private void markLastPlayedFile(File dir) {
     String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
     int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
+    
+    String lastFileName = lastFile != null ? new File(lastFile).getName() : null;
 
-    log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFile, lastTime));
+    log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFileName, lastTime));
     filesAdapter.markLastPlayedItem(lastFile);
   }
   
@@ -743,6 +744,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private File getNextRandomFile(File file) {
+    logd("getNextRandomFile(): " + file);
+    
     if (shuffleList == null || shuffleList.size() == 0) {
       generateShuffleList(file);
     }
@@ -761,7 +764,7 @@ public class MainActivity extends AppCompatActivity {
     int playingItemPos = filesAdapter.getPositionForSubpath(playerService.getAudioPath());
     
     if (playingItemPos != -1) {
-      log("Selecting playing folder or file: " + fileList.get(playingItemPos));
+      log("Selecting playing folder or file: " + fileList.get(playingItemPos).path);
       filesAdapter.selectItem(playingItemPos);
     }
     else {
@@ -796,6 +799,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void generateShuffleList(File audioFile) {
     logd("generateShuffleList(): " + audioFile);
+    if (playingList == null) return;
     shuffleList = new ArrayList<>(Arrays.asList(playingList));
     removeFromShuffleList(audioFile);
   }
@@ -821,6 +825,7 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Utils ------------------------------
   private void cachePlayingList(File file) {
+    logd("cachePlayingList(): " + file);
     playingList = file.getParentFile().listFiles(Fun.fileFilter);
     Arrays.sort(playingList, Fun.nocaseComp);
   }
@@ -859,7 +864,7 @@ public class MainActivity extends AppCompatActivity {
       if (isDirectoryChanged) {
         log("Directory changed");
         Fun.saveSharedPref(context, "TIME_" + currentAudioParent, lastAudioTime);
-        log(String.format("Saved %d time to TIME_%s", lastAudioTime, currentAudioParent));
+        log(String.format("Saved %d to TIME_%s", lastAudioTime, currentAudioParent));
         
         cachePlayingList(newAudioFile);
         resetPlayingDirTime();
