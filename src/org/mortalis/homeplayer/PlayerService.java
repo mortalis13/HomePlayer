@@ -272,10 +272,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   
-  public void restartAudio() {
-    startAudio(audioPath);
-  }
-  
   private void startAudio(String audioPath) {
     logd("startAudio()");
     
@@ -444,8 +440,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     return playerLoaded;
   }
   
+  public boolean hasProgress() {
+    return mediaPlayer != null && mediaPlayer.getCurrentPosition() != 0;
+  }
+  
   public String getAudioPath() {
     return audioPath;
+  }
+  
+  public void resetService() {
+    playerLoaded = false;
   }
   
   

@@ -173,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
     logd("MainActivity.onResume()");
     super.onResume();
     bindPlayerService();
+    if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) playerService.resetService();
   }
   
   @Override
@@ -453,8 +454,8 @@ public class MainActivity extends AppCompatActivity {
       setPlayButtonAsPause();
     }
     else {
-      // If stopped
-      playerService.restartAudio();
+      // If stopped or service is reset, restart audio
+      playAudio(playerService.getAudioPath(), 0, true);
     }
   }
   
