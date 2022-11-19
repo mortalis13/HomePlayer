@@ -367,6 +367,10 @@ public class MainActivity extends AppCompatActivity {
         playerService.changePlayPosition(value);
         playerService.enableUpdateTime();
       }
+      public void onCancelled() {
+        if (!serviceBound) return;
+        playerService.enableUpdateTime();
+      }
     });
     
     
@@ -1003,8 +1007,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void initProgress(int time) {
+    progressSlider.reset();
     progressSlider.setMax(time);
-    progressSlider.setProgress(0);
   }
   
   private void updateProgress(int time) {

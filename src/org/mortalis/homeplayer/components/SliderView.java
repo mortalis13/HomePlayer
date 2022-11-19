@@ -10,12 +10,17 @@ import android.view.View;
 
 import androidx.core.content.ContextCompat;
 
+import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
+import static org.mortalis.homeplayer.Fun.log;
 
 
 public class SliderView extends View {
   
+  private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
+  
   private boolean sliderEnabled;
+  private boolean touchEnabled;
   
   private Paint canvasPaint;
   private Paint borderPaint;
@@ -78,6 +83,11 @@ public class SliderView extends View {
   }
   
   
+  public void reset() {
+    setProgress(0);
+    this.touchEnabled = true;
+  }
+  
   public void setMax(int value) {
     this.maxValue = value;
   }
@@ -117,23 +127,38 @@ public class SliderView extends View {
     
     int action = event.getAction();
     int x = (int) event.getX();
+    int y = (int) event.getY();
     
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
+      if (!this.touchEnabled) return true;
+      
       if (x < this.snapPosX) x = 0;
       if (x > this.canvasWidth - this.snapPosX) x = this.canvasWidth;
+      
+      // Detect if vertical offset is greater than max and reset the position
+      int outerVerticalOffset = 0;
+      if (y < 0) outerVerticalOffset = Math.abs(y);
+      if (y > this.canvasHeight) outerVerticalOffset = y - this.canvasHeight;
+      
+      if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
+        this.touchEnabled = false;
+        cancelTouch();
+        return true;
+      }
       
       int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
       setProgress(_progress);
       
-      if (this.progressChangeListener != null) {
-        this.progressChangeListener.onChanging(this.progress);
-      }
+      sendPosition(this.progress);
     }
     
     if (action == MotionEvent.ACTION_UP) {
-      if (this.progressChangeListener != null) {
-        this.progressChangeListener.onChanged(this.progress);
+      if (!this.touchEnabled) {
+        this.touchEnabled = true;
+        return true;
       }
+      
+      releaseTouch(this.progress);
     }
     
     return true;
@@ -168,6 +193,24 @@ public class SliderView extends View {
     this.sliderEnabled = false;
   }
   
+  private void cancelTouch() {
+    if (this.progressChangeListener != null) {
+      this.progressChangeListener.onCancelled();
+    }
+  }
+  
+  private void sendPosition(int position) {
+    if (this.progressChangeListener != null) {
+      this.progressChangeListener.onChanging(position);
+    }
+  }
+  
+  private void releaseTouch(int position) {
+    if (this.progressChangeListener != null) {
+      this.progressChangeListener.onChanged(position);
+    }
+  }
+  
   
   private int measureHeight(int measureSpec) {
     int size = getPaddingTop() + getPaddingBottom();
@@ -192,6 +235,7 @@ public class SliderView extends View {
   public interface ProgressChangeListener {
     public void onChanging(int value);
     public void onChanged(int value);
+    public void onCancelled();
   }
   
 }
