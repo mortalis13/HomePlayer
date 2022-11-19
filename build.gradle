@@ -11,7 +11,7 @@ buildscript {
   }
   
   dependencies {
-    classpath 'com.android.tools.build:gradle:7.2.2'
+    classpath 'com.android.tools.build:gradle:7.3.0'
   }
 }
 
@@ -28,7 +28,7 @@ android {
   compileSdkVersion 33
   
   defaultConfig {
-    applicationId "org.mortalis.homeplayer"
+    namespace "org.mortalis.homeplayer"
     vectorDrawables.useSupportLibrary = true
     
     versionCode 25
@@ -92,7 +92,7 @@ dependencies {
 }
 
 def appStart() {
-  return "adb shell am start -n ${android.defaultConfig.applicationId}/.MainActivity".split()
+  return "adb shell am start -n ${android.namespace}/.MainActivity".split()
 }
 
 task appStart(type: Exec, dependsOn: 'installDebug') {
