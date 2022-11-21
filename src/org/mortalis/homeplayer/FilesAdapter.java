@@ -54,7 +54,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   public FilesAdapter(List<ListItem> fileList, Context context) {
     this.fileList = fileList;
     
-    item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon);
+    item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon_color);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
     itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
     

@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:tint="#888"
+        android:tint="@color/list_item_icon_color"
       />
       <org.mortalis.homeplayer.components.SimplePaintView
         android:id="@+id/itemIndicator"
@@ -50,7 +50,7 @@
       android:paddingBottom="2dp"
       android:paddingRight="8dp"
       android:gravity="center_vertical"
-      android:textColor="#666"
+      android:textColor="@color/list_item_text_color"
       android:textSize="18dp"
       android:focusable="true"
     />
@@ -62,7 +62,7 @@
       android:minWidth="50dp"
       android:paddingRight="6dp"
       android:gravity="center_vertical"
-      android:textColor="#666"
+      android:textColor="@color/list_item_text_color"
       android:textSize="16dp"
       android:focusable="true"
       android:visibility="gone"
@@ -108,7 +108,7 @@
       android:layout_width="70dp"
       android:layout_height="match_parent"
       android:src="@drawable/outline_highlight_off_black_24"
-      android:tint="#555"
+      android:tint="@color/list_item_button_tint_color"
       android:background="@color/list_item_button_background_default"
       android:layout_toLeftOf="@+id/bFileInfo"
     />
@@ -117,7 +117,7 @@
       android:layout_width="70dp"
       android:layout_height="match_parent"
       android:src="@drawable/outline_info_black_24"
-      android:tint="#555"
+      android:tint="@color/list_item_button_tint_color"
       android:background="@drawable/list_item_button_background"
       android:layout_alignParentRight="true"
     />

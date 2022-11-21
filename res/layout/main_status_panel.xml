@@ -36,7 +36,7 @@
       android:layout_height="match_parent"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="#444"
+      android:textColor="@color/status_text_color"
       android:text="15"
       android:layout_alignParentLeft="true"
     />
@@ -47,7 +47,7 @@
       android:layout_marginLeft="16dp"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="#444"
+      android:textColor="@color/status_text_color"
       android:text="128.3 MB"
       android:layout_toRightOf="@+id/textTotalFiles"
     />
@@ -58,7 +58,7 @@
       android:layout_marginLeft="16dp"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="#444"
+      android:textColor="@color/status_text_color"
       android:text="00:41:27"
       android:layout_toRightOf="@+id/textTotalSize"
     />
@@ -68,7 +68,7 @@
       android:layout_height="match_parent"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="#444"
+      android:textColor="@color/status_text_color"
       android:text="63%"
       android:layout_alignParentRight="true"
     />

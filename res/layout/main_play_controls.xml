@@ -12,7 +12,7 @@
     android:layout_height="match_parent"
     android:layout_weight="1"
     android:src="@drawable/baseline_navigate_before_black_36"
-    android:tint="#777"
+    android:tint="@color/play_control_button_tint_color"
     android:background="@drawable/control_button_background"
   />
   <ImageButton
@@ -21,7 +21,7 @@
     android:layout_height="match_parent"
     android:layout_weight="1"
     android:src="@drawable/outline_fast_rewind_black_24"
-    android:tint="#777"
+    android:tint="@color/play_control_button_tint_color"
     android:background="@drawable/control_button_background"
   />
   <FrameLayout
@@ -35,7 +35,7 @@
       android:layout_width="120dp"
       android:layout_height="match_parent"
       android:src="@drawable/baseline_play_arrow_black_36"
-      android:tint="#777"
+      android:tint="@color/play_control_button_tint_color"
       android:background="@drawable/control_button_background"
     />
     <LinearLayout
@@ -55,7 +55,7 @@
           android:layout_height="16dp"
           android:layout_gravity="center"
           android:gravity="center"
-          android:tint="#788c94"
+          android:tint="@color/play_control_extra_icon_tint_color"
           android:layout_alignParentLeft="true"
           android:layout_alignParentTop="true"
           android:src="@drawable/round_shuffle_black_18"
@@ -75,7 +75,7 @@
           android:layout_height="16dp"
           android:layout_gravity="center"
           android:gravity="center"
-          android:tint="#788c94"
+          android:tint="@color/play_control_extra_icon_tint_color"
           android:layout_alignParentRight="true"
           android:layout_alignParentTop="true"
           android:src="@drawable/round_repeat_black_18"
@@ -90,7 +90,7 @@
     android:layout_height="match_parent"
     android:layout_weight="1"
     android:src="@drawable/outline_fast_forward_black_24"
-    android:tint="#777"
+    android:tint="@color/play_control_button_tint_color"
     android:background="@drawable/control_button_background"
   />
   <ImageButton
@@ -99,7 +99,7 @@
     android:layout_height="match_parent"
     android:layout_weight="1"
     android:src="@drawable/baseline_navigate_next_black_36"
-    android:tint="#777"
+    android:tint="@color/play_control_button_tint_color"
     android:background="@drawable/control_button_background"
   />
 </LinearLayout>

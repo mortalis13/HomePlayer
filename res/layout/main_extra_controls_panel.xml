@@ -12,7 +12,7 @@
     android:layout_width="60dp"
     android:layout_height="match_parent"
     android:src="@drawable/round_shuffle_black_24"
-    android:tint="#777"
+    android:tint="@color/list_item_button_tint_color"
     android:background="@drawable/secondary_toggle_button_background"
     android:layout_alignParentLeft="true"
   />
@@ -28,7 +28,7 @@
     android:layout_width="60dp"
     android:layout_height="match_parent"
     android:src="@drawable/round_repeat_black_24"
-    android:tint="#777"
+    android:tint="@color/list_item_button_tint_color"
     android:background="@drawable/secondary_toggle_button_background"
     android:layout_alignParentRight="true"
   />

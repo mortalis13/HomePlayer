@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name">Home Player</string>
-  <string name="action_settings">Settings</string>
   
   <string name="notification_channel_name">Home Player Notifications</string>
   <string name="notification_channel_description"></string>
-  
-  <string name="ic_volume_up">@drawable/ic_volume_up_black_18dp</string>
-  <string name="ic_folder">@drawable/ic_folder_black_18dp</string>
-  <string name="ic_stop">@drawable/baseline_stop_black_36</string>
 </resources>
