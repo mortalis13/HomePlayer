@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.mortalis.homeplayer.components.SliderView;
+import org.mortalis.homeplayer.components.VolumeSliderView;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -141,6 +142,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTotalSize;
   private TextView textTotalTime;
   private TextView textVolumeLevel;
+  
+  private VolumeSliderView volumeSlider;
   
 
   @Override
@@ -313,7 +316,9 @@ public class MainActivity extends AppCompatActivity {
     textTotalTime = findViewById(R.id.textTotalTime);
     textVolumeLevel = findViewById(R.id.textVolumeLevel);
     
+    volumeSlider = findViewById(R.id.volumeSlider);
     
+
     titleScroller.setSmoothScrollingEnabled(false);
     
     fileList = new ArrayList<>();
@@ -373,7 +378,6 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     
-    
     panelInfoLeft.setOnClickListener(v -> toggleExtraControlPanel());
     panelInfoCenter.setOnClickListener(v -> toggleExtraInfoPanel());
     panelInfoRight.setOnClickListener(v -> changeToPlayingDir());
@@ -411,6 +415,11 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     
+    volumeSlider.setProgressChangeListener(value -> {
+      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+    });
+    
+    volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     updateVolumeLevel();
   }
   
@@ -1090,6 +1099,8 @@ public class MainActivity extends AppCompatActivity {
    
     String volumeLevel = String.format("%d%%", (int) volumePercent);
     textVolumeLevel.setText(volumeLevel);
+    
+    volumeSlider.setProgress(volume);
   }
   
 

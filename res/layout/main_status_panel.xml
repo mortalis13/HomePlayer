@@ -9,6 +9,17 @@
 >
   <include layout="@layout/divider_horizontal_include"/>
   
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+  >
+  
+  <org.mortalis.homeplayer.components.VolumeSliderView
+    android:id="@+id/volumeSlider"
+    android:layout_width="match_parent"
+    android:layout_height="30dp"
+  />
+
   <RelativeLayout
     android:id="@+id/panelStatus"
     android:layout_width="match_parent"
@@ -17,7 +28,7 @@
     android:paddingRight="6dp"
     android:focusable="true"
     android:gravity="center_vertical"
-    android:background="@color/status_background"
+    android:background="@color/transparent"
   >
     <TextView
       android:id="@+id/textTotalFiles"
@@ -62,6 +73,8 @@
       android:layout_alignParentRight="true"
     />
   </RelativeLayout>
+  
+  </FrameLayout>
 </LinearLayout>
   
 </merge>
