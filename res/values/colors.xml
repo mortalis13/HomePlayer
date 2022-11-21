@@ -50,9 +50,10 @@
   <color name="plain_slider_border_color">#888</color>
   
   <color name="volume_slider_background_color">@color/status_background</color>
-  <color name="volume_slider_progress_color">#b4cdba</color>
-  <color name="volume_slider_progress_medium_color">#e5cba8</color>
-  <color name="volume_slider_progress_high_color">#e6b5b5</color>
+  
+  <color name="volume_slider_progress_color">#aec6b4</color>
+  <color name="volume_slider_progress_medium_color">#e2c8a6</color>
+  <color name="volume_slider_progress_high_color">#dbb1b1</color>
   <color name="volume_slider_border_color">#888</color>
   
   <color name="status_background">#ddd</color>
