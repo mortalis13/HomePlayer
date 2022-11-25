@@ -337,19 +337,19 @@ public class MainActivity extends AppCompatActivity {
       }
     };
     
-    listItems.setAdapter(filesAdapter);
-    
     listLayoutManager = new LinearLayoutManager(context) {
       public void onLayoutCompleted(final RecyclerView.State state) {
         // All visible items are shown and loaded
         super.onLayoutCompleted(state);
-        log("-- onLayoutCompleted");
         if (!itemsQueue.isEmpty()) {
           new ProcessItemsQueueTask(fileList).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
       }
     };
+    
+    listItems.setAdapter(filesAdapter);
     listItems.setLayoutManager(listLayoutManager);
+    listItems.addOnItemTouchListener(new RecyclerTouchListener(listItems));
     
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);

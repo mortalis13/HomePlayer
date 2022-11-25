@@ -17,13 +17,26 @@ public class OnSwipeTouchListener implements OnTouchListener {
   }
   
   @Override
-  public boolean onTouch(View v, MotionEvent event) {
+  public boolean onTouch(View view, MotionEvent event) {
     return gestureDetector.onTouchEvent(event);
   }
+  
+  public void processLongPress() {}
+  public void processDoubleTap() {}
+  public void onSwipeRight() {}
+  public void onSwipeLeft() {}
+  public void onSwipeUp() {}
+  public void onSwipeDown() {}
+  
   
   private final class GestureListener extends SimpleOnGestureListener {
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+    
+    @Override
+    public void onLongPress(MotionEvent e) {
+      processLongPress();
+    }
     
     @Override
     public boolean onDown(MotionEvent e) {
@@ -72,16 +85,5 @@ public class OnSwipeTouchListener implements OnTouchListener {
       return false;
     }
   }
-  
-  
-  public void processDoubleTap() {}
-  
-  public void onSwipeRight() {}
-  
-  public void onSwipeLeft() {}
-  
-  public void onSwipeUp() {}
-  
-  public void onSwipeDown() {}
   
 }
