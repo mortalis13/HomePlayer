@@ -32,12 +32,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private List<ListItem> fileList;
   private RecyclerView recyclerView;
   
-  private boolean itemLongPressed;
+  private GestureDetector gestureDetector;
+  private boolean itemSwipedLeft;
+  private boolean itemSwiping;
   
   private int lastItemSelectedPos = -1;
   private int selectedItemPos = -1;
   
-  private ItemViewHolder holderWithMenu;
+  private int holderWithMenu = -1;
   
   private int item_icon_color_default;
   private int item_icon_color_lastplayed;
@@ -56,6 +58,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon_color);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
     itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
+    
+    gestureDetector = new GestureDetector(context, new ListSwipeManager());
   }
   
   @Override
@@ -178,15 +182,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     return -1;
   }
   
-  public void hideActiveItemMenu() {
-    if (holderWithMenu != null) {
-      holderWithMenu.hideItemMenu();
-      notifyItemChanged(holderWithMenu.getBindingAdapterPosition());
-    }
-    
-    holderWithMenu = null;
-  }
-  
   
   public class ItemViewHolder extends RecyclerView.ViewHolder {
     ImageView itemIcon;
@@ -241,16 +236,19 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         hideItemMenu();
       });
       
-      itemView.setOnTouchListener((View view, MotionEvent event) -> {
+      itemView.setOnTouchListener((view, event) -> {
+        if (this.item.isFile) {
+          // Build a new event with coordinates relative to the parent list view
+          float x = event.getX();
+          float y = view.getTop() + event.getY();
+          event = MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(), x, y, event.getMetaState());
+          
+          boolean result = gestureDetector.onTouchEvent(event);
+          if (result) return true;
+        }
+        
         return processOnTouch(view, event);
       });
-    }
-    
-    public void processLongPress() {
-      if (!this.item.isFile) return;
-      itemLongPressed = true;
-      showItemMenu();
-      holderWithMenu = this;
     }
     
     private boolean processOnTouch(View view, MotionEvent event) {
@@ -263,20 +261,43 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       
       if (action == MotionEvent.ACTION_DOWN) {
         view.setPressed(true);
+        hideActiveMenu();
       }
       else if (action == MotionEvent.ACTION_CANCEL) {
         view.setPressed(false);
-        itemLongPressed = false;
+        itemSwipedLeft = false;
+        itemSwiping = false;
       }
       else if (action == MotionEvent.ACTION_UP) {
         view.setPressed(false);
-        if (!itemLongPressed) {
+        
+        if (itemSwipedLeft) {
+          showItemMenu();
+          holderWithMenu = getBindingAdapterPosition();
+        }
+        else if (!itemSwiping) {
           itemClickAction.execute(this.item);
         }
-        itemLongPressed = false;
+        
+        itemSwipedLeft = false;
+        itemSwiping = false;
       }
       
       return true;
+    }
+    
+    private void hideActiveMenu() {
+      int currentPos = getBindingAdapterPosition();
+      
+      if (holderWithMenu != -1) {
+        int pos = holderWithMenu;
+        holderWithMenu = -1;
+        hideItemMenu();
+        
+        if (pos != currentPos) {
+          notifyItemChanged(pos);
+        }
+      }
     }
     
     public void select() {
@@ -296,13 +317,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       if (itemMenuPanel.getVisibility() != View.VISIBLE) {
         itemMenuPanel.setVisibility(View.VISIBLE);
         
+        // float itemMenuWidth = Fun.dpToPx(141);
         TranslateAnimation animation = new TranslateAnimation(itemMenuWidth, 0, 0, 0);
         animation.setDuration(150);
         itemMenuPanel.startAnimation(animation);
       }
     }
     
-    public void hideItemMenu() {
+    private void hideItemMenu() {
       if (itemMenuPanel == null) return;
       if (itemMenuPanel.getVisibility() != View.GONE) {
         itemMenuPanel.setVisibility(View.GONE);
@@ -340,4 +362,29 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
   } // ItemViewHolder
   
+  
+  private class ListSwipeManager extends GestureDetector.SimpleOnGestureListener {
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+      View view = recyclerView.findChildViewUnder(e1.getX(), e1.getY());
+      
+      float moveDiff = e2.getX() - e1.getX();
+      int direction = moveDiff < 0 ? 0: 1;
+      float swipedRatio = Math.abs(moveDiff) / view.getWidth();
+      
+      if (direction == 0) {
+        if (!itemSwiping) {
+          recyclerView.requestDisallowInterceptTouchEvent(true);
+          itemSwiping = true;
+          view.setPressed(true);
+        }
+        
+        // LEFT
+        if (swipedRatio >= 0.25f) {
+          itemSwipedLeft = true;
+        }
+      }
+      return true;
+    }
+  }
+
 }

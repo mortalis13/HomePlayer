@@ -337,6 +337,8 @@ public class MainActivity extends AppCompatActivity {
       }
     };
     
+    listItems.setAdapter(filesAdapter);
+    
     listLayoutManager = new LinearLayoutManager(context) {
       public void onLayoutCompleted(final RecyclerView.State state) {
         // All visible items are shown and loaded
@@ -346,10 +348,7 @@ public class MainActivity extends AppCompatActivity {
         }
       }
     };
-    
-    listItems.setAdapter(filesAdapter);
     listItems.setLayoutManager(listLayoutManager);
-    listItems.addOnItemTouchListener(new RecyclerTouchListener(listItems));
     
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);
