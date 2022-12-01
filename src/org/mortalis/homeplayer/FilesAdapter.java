@@ -178,13 +178,16 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     return -1;
   }
   
-  public void hideActiveItemMenu() {
+  public void hideActiveItemMenu(int currentPos) {
     if (holderWithMenu != null) {
-      holderWithMenu.hideItemMenu();
-      notifyItemChanged(holderWithMenu.getBindingAdapterPosition());
+      int pos = holderWithMenu.getBindingAdapterPosition();
+      
+      if (pos != currentPos) {
+        holderWithMenu.hideItemMenu();
+        notifyItemChanged(pos);
+        holderWithMenu = null;
+      }
     }
-    
-    holderWithMenu = null;
   }
   
   

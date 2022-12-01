@@ -17,8 +17,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   public RecyclerTouchListener(final RecyclerView recycleView) {
     gestureDetector = new GestureDetectorCompat(recycleView.getContext(), new GestureDetector.SimpleOnGestureListener() {
       public void onLongPress(MotionEvent event) {
-        View view = recycleView.findChildViewUnder(event.getX(), event.getY());
-        FilesAdapter.ItemViewHolder viewHolder = (FilesAdapter.ItemViewHolder) recycleView.findContainingViewHolder(view);
+        var viewHolder = getViewHolder(recycleView, event.getX(), event.getY());
         viewHolder.processLongPress();
       }
     });
@@ -29,11 +28,20 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
     int action = event.getAction();
     
     if (action == MotionEvent.ACTION_DOWN) {
+      var viewHolder = getViewHolder(recycleView, event.getX(), event.getY());
+      int currentPos = viewHolder.getBindingAdapterPosition();
+      
       FilesAdapter adapter = (FilesAdapter) recycleView.getAdapter();
-      adapter.hideActiveItemMenu();
+      adapter.hideActiveItemMenu(currentPos);
     }
     
     return false;
+  }
+  
+  private FilesAdapter.ItemViewHolder getViewHolder(RecyclerView recycleView, float x, float y) {
+    View view = recycleView.findChildViewUnder(x, y);
+    FilesAdapter.ItemViewHolder viewHolder = (FilesAdapter.ItemViewHolder) recycleView.findContainingViewHolder(view);
+    return viewHolder;
   }
 
 }
