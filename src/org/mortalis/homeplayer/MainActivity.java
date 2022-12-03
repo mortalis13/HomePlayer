@@ -473,13 +473,13 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void playPrevFileAction() {
-    if (playerService == null || !playerService.isPlayerLoaded()) return;
+    if (playerService == null) return;
     boolean startPlayback = playerService.isPlaying();
     playPrevFile(startPlayback);
   }
   
   private void playNextFileAction() {
-    if (playerService == null || !playerService.isPlayerLoaded()) return;
+    if (playerService == null) return;
     boolean startPlayback = playerService.isPlaying();
     playNextFile(startPlayback);
   }

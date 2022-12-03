@@ -449,6 +449,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   public void resetService() {
+    log("resetService()");
     playerLoaded = false;
   }
   
