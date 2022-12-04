@@ -18,6 +18,7 @@ import static org.mortalis.homeplayer.Fun.log;
 public class SliderView extends View {
   
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
+  private static final float WAVEFORM_PAD = Fun.dpToPx(4);
   
   private boolean sliderEnabled;
   private boolean touchEnabled;
@@ -25,6 +26,7 @@ public class SliderView extends View {
   private Paint canvasPaint;
   private Paint borderPaint;
   private Paint progressPaint;
+  private Paint waveformPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
@@ -70,6 +72,10 @@ public class SliderView extends View {
     this.progressPaint.setAntiAlias(true);
     this.progressPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_progress_color));
     this.progressPaint.setStyle(Paint.Style.FILL);
+    
+    this.waveformPaint = new Paint();
+    this.waveformPaint.setAntiAlias(true);
+    this.waveformPaint.setColor(0x66ff0000);
     
     this.borderPaint = new Paint();
     this.borderPaint.setAntiAlias(true);
@@ -177,6 +183,7 @@ public class SliderView extends View {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
     canvas.drawRect(this.borderRect, this.borderPaint);
+    drawWaveform(canvas);
   }
   
   @Override
@@ -236,6 +243,80 @@ public class SliderView extends View {
     public void onChanging(int value);
     public void onChanged(int value);
     public void onCancelled();
+  }
+  
+  
+  float[] resamples;
+  float maxSample;
+  
+  private float getAvg(float[] data, int from, int to) {
+    float avg = 0;
+    float sum = 0;
+    for (int i = from; i < to; i++) {
+      sum += Math.abs(data[i]);
+    }
+    avg = sum / (to - from + 1);
+    return avg;
+  }
+  
+  private float getMax(float[] data, int from, int to) {
+    float max = 0;
+    for (int i = from; i < to; i++) {
+      if (Math.abs(data[i]) > max) max = data[i];
+    }
+    return max;
+  }
+  
+  public void clearWaveform() {
+    resamples = null;
+    invalidate();
+  }
+  
+  public void updateWaveform(float[] samples) {
+    log("update");
+    int width = getMeasuredWidth();
+    
+    resamples = new float[width];
+    
+    int step = (int) ((float) samples.length / width);
+    
+    maxSample = 0;
+    for (int i = 0; i < width; i++) {
+      int i0 = step * i;
+      int i1 = i0 + step;
+      // resamples[i] = getAvg(samples, i0, i1) / Short.MAX_VALUE;
+      // resamples[i] = getMax(samples, i0, i1) / Short.MAX_VALUE;
+      
+      resamples[i] = getAvg(samples, i0, i1);
+      if (resamples[i] > maxSample) maxSample = resamples[i];
+    }
+    
+    // for (int i = 200; i < 200+20; i++) {
+    //   log(resamples[i]);
+    // }
+    // log("--------");
+    // for (int i = 0; i < 100; i++) {
+    //   log(samples.get(i));
+    // }
+    
+    invalidate();
+  }
+  
+  private void drawWaveform(Canvas canvas) {
+    if (resamples == null) return;
+    
+    int width = getMeasuredWidth();
+    int height = getMeasuredHeight();
+    
+    for (int i = 0; i < width; i++) {
+      float h = resamples[i] / maxSample * (height / 2 - WAVEFORM_PAD);
+
+      float x = i;
+      float y0 = height / 2 - h;
+      float y1 = height / 2 + h + 1;
+      
+      canvas.drawLine(x, y0, x, y1, waveformPaint);
+    }
   }
   
 }
