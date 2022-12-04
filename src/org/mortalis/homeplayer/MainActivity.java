@@ -921,7 +921,14 @@ public class MainActivity extends AppCompatActivity {
   
   private void updatePlayingStats() {
     File playingFile = new File(playerService.getAudioPath());
-    int playingItemPos = Arrays.binarySearch(playingList, playingFile);
+    
+    int playingItemPos = -1;
+    for (int i = 0; i < playingList.length; i++) {
+      if (playingFile.equals(playingList[i])) {
+        playingItemPos = i;
+        break;
+      }
+    }
 
     if (playingItemPos != -1) {
       String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
