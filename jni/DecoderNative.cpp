@@ -208,9 +208,6 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(
         audio_stream = fmt_ctx->streams[audio_stream_idx];
     }
     
-    // dump input information to stderr
-    // av_dump_format(fmt_ctx, 0, input_audio_path, 0);
-
     if (!audio_stream) {
         ret = 1;
         // add_error(&errors_data, STREAM_NOT_FOUND_PROC_CODE);
