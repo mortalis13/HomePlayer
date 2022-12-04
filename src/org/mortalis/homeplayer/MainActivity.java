@@ -37,11 +37,13 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import linc.com.amplituda.Amplituda;
-import linc.com.amplituda.AmplitudaResult;
+// import linc.com.amplituda.Amplituda;
+// import linc.com.amplituda.AmplitudaResult;
 
 import org.mortalis.homeplayer.components.SliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
+import org.mortalis.homeplayer.decoder.DecoderNative;
+import org.mortalis.homeplayer.decoder.DecoderResult;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -151,10 +153,10 @@ public class MainActivity extends AppCompatActivity {
   private VolumeSliderView volumeSlider;
   
   
-  // static {
-  //   Fun.log("Loading Decoder native library");
-  //   System.loadLibrary("adecoder");
-  // }
+  static {
+    Fun.log("Loading Decoder native library");
+    System.loadLibrary("adecoder");
+  }
   
 
   @Override
@@ -1136,15 +1138,12 @@ public class MainActivity extends AppCompatActivity {
         log("lock-enter: " + audioPath);
         if (Thread.interrupted()) {log("interrupted-1"); return;}
         
-        Amplituda amplituda = new Amplituda(context);
-        AmplitudaResult<String> result = amplituda.processAudio(audioPath).get();
-        float[] samples = result.getSamples();
-        
+        DecoderResult result = DecoderNative.decodeSamples(audioPath);
         if (Thread.interrupted()) {log("interrupted-2"); return;}
         
         new Handler(Looper.getMainLooper()).post(() -> {
           if (Thread.interrupted()) {log("interrupted-3"); return;}
-          progressSlider.updateWaveform(samples);
+          progressSlider.updateWaveform(result.samples);
         });
         log("lock-exit: " + audioPath);
       }
