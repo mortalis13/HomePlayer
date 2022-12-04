@@ -29,11 +29,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import linc.com.amplituda.Amplituda;
+import linc.com.amplituda.AmplitudaResult;
 
 import org.mortalis.homeplayer.components.SliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
@@ -144,6 +149,12 @@ public class MainActivity extends AppCompatActivity {
   private TextView textVolumeLevel;
   
   private VolumeSliderView volumeSlider;
+  
+  
+  // static {
+  //   Fun.log("Loading Decoder native library");
+  //   System.loadLibrary("adecoder");
+  // }
   
 
   @Override
@@ -521,6 +532,8 @@ public class MainActivity extends AppCompatActivity {
       loge("The file does not exist: " + filePath);
       return;
     }
+    
+    updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
     updateShuffleList(playingFile);
@@ -1108,6 +1121,38 @@ public class MainActivity extends AppCompatActivity {
     textVolumeLevel.setText(volumeLevel);
     
     volumeSlider.setProgress(volume);
+  }
+  
+  Object lock = new Object();
+  
+  boolean a = false;
+  Thread t;
+  
+  private void updateWaveform(String audioPath) {
+    if (t != null) t.interrupt();
+    
+    t = new Thread(() -> {
+      synchronized (lock) {
+        log("lock-enter: " + audioPath);
+        if (Thread.interrupted()) {log("interrupted-1"); return;}
+        
+        Amplituda amplituda = new Amplituda(context);
+        AmplitudaResult<String> result = amplituda.processAudio(audioPath).get();
+        float[] samples = result.getSamples();
+        
+        if (Thread.interrupted()) {log("interrupted-2"); return;}
+        
+        new Handler(Looper.getMainLooper()).post(() -> {
+          if (Thread.interrupted()) {log("interrupted-3"); return;}
+          progressSlider.updateWaveform(samples);
+        });
+        log("lock-exit: " + audioPath);
+      }
+    });
+    
+    t.start();
+    
+    progressSlider.clearWaveform();
   }
   
 
