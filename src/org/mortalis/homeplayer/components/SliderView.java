@@ -247,6 +247,7 @@ public class SliderView extends View {
   
   
   float[] resamples;
+  short[] samples;
   float maxSample;
   
   private float getAvg(float[] data, int from, int to) {
@@ -269,6 +270,12 @@ public class SliderView extends View {
   
   public void clearWaveform() {
     resamples = null;
+    samples = null;
+    invalidate();
+  }
+  
+  public void updateWaveform(short[] samples) {
+    this.samples = samples;
     invalidate();
   }
   
@@ -303,20 +310,41 @@ public class SliderView extends View {
   }
   
   private void drawWaveform(Canvas canvas) {
-    if (resamples == null) return;
+    // log("w: " + getMeasuredWidth());
+    // log("h: " + getMeasuredHeight());
+    if (samples == null) return;
     
-    int width = getMeasuredWidth();
+    // int width = getMeasuredWidth();
     int height = getMeasuredHeight();
     
-    for (int i = 0; i < width; i++) {
-      float h = resamples[i] / maxSample * (height / 2 - WAVEFORM_PAD);
+    for (int i = 0; i < samples.length; i++) {
+      float h = samples[i];
 
       float x = i;
-      float y0 = height / 2 - h;
-      float y1 = height / 2 + h + 1;
+      float y0 = (float) height / 2 - h;
+      float y1 = (float) height / 2 + h + 1;
       
       canvas.drawLine(x, y0, x, y1, waveformPaint);
     }
   }
+  
+  // private void drawWaveform(Canvas canvas) {
+  //   // log("w: " + getMeasuredWidth());
+  //   // log("h: " + getMeasuredHeight());
+  //   if (resamples == null) return;
+    
+  //   int width = getMeasuredWidth();
+  //   int height = getMeasuredHeight();
+    
+  //   for (int i = 0; i < width; i++) {
+  //     float h = resamples[i] / maxSample * (height / 2 - WAVEFORM_PAD);
+
+  //     float x = i;
+  //     float y0 = height / 2 - h;
+  //     float y1 = height / 2 + h + 1;
+      
+  //     canvas.drawLine(x, y0, x, y1, waveformPaint);
+  //   }
+  // }
   
 }
