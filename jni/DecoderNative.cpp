@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 
 extern "C" {
 #include "libavutil/timestamp.h"
@@ -28,14 +29,15 @@ static int audio_stream_idx = -1;
 static AVFrame *frame = NULL;
 static AVPacket *pkt = NULL;
 
-std::vector<float> pixel_buffer;
-float pixel_sum;
-float max_pixel;
-int pixel_index;
+
+int frame_id = 0;
 
 
-static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &samples, int pixel_size, std::string* errors) {
+static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &buffer, int pixel_size, std::string* errors) {
     int ret = 0;
+    float pixel_sum = 0;
+    
+    bool is_planar = av_sample_fmt_is_planar(dec_ctx->sample_fmt);
 
     // submit the packet to the decoder
     ret = avcodec_send_packet(dec_ctx, pkt);
@@ -48,20 +50,16 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
     while (ret >= 0) {
         ret = avcodec_receive_frame(dec_ctx, frame);
         if (ret < 0) {
-            // those two return values are special and mean there is no output
-            // frame available, but there were no errors during decoding
-            if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) {
-                return 0;
-            }
+            if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) return 0;
             __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "DECODING_PROC_CODE");
             return ret;
         }
         
-        // read_samples(frame, dec_ctx->sample_fmt, samples);
+        // if (frame_id++ % SKIP_FRAME_STEP != 0) continue;
+        // frame_id++;
+        
         uint8_t* base;
         int offset;
-        
-        bool is_planar = av_sample_fmt_is_planar(dec_ctx->sample_fmt);
         
         for (int sid = 0; sid < frame->nb_samples; sid++) {
           float sample = 0;
@@ -69,11 +67,13 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
           for (int ch = 0; ch < frame->channels; ch++) {
             float channelSample = 0;
             
-            base = frame->data[0];
-            offset = sid * frame->channels + ch;
             if (is_planar) {
                 base = frame->extended_data[ch];
                 offset = sid;
+            }
+            else {
+                base = frame->data[0];
+                offset = sid * frame->channels + ch;
             }
             
             switch (dec_ctx->sample_fmt) {
@@ -105,25 +105,14 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
           }
           
           sample /= frame->channels;
-          
-          // pack samples
           pixel_sum += std::abs(sample);
-          pixel_index++;
-          
-          if (pixel_index >= pixel_size) {
-              float pixel = pixel_sum / pixel_size;
-              if (pixel > max_pixel) max_pixel = pixel;
-            
-              samples.push_back(pixel);
-              pixel_sum = 0;
-              pixel_index = 0;
-          }
         }
         
+        float frame_value = pixel_sum / frame->nb_samples;
+        buffer.push_back(frame_value);
+        
         av_frame_unref(frame);
-        if (ret < 0) {
-            return ret;
-        }
+        if (ret < 0) return ret;
     }
 
     return 0;
@@ -181,11 +170,10 @@ extern "C" JNIEXPORT jobject JNICALL
 
 Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
     int ret = 0;
+    clock_t start_time = clock();
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode Start");
     
-    pixel_sum = 0;
-    max_pixel = 0;
-    pixel_index = 0;
-    pixel_buffer.clear();
+    frame_id = 0;
     
     // input params
     const char* input_audio_path = env->GetStringUTFChars(jaudio_path, 0);
@@ -197,6 +185,7 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
 
     // prepare result containers
     std::vector<float> samples_data;
+    std::vector<float> pixel_buffer;
     std::string errors_data;
 
     // open input file, and allocate format context
@@ -235,19 +224,12 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
         // goto end_cleanup;
     }
     
-    int total_samples = (int) ((fmt_ctx->duration / (float) AV_TIME_BASE) * audio_dec_ctx->sample_rate);
-    int pixel_size = (int) ((float) total_samples / view_width);
-    
-    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "duration: %d", fmt_ctx->duration);
-    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "sample_rate: %d", audio_dec_ctx->sample_rate);
-    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_samples: %d", total_samples);
-    
     // read frames from the file
     while (av_read_frame(fmt_ctx, pkt) >= 0) {
         bool is_audio_stream = pkt->stream_index == audio_stream_idx;
         
         if (is_audio_stream) {
-            ret = decode_packet(audio_dec_ctx, pkt, samples_data, pixel_size, &errors_data);
+            ret = decode_packet(audio_dec_ctx, pkt, pixel_buffer, 0, &errors_data);
         }
         else {
             __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "not audio stream: %d", pkt->stream_index);
@@ -259,15 +241,63 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
 
     // flush the decoders
     if (audio_dec_ctx) {
-        decode_packet(audio_dec_ctx, NULL, samples_data, pixel_size, &errors_data);
+        decode_packet(audio_dec_ctx, NULL, pixel_buffer, 0, &errors_data);
     }
     
-    if (pixel_index > 0) {
-        __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "flushing end data, pixel_index: %d", pixel_index);
-        float pixel = pixel_sum / pixel_index;
-        if (pixel > max_pixel) max_pixel = pixel;
-        samples_data.push_back(pixel);
+    // normalize data to fit in view_width
+    int total_frames = pixel_buffer.size();
+    int pixel_size = (int) ((float) total_frames / view_width);
+    float over_size = total_frames % view_width;
+    
+    // int skip_index = (over_size != 0) ? (int) ((float) total_frames / over_size) : 0;
+    float skip_index_f = (over_size != 0) ? (float) total_frames / over_size : 0;
+    int skip_index = 0;
+    int skip_index_1 = 0;
+    int skip_index_2 = 0;
+    
+    if (skip_index_f != 0) {
+        skip_index_1 = (int) skip_index_f;
+        skip_index_2 = (int) std::ceil(skip_index_f);
+        skip_index = skip_index_1;
     }
+    
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_frames: %d", total_frames);
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skip_index: %d", skip_index);
+    
+    float pixel_sum = 0;
+    float max_pixel = 0;
+    int block_id = 0;
+    
+    int skipped = 0;
+    bool q = false;
+    
+    for (int i = 0; i < total_frames; ++i) {
+        // skip frames that overflow the total width (skipped each 'skip_index'th frame to have in total over_size skipped frames)
+        if (skip_index != 0 && i % skip_index == 0 && skipped < over_size) {
+            skipped++;
+            continue;
+        }
+        
+        if (skipped >= over_size && !q) {
+            __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "i: %d", i);
+            q = true;
+        }
+        
+        pixel_sum += pixel_buffer[i];
+        block_id++;
+        
+        if (block_id == pixel_size) {
+            float pixel = pixel_sum / pixel_size;
+            if (pixel > max_pixel) max_pixel = pixel;
+            
+            samples_data.push_back(pixel);
+            
+            pixel_sum = 0;
+            block_id = 0;
+        }
+    }
+    pixel_buffer.clear();
     
     // release ffmpeg data
     end_cleanup:
@@ -282,17 +312,22 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
 
     env->ReleaseStringUTFChars(jaudio_path, input_audio_path);
     
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "samples_data: %d", samples_data.size());
+    int total_pixels = samples_data.size();
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "samples_data: %d", total_pixels);
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skipped: %d", skipped);
     
     // ----------
-    jshortArray samplesBytes = env->NewShortArray(samples_data.size());
+    jshortArray samplesBytes = env->NewShortArray(total_pixels);
     jshort* pArray = env->GetShortArrayElements(samplesBytes, NULL);
-    for (size_t i = 0; i < samples_data.size(); i++) {
+    for (size_t i = 0; i < total_pixels; i++) {
       short value = (short) (samples_data[i] * view_height / 2 / max_pixel);
       pArray[i] = value;
     }
+    samples_data.clear();
     env->ReleaseShortArrayElements(samplesBytes, pArray, 0);
     env->SetObjectField(resultObject, samples_field, samplesBytes);
+
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode End: %.2f", double(clock() - start_time) / CLOCKS_PER_SEC);
 
     return resultObject;
 }

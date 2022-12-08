@@ -320,7 +320,7 @@ public class SliderView extends View {
     for (int i = 0; i < samples.length; i++) {
       float h = samples[i];
 
-      float x = i;
+      float x = this.borderWidth + i;
       float y0 = (float) height / 2 - h;
       float y1 = (float) height / 2 + h + 1;
       

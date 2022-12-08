@@ -535,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    // updateWaveform(filePath);
+    updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
     updateShuffleList(playingFile);
@@ -1138,10 +1138,10 @@ public class MainActivity extends AppCompatActivity {
     t = new Thread(() -> {
       synchronized (lock) {
         // log("lock-enter: " + audioPath);
-        // if (Thread.interrupted()) {log("interrupted-1"); return;}
+        if (Thread.interrupted()) {log("interrupted-1"); return;}
         
-        DecoderResult result = DecoderNative.decodeSamples(audioPath, 1080, 132);
-        // if (Thread.interrupted()) {log("interrupted-2"); return;}
+        DecoderResult result = DecoderNative.decodeSamples(audioPath, 1080, 132 - (int) Fun.dpToPx(4));
+        if (Thread.interrupted()) {log("interrupted-2"); return;}
         
         new Handler(Looper.getMainLooper()).post(() -> {
           if (Thread.interrupted()) {log("interrupted-3"); return;}
