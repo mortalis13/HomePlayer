@@ -874,9 +874,9 @@ public class MainActivity extends AppCompatActivity {
           if (lastTime != -1) time = lastTime;
         }
         
-        updateWaveform(item.path);
+        // updateWaveform(item.path);
         
-        // playAudio(item.path, time, true);
+        playAudio(item.path, time, true);
       }
     }
     catch (Exception e) {

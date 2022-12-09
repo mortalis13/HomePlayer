@@ -249,52 +249,38 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     int pixel_size = (int) ((float) total_frames / view_width);
     float over_size = total_frames % view_width;
     
-    // int skip_index = (over_size != 0) ? (int) ((float) total_frames / over_size) : 0;
-    float skip_index_f = (over_size != 0) ? (float) total_frames / over_size : 0;
-    int skip_index = 0;
-    int skip_index_1 = 0;
-    int skip_index_2 = 0;
-    
-    if (skip_index_f != 0) {
-        skip_index_1 = (int) skip_index_f;
-        skip_index_2 = (int) std::ceil(skip_index_f);
-        skip_index = skip_index_1;
-    }
-    
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_frames: %d", total_frames);
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skip_index: %d", skip_index);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_frames: %d", total_frames);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skip_index: %d", skip_index);
     
     float pixel_sum = 0;
     float max_pixel = 0;
+
     int block_id = 0;
-    
-    int skipped = 0;
-    bool q = false;
+    int taken_num = 0;
     
     for (int i = 0; i < total_frames; ++i) {
-        // skip frames that overflow the total width (skipped each 'skip_index'th frame to have in total over_size skipped frames)
-        if (skip_index != 0 && i % skip_index == 0 && skipped < over_size) {
-            skipped++;
-            continue;
-        }
+        // check if the next element is included in the processing or skipped
+        // (on the fly resizing of the array from total_frames to total_frames - over_size)
+        // according to the comparison (taken_num + 1) * total_size - (looked_num) * new_size < total_size / 2
+        // the resize is needed to discard frames that make the division by view_width non-integer
         
-        if (skipped >= over_size && !q) {
-            __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "i: %d", i);
-            q = true;
-        }
-        
-        pixel_sum += pixel_buffer[i];
-        block_id++;
-        
-        if (block_id == pixel_size) {
-            float pixel = pixel_sum / pixel_size;
-            if (pixel > max_pixel) max_pixel = pixel;
+        float diff = (taken_num + 1) * total_frames - (i + 1) * (total_frames - over_size);
+
+        if (diff < (float) total_frames / 2) {
+            pixel_sum += pixel_buffer[i];
+            taken_num++;
             
-            samples_data.push_back(pixel);
-            
-            pixel_sum = 0;
-            block_id = 0;
+            block_id++;
+            if (block_id == pixel_size) {
+                float pixel = pixel_sum / pixel_size;
+                if (pixel > max_pixel) max_pixel = pixel;
+                
+                samples_data.push_back(pixel);
+                
+                pixel_sum = 0;
+                block_id = 0;
+            }
         }
     }
     pixel_buffer.clear();
@@ -314,7 +300,6 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     
     int total_pixels = samples_data.size();
     __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "samples_data: %d", total_pixels);
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skipped: %d", skipped);
     
     // ----------
     jshortArray samplesBytes = env->NewShortArray(total_pixels);
