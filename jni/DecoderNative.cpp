@@ -264,7 +264,12 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     float step = ((float) total_frames - 1) / (total_frames - over_size - 1);
     __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "step: %f", step);
     
+    // alt rescale index calc
+    // float scale_ratio = (float) total_frames / (total_frames - over_size);
+    // float scale_ratio_2 = (float) total_frames / (2 * (total_frames - over_size));
+    
     for (int i = 0; i < total_frames - over_size; ++i) {
+        // pixel_sum += pixel_buffer[std::round(i * scale_ratio + scale_ratio_2)];
         pixel_sum += pixel_buffer[std::round(i * step)];
         block_id++;
         
