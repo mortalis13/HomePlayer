@@ -247,40 +247,35 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     // normalize data to fit in view_width
     int total_frames = pixel_buffer.size();
     int pixel_size = (int) ((float) total_frames / view_width);
-    float over_size = total_frames % view_width;
+    int over_size = total_frames % view_width;
     
     // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
     // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_frames: %d", total_frames);
     // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skip_index: %d", skip_index);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "over_size: %f", over_size);
     
     float pixel_sum = 0;
     float max_pixel = 0;
 
     int block_id = 0;
-    int taken_num = 0;
     
-    for (int i = 0; i < total_frames; ++i) {
-        // check if the next element is included in the processing or skipped
-        // (on the fly resizing of the array from total_frames to total_frames - over_size)
-        // according to the comparison (taken_num + 1) * total_size - (looked_num) * new_size < total_size / 2
-        // the resize is needed to discard frames that make the division by view_width non-integer
+    // step for resizing arrays: (old_len - 1) / (new_len - 1)
+    // only elements that are 'step' away will be taken
+    float step = ((float) total_frames - 1) / (total_frames - over_size - 1);
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "step: %f", step);
+    
+    for (int i = 0; i < total_frames - over_size; ++i) {
+        pixel_sum += pixel_buffer[std::round(i * step)];
+        block_id++;
         
-        float diff = (taken_num + 1) * total_frames - (i + 1) * (total_frames - over_size);
-
-        if (diff < (float) total_frames / 2) {
-            pixel_sum += pixel_buffer[i];
-            taken_num++;
+        if (block_id == pixel_size) {
+            float pixel = pixel_sum / pixel_size;
+            if (pixel > max_pixel) max_pixel = pixel;
             
-            block_id++;
-            if (block_id == pixel_size) {
-                float pixel = pixel_sum / pixel_size;
-                if (pixel > max_pixel) max_pixel = pixel;
-                
-                samples_data.push_back(pixel);
-                
-                pixel_sum = 0;
-                block_id = 0;
-            }
+            samples_data.push_back(pixel);
+            
+            pixel_sum = 0;
+            block_id = 0;
         }
     }
     pixel_buffer.clear();
