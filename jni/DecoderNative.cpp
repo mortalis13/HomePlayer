@@ -31,11 +31,13 @@ static AVPacket *pkt = NULL;
 
 
 int frame_id = 0;
+float pixel_sum = 0;
+int pixel_index = 0;
 
 
-static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &buffer, int pixel_size, std::string* errors) {
+static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &buffer, int block_size) {
     int ret = 0;
-    float pixel_sum = 0;
+    int pixel_size = block_size;
     
     bool is_planar = av_sample_fmt_is_planar(dec_ctx->sample_fmt);
 
@@ -60,6 +62,8 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
         
         uint8_t* base;
         int offset;
+        
+        if (block_size == 0) pixel_size = frame->nb_samples;
         
         for (int sid = 0; sid < frame->nb_samples; sid++) {
           float sample = 0;
@@ -106,10 +110,17 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
           
           sample /= frame->channels;
           pixel_sum += std::abs(sample);
-        }
-        
-        float frame_value = pixel_sum / frame->nb_samples;
-        buffer.push_back(frame_value);
+          
+          // pack samples
+          pixel_index++;
+          if (pixel_index >= pixel_size) {
+              float pixel = pixel_sum / pixel_size;
+              buffer.push_back(pixel);
+              
+              pixel_sum = 0;
+              pixel_index = 0;
+          }
+        } // for nb_samples
         
         av_frame_unref(frame);
         if (ret < 0) return ret;
@@ -119,7 +130,7 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
 }
 
 
-static int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type, std::string* errors) {
+static int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type) {
     int ret, stream_index;
     AVStream *st;
     const AVCodec *dec = NULL;
@@ -174,6 +185,8 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode Start");
     
     frame_id = 0;
+    pixel_sum = 0;
+    pixel_index = 0;
     
     // input params
     const char* input_audio_path = env->GetStringUTFChars(jaudio_path, 0);
@@ -184,9 +197,8 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
     jobject resultObject = (env)->NewObject(resultClass, constructor);
 
     // prepare result containers
-    std::vector<float> samples_data;
+    std::vector<float> pixel_data;
     std::vector<float> pixel_buffer;
-    std::string errors_data;
 
     // open input file, and allocate format context
     if (avformat_open_input(&fmt_ctx, input_audio_path, NULL, NULL) < 0) {
@@ -200,7 +212,7 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
         // goto end_return;
     }
 
-    if (open_codec_context(&audio_stream_idx, &audio_dec_ctx, fmt_ctx, AVMEDIA_TYPE_AUDIO, &errors_data) >= 0) {
+    if (open_codec_context(&audio_stream_idx, &audio_dec_ctx, fmt_ctx, AVMEDIA_TYPE_AUDIO) >= 0) {
         audio_stream = fmt_ctx->streams[audio_stream_idx];
     }
     
@@ -224,12 +236,27 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
         // goto end_cleanup;
     }
     
+    // estimate if it's enough to group each frame or a custom block size should be used
+    int total_samples = (int) ((fmt_ctx->duration / (float) AV_TIME_BASE) * audio_dec_ctx->sample_rate);
+    int estimated_frames = total_samples / audio_dec_ctx->frame_size;
+    
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "frame_size: %d", audio_dec_ctx->frame_size);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_samples: %d", total_samples);
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "estimated_frames: %d", estimated_frames);
+    
+    int block_size = 0;
+    if (estimated_frames < view_width) {
+        block_size = 10;
+        // for short audios
+        if (total_samples < view_width * block_size) block_size = 1;
+    }
+    
     // read frames from the file
     while (av_read_frame(fmt_ctx, pkt) >= 0) {
         bool is_audio_stream = pkt->stream_index == audio_stream_idx;
         
         if (is_audio_stream) {
-            ret = decode_packet(audio_dec_ctx, pkt, pixel_buffer, 0, &errors_data);
+            ret = decode_packet(audio_dec_ctx, pkt, pixel_buffer, block_size);
         }
         else {
             __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "not audio stream: %d", pkt->stream_index);
@@ -241,46 +268,47 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
 
     // flush the decoders
     if (audio_dec_ctx) {
-        decode_packet(audio_dec_ctx, NULL, pixel_buffer, 0, &errors_data);
+        decode_packet(audio_dec_ctx, NULL, pixel_buffer, block_size);
     }
     
     // normalize data to fit in view_width
-    int total_frames = pixel_buffer.size();
-    int pixel_size = (int) ((float) total_frames / view_width);
-    int over_size = total_frames % view_width;
+    int total_buf_size = pixel_buffer.size();
+    int pixel_size = (int) ((float) total_buf_size / view_width);
+    int over_size = total_buf_size % view_width;
     
     // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
-    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_frames: %d", total_frames);
-    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "skip_index: %d", skip_index);
+    // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_buf_size: %d", total_buf_size);
     // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "over_size: %f", over_size);
     
-    float pixel_sum = 0;
+    pixel_sum = 0;
     float max_pixel = 0;
 
-    int block_id = 0;
+    int block_counter = 0;
     
     // step for resizing arrays: (old_len - 1) / (new_len - 1)
     // only elements that are 'step' away will be taken
-    float step = ((float) total_frames - 1) / (total_frames - over_size - 1);
+    float step = ((float) total_buf_size - 1) / (total_buf_size - over_size - 1);
     __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "step: %f", step);
     
-    // alt rescale index calc
-    // float scale_ratio = (float) total_frames / (total_frames - over_size);
-    // float scale_ratio_2 = (float) total_frames / (2 * (total_frames - over_size));
+    // [alt rescale index calc]
+    // float scale_ratio = (float) total_buf_size / (total_buf_size - over_size);
+    // float scale_ratio_2 = (float) total_buf_size / (2 * (total_buf_size - over_size));
     
-    for (int i = 0; i < total_frames - over_size; ++i) {
+    for (int i = 0; i < total_buf_size - over_size; ++i) {
+        // [alt rescale index calc]
         // pixel_sum += pixel_buffer[std::round(i * scale_ratio + scale_ratio_2)];
-        pixel_sum += pixel_buffer[std::round(i * step)];
-        block_id++;
         
-        if (block_id == pixel_size) {
+        pixel_sum += pixel_buffer[std::round(i * step)];
+        block_counter++;
+        
+        if (block_counter == pixel_size) {
             float pixel = pixel_sum / pixel_size;
             if (pixel > max_pixel) max_pixel = pixel;
             
-            samples_data.push_back(pixel);
+            pixel_data.push_back(pixel);
             
             pixel_sum = 0;
-            block_id = 0;
+            block_counter = 0;
         }
     }
     pixel_buffer.clear();
@@ -298,17 +326,17 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
 
     env->ReleaseStringUTFChars(jaudio_path, input_audio_path);
     
-    int total_pixels = samples_data.size();
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "samples_data: %d", total_pixels);
+    int total_pixels = pixel_data.size();
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_data: %d", total_pixels);
     
     // ----------
     jshortArray samplesBytes = env->NewShortArray(total_pixels);
     jshort* pArray = env->GetShortArrayElements(samplesBytes, NULL);
     for (size_t i = 0; i < total_pixels; i++) {
-      short value = (short) (samples_data[i] * view_height / 2 / max_pixel);
+      short value = (short) (pixel_data[i] * view_height / 2 / max_pixel);
       pArray[i] = value;
     }
-    samples_data.clear();
+    pixel_data.clear();
     env->ReleaseShortArrayElements(samplesBytes, pArray, 0);
     env->SetObjectField(resultObject, samples_field, samplesBytes);
 
