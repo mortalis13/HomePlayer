@@ -1141,6 +1141,8 @@ public class MainActivity extends AppCompatActivity {
         if (Thread.interrupted()) {log("interrupted-1"); return;}
         
         DecoderResult result = DecoderNative.decodeSamples(audioPath, 1080, 132 - (int) Fun.dpToPx(4));
+        log("Decode result: " + result);
+        if (result == null) return;
         if (Thread.interrupted()) {log("interrupted-2"); return;}
         
         new Handler(Looper.getMainLooper()).post(() -> {
