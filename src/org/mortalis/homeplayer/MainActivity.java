@@ -1134,6 +1134,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateWaveform(String audioPath) {
     if (t != null) t.interrupt();
+    DecoderNative.stopDecoding();
     
     t = new Thread(() -> {
       synchronized (lock) {

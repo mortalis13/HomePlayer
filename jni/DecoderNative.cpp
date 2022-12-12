@@ -33,10 +33,17 @@ static int frame_id = 0;
 static float pixel_sum = 0;
 static int pixel_index = 0;
 
+static bool decoderUnloaded = false;
+
 
 static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &buffer, int block_size) {
   int ret = 0;
   int pixel_size = block_size;
+  
+  if (decoderUnloaded) {
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded -decode_0");
+    return 0;
+  }
   
   bool is_planar = av_sample_fmt_is_planar(dec_ctx->sample_fmt);
 
@@ -59,13 +66,18 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
     // if (frame_id++ % SKIP_FRAME_STEP != 0) continue;
     // frame_id++;
     
-    uint8_t* base;
-    int offset;
-    
     if (block_size == 0) pixel_size = frame->nb_samples;
     
     for (int sid = 0; sid < frame->nb_samples; sid++) {
+      if (decoderUnloaded) {
+        __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded -decode_1");
+        av_frame_unref(frame);
+        return 0;
+      }
+      
       float sample = 0;
+      uint8_t* base;
+      int offset;
       
       for (int ch = 0; ch < frame->channels; ch++) {
         float channelSample = 0;
@@ -214,12 +226,19 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
 }
 
 
-extern "C" JNIEXPORT jobject JNICALL
+extern "C"
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_stopDecoding(JNIEnv* env) {
+  decoderUnloaded = true;
+}
 
-Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
+
+extern "C"
+JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
   int ret = 0;
   clock_t start_time = clock();
   __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode Start");
+  
+  decoderUnloaded = false;
   
   frame_id = 0;
   pixel_sum = 0;
@@ -252,6 +271,12 @@ Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jo
   
   // read frames from the file
   while (av_read_frame(format_context, pkt) >= 0) {
+    if (decoderUnloaded) {
+      __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded: %s", input_audio_path);
+      cleanup();
+      return NULL;
+    }
+    
     bool is_audio_stream = pkt->stream_index == audio_stream_idx;
     
     if (is_audio_stream) {
