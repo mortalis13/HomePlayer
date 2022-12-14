@@ -37,9 +37,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-// import linc.com.amplituda.Amplituda;
-// import linc.com.amplituda.AmplitudaResult;
-
 import org.mortalis.homeplayer.components.SliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
 import org.mortalis.homeplayer.decoder.DecoderNative;

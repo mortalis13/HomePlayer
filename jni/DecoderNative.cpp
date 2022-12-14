@@ -36,7 +36,7 @@ static int pixel_index = 0;
 static bool decoderUnloaded = false;
 
 
-static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vector<float> &buffer, int block_size) {
+static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, std::vector<float> &buffer, int block_size, bool is_planar) {
   int ret = 0;
   int pixel_size = block_size;
   
@@ -45,10 +45,8 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
     return 0;
   }
   
-  bool is_planar = av_sample_fmt_is_planar(dec_ctx->sample_fmt);
-
   // submit the packet to the decoder
-  ret = avcodec_send_packet(dec_ctx, pkt);
+  ret = avcodec_send_packet(_codec_context, pkt);
   if (ret < 0) {
     __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_SUBMITTING_PROC");
     return ret;
@@ -56,15 +54,14 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
   
   // get all the available frames from the decoder
   while (ret >= 0) {
-    ret = avcodec_receive_frame(dec_ctx, frame);
+    ret = avcodec_receive_frame(_codec_context, frame);
     if (ret < 0) {
       if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) return 0;
       __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "DECODING_PROC");
       return ret;
     }
     
-    // if (frame_id++ % SKIP_FRAME_STEP != 0) continue;
-    // frame_id++;
+    // if (frame_id++ % 2 != 0) continue;
     
     if (block_size == 0) pixel_size = frame->nb_samples;
     
@@ -91,7 +88,7 @@ static int decode_packet(AVCodecContext *dec_ctx, const AVPacket *pkt, std::vect
           offset = sid * frame->channels + ch;
         }
         
-        switch (dec_ctx->sample_fmt) {
+        switch (_codec_context->sample_fmt) {
           case AV_SAMPLE_FMT_U8:
           case AV_SAMPLE_FMT_U8P:
             channelSample = static_cast<float>(reinterpret_cast<uint8_t*>(base)[offset]);
@@ -269,6 +266,8 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
     if (total_samples < view_width * block_size) block_size = 1;
   }
   
+  bool is_planar = av_sample_fmt_is_planar(codec_context->sample_fmt);
+  
   // read frames from the file
   while (av_read_frame(format_context, pkt) >= 0) {
     if (decoderUnloaded) {
@@ -280,7 +279,7 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
     bool is_audio_stream = pkt->stream_index == audio_stream_idx;
     
     if (is_audio_stream) {
-      ret = decode_packet(codec_context, pkt, pixel_buffer, block_size);
+      ret = decode_packet(codec_context, pkt, pixel_buffer, block_size, is_planar);
     }
     else {
       __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "not audio stream: %d", pkt->stream_index);
@@ -292,7 +291,7 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
 
   // flush the decoders
   if (codec_context) {
-    decode_packet(codec_context, NULL, pixel_buffer, block_size);
+    decode_packet(codec_context, NULL, pixel_buffer, block_size, is_planar);
   }
   
   // normalize data to fit in view_width
