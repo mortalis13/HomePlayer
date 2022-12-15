@@ -17,6 +17,8 @@ import static org.mortalis.homeplayer.Fun.log;
 
 public class VolumeSliderView extends View {
   
+  private final static int SLIDER_SENSITIVITY = 130;
+  
   private Paint canvasPaint;
   private Paint borderPaint;
   private Paint progressPaint;
@@ -41,8 +43,10 @@ public class VolumeSliderView extends View {
   
   private int maxValue;
   private int progress;
+  private float progressStep;
   
   private int moveStartX;
+  private int stepsDone;
   
   private ProgressChangeListener progressChangeListener;
   
@@ -121,11 +125,12 @@ public class VolumeSliderView extends View {
     if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
-    float _progress = (float) this.progress * this.canvasWidth / this.maxValue;
+    this.progressStep = (float) this.canvasWidth / this.maxValue;
+    float progressPx = this.progress * this.progressStep;
     
     left   = this.leftOffset;
     top    = this.topOffset;
-    right  = left + _progress;
+    right  = left + progressPx;
     bottom = this.canvasHeight - this.borderWidth;
     this.progressRect.set(left, top, right, bottom);
     
@@ -141,19 +146,21 @@ public class VolumeSliderView extends View {
     
     if (action == MotionEvent.ACTION_DOWN) {
       this.moveStartX = x;
+      this.stepsDone = 0;
     }
     
     if (action == MotionEvent.ACTION_MOVE) {
       int moveOffsetX = x - this.moveStartX;
       
-      float offset = (float) moveOffsetX * this.maxValue / this.canvasWidth;
-      int progressOffset = (int) offset;
+      float steps = moveOffsetX / (this.progressStep * 100 / SLIDER_SENSITIVITY);
+      int stepsProgress = (int) steps;
       
-      if (progressOffset != 0) {
-        this.moveStartX = x - (moveOffsetX - this.canvasWidth / this.maxValue * progressOffset);
+      if (stepsProgress != 0) {
+        stepsProgress -= this.stepsDone;
+        this.stepsDone += stepsProgress;
       }
       
-      int _progress = this.progress + progressOffset;
+      int _progress = this.progress + stepsProgress;
       setProgress(_progress);
       
       sendPosition(this.progress);
