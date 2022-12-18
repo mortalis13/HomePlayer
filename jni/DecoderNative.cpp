@@ -9,6 +9,7 @@ extern "C" {
 #include "libavutil/timestamp.h"
 #include "libavutil/samplefmt.h"
 #include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
 }
 
 #ifndef CPP_LOG_TAG
@@ -178,7 +179,7 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
   // find decoder for the stream
   codec = avcodec_find_decoder(stream->codecpar->codec_id);
   if (!codec) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_NOT_FOUND_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_NOT_FOUND_PROC: %x", stream->codecpar->codec_id);
     return AVERROR(EINVAL);
   }
 
@@ -207,7 +208,6 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
   if (!frame) {
     ret = AVERROR(ENOMEM);
     __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "FRAME_ALLOC");
-    cleanup();
     return ret;
   }
 
@@ -215,7 +215,6 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
   if (!pkt) {
     ret = AVERROR(ENOMEM);
     __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_ALLOC");
-    cleanup();
     return ret;
   }
 
@@ -249,7 +248,11 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
   std::vector<float> pixel_buffer;
 
   ret = init_codec(input_audio_path, AVMEDIA_TYPE_AUDIO);
-  if (ret != 0) return NULL;
+  if (ret != 0) {
+    cleanup();
+    env->ReleaseStringUTFChars(jaudio_path, input_audio_path);
+    return NULL;
+  }
     
   // estimate if it's enough to group each frame or a custom block size should be used
   int total_samples = (int) ((format_context->duration / (float) AV_TIME_BASE) * codec_context->sample_rate);
