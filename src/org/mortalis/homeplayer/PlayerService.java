@@ -428,6 +428,11 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     return mediaPlayer.getDuration();
   }
   
+  public int getPlayingTime() {
+    if (mediaPlayer == null) return -1;
+    return mediaPlayer.getCurrentPosition();
+  }
+  
   public boolean isPlaying() {
     return mediaPlayer != null && mediaPlayer.isPlaying();
   }
