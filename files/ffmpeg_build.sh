@@ -1,6 +1,24 @@
+# ===================
+# == Installation
+# ..Get NDK download url
+# curl -s https://developer.android.com/ndk/downloads/index.html | grep -Eo 'https://.+linux.zip'
+
+# ..Download and unpack
+# wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+# wget http://ffmpeg.org/releases/ffmpeg-5.1.tar.gz
+# apt install unzip
+# tar -xzvf ffmpeg-5.1.tar.gz
+
+# ..Run the script
+# ===================
+
 BUILD_DIR=/root/_ffmpeg-android
-NDK_TOOLCHAIN_DIR=/root/android_sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64
 FFMPEG_DIR=/root/ffmpeg-5.1
+
+NDK_TOOLCHAIN_DIR=/root/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64
+NDK_MAKE_DIR=/root/android-ndk-r25b/prebuilt/linux-x86_64/bin
+
+PATH=$PATH:$NDK_MAKE_DIR
 
 ABIS=(
   armeabi-v7a
