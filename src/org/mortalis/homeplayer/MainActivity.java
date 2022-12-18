@@ -98,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
   private AudioManager audioManager;
   private VolumeReceiver volumeReceiver = new VolumeReceiver();
   
+  private Object lock = new Object();
+  private Thread waveformDecodeThread;
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -877,8 +880,6 @@ public class MainActivity extends AppCompatActivity {
           if (lastTime != -1) time = lastTime;
         }
         
-        // updateWaveform(item.path);
-        
         playAudio(item.path, time, true);
       }
     }
@@ -1135,35 +1136,37 @@ public class MainActivity extends AppCompatActivity {
     volumeSlider.setProgress(volume);
   }
   
-  Object lock = new Object();
-  
-  boolean a = false;
-  Thread t;
-  
   private void updateWaveform(String audioPath) {
-    if (t != null) t.interrupt();
+    int sliderWidth = progressSlider.getWaveformWidth();
+    int sliderHeight = progressSlider.getWaveformHeight();
+    
+    if (sliderWidth <= 0 || sliderHeight <= 0) {
+      loge(String.format("Incorrect values for waveform %d x %d", sliderWidth, sliderHeight));
+      return;
+    }
+    
+    log(String.format("Updating waveform for size %d x %d", sliderWidth, sliderHeight));
+    
+    if (waveformDecodeThread != null) waveformDecodeThread.interrupt();
     DecoderNative.stopDecoding();
     
-    t = new Thread(() -> {
+    waveformDecodeThread = new Thread(() -> {
       synchronized (lock) {
-        // log("lock-enter: " + audioPath);
-        if (Thread.interrupted()) {log("interrupted-1"); return;}
+        if (Thread.interrupted()) return;
         
-        DecoderResult result = DecoderNative.decodeSamples(audioPath, 1080, 132 - (int) Fun.dpToPx(4));
+        DecoderResult result = DecoderNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
         log("Decode result: " + result);
+        
         if (result == null) return;
-        if (Thread.interrupted()) {log("interrupted-2"); return;}
+        if (Thread.interrupted()) return;
         
         new Handler(Looper.getMainLooper()).post(() -> {
-          if (Thread.interrupted()) {log("interrupted-3"); return;}
           progressSlider.updateWaveform(result.samples);
         });
-        // log("lock-exit: " + audioPath);
       }
     });
     
-    t.start();
-    
+    waveformDecodeThread.start();
     progressSlider.clearWaveform();
   }
   
