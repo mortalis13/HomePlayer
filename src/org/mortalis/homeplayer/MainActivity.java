@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
   
   static {
     Fun.log("Loading Decoder native library");
-    System.loadLibrary("adecoder");
+    System.loadLibrary("decoder");
   }
   
 
