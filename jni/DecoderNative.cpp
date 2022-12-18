@@ -77,7 +77,9 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
       uint8_t* base;
       int offset;
       
-      for (int ch = 0; ch < frame->channels; ch++) {
+      int num_channels = frame->ch_layout.nb_channels;
+      
+      for (int ch = 0; ch < num_channels; ch++) {
         float channelSample = 0;
         
         if (is_planar) {
@@ -86,7 +88,7 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
         }
         else {
           base = frame->data[0];
-          offset = sid * frame->channels + ch;
+          offset = sid * num_channels + ch;
         }
         
         switch (_codec_context->sample_fmt) {
@@ -117,7 +119,7 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
         sample += channelSample;
       }
       
-      sample /= frame->channels;
+      sample /= num_channels;
       pixel_sum += std::abs(sample);
       
       // pack samples
