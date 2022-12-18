@@ -388,6 +388,12 @@ public class MainActivity extends AppCompatActivity {
       public void onCancelled() {
         if (!serviceBound) return;
         playerService.enableUpdateTime();
+        
+        if (!playerService.isPlaying()) {
+          int playingTime = playerService.getPlayingTime();
+          updatePlayingTime(playingTime, playerService.getTotalTime());
+          updateProgress(playingTime);
+        }
       }
     });
     
@@ -955,6 +961,11 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updatePlayingTime(int playingPos, int totalTime) {
+    if (playingPos == -1 || totalTime == -1) {
+      loge(String.format("updatePlayingTime(): time is -1, playingPos: %d, totalTime: %d", playingPos, totalTime));
+      return;
+    }
+    
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingPos);
     lastAudioTime = playingPos;
     
