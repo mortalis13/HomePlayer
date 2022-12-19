@@ -35,7 +35,10 @@ public class SliderView extends View {
   private int canvasWidth;
   private int canvasHeight;
   
-  private float borderWidth;
+  private int workingWidth;
+  private int workingHeight;
+  
+  private int borderWidth;
   private float snapPosX;
   private float leftOffset;
   private float topOffset;
@@ -59,7 +62,7 @@ public class SliderView extends View {
   
   
   private void init(Context context) {
-    this.borderWidth = (float) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
+    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
     this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
     
     this.leftOffset = this.borderWidth;
@@ -108,19 +111,19 @@ public class SliderView extends View {
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = this.borderWidth / 2;
-    float top    = this.borderWidth / 2;
-    float right  = this.canvasWidth  - this.borderWidth / 2;
-    float bottom = this.canvasHeight - this.borderWidth / 2;
+    float left   = (float) this.borderWidth / 2;
+    float top    = (float) this.borderWidth / 2;
+    float right  = this.canvasWidth  - (float) this.borderWidth / 2;
+    float bottom = this.canvasHeight - (float) this.borderWidth / 2;
     this.borderRect.set(left, top, right, bottom);
     
-    if (this.maxValue == 0) setMax(this.canvasWidth);
+    if (this.maxValue == 0) setMax(this.workingWidth);
     if (this.maxValue == 0) return;
     
-    float _progress = (float) this.progress * this.canvasWidth / this.maxValue;
+    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
     
-    left   = this.leftOffset;
-    top    = this.topOffset;
+    left   = this.borderWidth;
+    top    = this.borderWidth;
     right  = left + _progress;
     bottom = this.canvasHeight - this.borderWidth;
     this.progressRect.set(left, top, right, bottom);
@@ -134,19 +137,19 @@ public class SliderView extends View {
     if (!this.sliderEnabled) return true;
     
     int action = event.getAction();
-    int x = (int) event.getX();
-    int y = (int) event.getY();
+    int x = (int) event.getX() - this.borderWidth;
+    int y = (int) event.getY() - this.borderWidth;
     
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
       if (!this.touchEnabled) return true;
       
       if (x < this.snapPosX) x = 0;
-      if (x > this.canvasWidth - this.snapPosX) x = this.canvasWidth;
+      if (x > this.workingWidth - this.snapPosX) x = this.workingWidth;
       
       // Detect if vertical offset is greater than max and reset the position
       int outerVerticalOffset = 0;
       if (y < 0) outerVerticalOffset = Math.abs(y);
-      if (y > this.canvasHeight) outerVerticalOffset = y - this.canvasHeight;
+      if (y > this.workingHeight) outerVerticalOffset = y - this.workingHeight;
       
       if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
         this.touchEnabled = false;
@@ -154,7 +157,7 @@ public class SliderView extends View {
         return true;
       }
       
-      int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
+      int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
       setProgress(_progress);
       
       sendPosition(this.progress);
@@ -177,6 +180,8 @@ public class SliderView extends View {
     if (w == 0 || h == 0) return;
     this.canvasWidth = w;
     this.canvasHeight = h;
+    this.workingWidth = this.canvasWidth - this.borderWidth * 2;
+    this.workingHeight = this.canvasHeight - this.borderWidth * 2;
     rebuildUI();
   }
   
@@ -233,8 +238,7 @@ public class SliderView extends View {
   
   private void drawWaveform(Canvas canvas) {
     if (samples == null) return;
-    int height = getMeasuredHeight();
-    float center = (float) height / 2;
+    float center = (float) this.canvasHeight / 2;
     
     for (int i = 0; i < samples.length; i++) {
       float h = samples[i];
@@ -266,11 +270,11 @@ public class SliderView extends View {
   }
   
   public int getWaveformWidth() {
-    return this.canvasWidth - (int) this.borderWidth * 2;
+    return workingWidth;
   }
   
   public int getWaveformHeight() {
-    return this.canvasHeight - (int) this.borderWidth * 2 - WAVEFORM_PAD;
+    return workingHeight - WAVEFORM_PAD;
   }
   
 
