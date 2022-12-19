@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Bitmap;
+import android.graphics.Picture;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -48,7 +48,7 @@ public class SliderView extends View {
   private int progress;
   
   private short[] samples;
-  private Bitmap waveformBitmap;
+  private Picture waveformPicture;
   
   private ProgressChangeListener progressChangeListener;
   
@@ -107,7 +107,8 @@ public class SliderView extends View {
   
   public void setProgress(int value) {
     this.progress = value;
-    rebuildUI();
+    rebuildProgess();
+    invalidate();
   }
   
   private void rebuildUI() {
@@ -122,15 +123,19 @@ public class SliderView extends View {
     if (this.maxValue == 0) setMax(this.workingWidth);
     if (this.maxValue == 0) return;
     
-    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
-    
-    left   = this.borderWidth;
-    top    = this.borderWidth;
-    right  = left + _progress;
-    bottom = this.canvasHeight - this.borderWidth;
-    this.progressRect.set(left, top, right, bottom);
+    rebuildProgess();
     
     invalidate();
+  }
+  
+  private void rebuildProgess() {
+    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
+    
+    float left   = this.borderWidth;
+    float top    = this.borderWidth;
+    float right  = left + _progress;
+    float bottom = this.canvasHeight - this.borderWidth;
+    this.progressRect.set(left, top, right, bottom);
   }
   
   
@@ -230,9 +235,9 @@ public class SliderView extends View {
   
   public void updateWaveform(short[] samples) {
     this.samples = samples;
-    
-    this.waveformBitmap = Bitmap.createBitmap(this.canvasWidth, this.canvasHeight, Bitmap.Config.ARGB_8888);
-    Canvas waveformCanvas = new Canvas(this.waveformBitmap);
+
+    this.waveformPicture = new Picture();
+    Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
     
     float center = (float) this.canvasHeight / 2;
     
@@ -243,21 +248,23 @@ public class SliderView extends View {
       float y0 = center - h;
       float y1 = center + h + 1;
       
-      waveformCanvas.drawLine(x, y0, x, y1, waveformPaint);
+      waveformCanvas.drawLine(x, y0, x, y1, this.waveformPaint);
     }
     
-    invalidate();
+    this.waveformPicture.endRecording();
+    postInvalidate();
   }
   
   public void clearWaveform() {
-    samples = null;
-    waveformBitmap = null;
+    this.samples = null;
+    this.waveformBitmap = null;
+    this.waveformPicture = null;
     invalidate();
   }
   
   private void drawWaveform(Canvas canvas) {
-    if (waveformBitmap == null) return;
-    canvas.drawBitmap(waveformBitmap, null, canvasRect, null);
+    if (waveformPicture == null) return;
+    canvas.drawPicture(waveformPicture);
   }
   
   

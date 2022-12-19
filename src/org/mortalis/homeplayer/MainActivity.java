@@ -1160,9 +1160,7 @@ public class MainActivity extends AppCompatActivity {
         if (result == null) return;
         if (Thread.interrupted()) return;
         
-        new Handler(Looper.getMainLooper()).post(() -> {
-          progressSlider.updateWaveform(result.samples);
-        });
+        progressSlider.updateWaveform(result.samples);
       }
     });
     
