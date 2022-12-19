@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -47,6 +48,7 @@ public class SliderView extends View {
   private int progress;
   
   private short[] samples;
+  private Bitmap waveformBitmap;
   
   private ProgressChangeListener progressChangeListener;
   
@@ -228,16 +230,10 @@ public class SliderView extends View {
   
   public void updateWaveform(short[] samples) {
     this.samples = samples;
-    invalidate();
-  }
-  
-  public void clearWaveform() {
-    samples = null;
-    invalidate();
-  }
-  
-  private void drawWaveform(Canvas canvas) {
-    if (samples == null) return;
+    
+    this.waveformBitmap = Bitmap.createBitmap(this.canvasWidth, this.canvasHeight, Bitmap.Config.ARGB_8888);
+    Canvas waveformCanvas = new Canvas(this.waveformBitmap);
+    
     float center = (float) this.canvasHeight / 2;
     
     for (int i = 0; i < samples.length; i++) {
@@ -247,8 +243,21 @@ public class SliderView extends View {
       float y0 = center - h;
       float y1 = center + h + 1;
       
-      canvas.drawLine(x, y0, x, y1, waveformPaint);
+      waveformCanvas.drawLine(x, y0, x, y1, waveformPaint);
     }
+    
+    invalidate();
+  }
+  
+  public void clearWaveform() {
+    samples = null;
+    waveformBitmap = null;
+    invalidate();
+  }
+  
+  private void drawWaveform(Canvas canvas) {
+    if (waveformBitmap == null) return;
+    canvas.drawBitmap(waveformBitmap, null, canvasRect, null);
   }
   
   
@@ -270,11 +279,11 @@ public class SliderView extends View {
   }
   
   public int getWaveformWidth() {
-    return workingWidth;
+    return this.workingWidth;
   }
   
   public int getWaveformHeight() {
-    return workingHeight - WAVEFORM_PAD;
+    return this.workingHeight - WAVEFORM_PAD;
   }
   
 
