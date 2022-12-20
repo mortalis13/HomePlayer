@@ -33,6 +33,8 @@ public class SliderView extends View {
   private RectF progressRect;
   private RectF borderRect;
   
+  private Picture waveformPicture;
+  
   private int canvasWidth;
   private int canvasHeight;
   
@@ -41,14 +43,9 @@ public class SliderView extends View {
   
   private int borderWidth;
   private float snapPosX;
-  private float leftOffset;
-  private float topOffset;
   
   private int maxValue;
   private int progress;
-  
-  private short[] samples;
-  private Picture waveformPicture;
   
   private ProgressChangeListener progressChangeListener;
   
@@ -67,25 +64,18 @@ public class SliderView extends View {
     this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
     this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
     
-    this.leftOffset = this.borderWidth;
-    this.topOffset = this.borderWidth;
-    
     this.canvasPaint = new Paint();
-    this.canvasPaint.setAntiAlias(true);
     this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_background_color));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
-    this.progressPaint.setAntiAlias(true);
     this.progressPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_progress_color));
     this.progressPaint.setStyle(Paint.Style.FILL);
     
     this.waveformPaint = new Paint();
-    this.waveformPaint.setAntiAlias(true);
-    this.waveformPaint.setColor(0x66ff0000);
+    this.waveformPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_waveform_color));
     
     this.borderPaint = new Paint();
-    this.borderPaint.setAntiAlias(true);
     this.borderPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_border_color));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
@@ -234,8 +224,6 @@ public class SliderView extends View {
   
   
   public void updateWaveform(short[] samples) {
-    this.samples = samples;
-
     this.waveformPicture = new Picture();
     Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
     
@@ -256,8 +244,6 @@ public class SliderView extends View {
   }
   
   public void clearWaveform() {
-    this.samples = null;
-    this.waveformBitmap = null;
     this.waveformPicture = null;
     invalidate();
   }
