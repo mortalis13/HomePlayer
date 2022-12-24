@@ -26,13 +26,12 @@ allprojects {
 // -- app
 android {
   compileSdkVersion 33
-  // ndkVersion "21.1.6352462"
   
   defaultConfig {
     namespace "org.mortalis.homeplayer"
     vectorDrawables.useSupportLibrary = true
     
-    versionCode 27
+    versionCode 30
     versionName String.format('%d.%d', (int)(versionCode/10), versionCode%10)
     
     minSdkVersion 30
@@ -98,8 +97,6 @@ dependencies {
   implementation "androidx.core:core:1.8.0"
   implementation "androidx.media:media:1.6.0"
   implementation 'androidx.recyclerview:recyclerview:1.2.1'
-  
-  // implementation fileTree(dir: 'libs', include: ['*.aar'])
 }
 
 def appStart() {
