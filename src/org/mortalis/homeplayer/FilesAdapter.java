@@ -41,6 +41,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   private int item_icon_color_default;
   private int item_icon_color_lastplayed;
+  private int text_color_default;
+  private int text_color_error;
   private float itemMenuWidth;
   
   Action<ListItem> itemClickAction;
@@ -55,6 +57,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon_color);
     item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
+    text_color_default = ContextCompat.getColor(context, R.color.list_item_text_color);
+    text_color_error = ContextCompat.getColor(context, R.color.list_item_text_color_error);
     itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
   }
   
@@ -162,6 +166,20 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       
       if (item.path.equals(filePath)) {
         item.isFavorite = true;
+        notifyItemChanged(i);
+      }
+    }
+  }
+  
+  public void markError(String filePath) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
+      ListItem item = this.fileList.get(i);
+      if (!item.isFile) continue;
+      
+      if (item.path.equals(filePath)) {
+        item.hasError = true;
         notifyItemChanged(i);
       }
     }
@@ -333,6 +351,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       itemIndicator.setVisibility(item.isFavorite ? View.VISIBLE: View.GONE);
       
       itemText.setText(item.text);
+      int textColor = item.hasError ? text_color_error: text_color_default;
+      itemText.setTextColor(textColor);
+      
       itemTime.setText(item.time);
       itemTime.setVisibility(item.isFile ? View.VISIBLE: View.GONE);
       

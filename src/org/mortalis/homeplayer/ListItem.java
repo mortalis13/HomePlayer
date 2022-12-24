@@ -11,6 +11,7 @@ public class ListItem {
   boolean isLastPlayed;
   boolean isFavorite;
   
+  boolean hasError;
 
   ListItem(String text, String path, boolean isFile) {
     this.text = text;
