@@ -33,6 +33,8 @@
   <color name="list_item_button_tint_color">#555</color>
   
   <color name="list_item_text_color">#555</color>
+  <color name="list_item_text_color_error">#922</color>
+  
   <color name="list_item_icon_color">#888</color>
   <color name="list_item_is_last_played_file">#a45353</color>
   

@@ -76,6 +76,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public SimpleAction onPlayerPausedAction;
   public SimpleAction onPlayerResumedAction;
   public SimpleAction onPlayerStoppedAction;
+  public SimpleAction onPlayerErrorAction;
   public Action<Integer> onHeadphonesPlugAction = (state) -> {};
   
   @Override
@@ -410,6 +411,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     onPlayerStoppedAction.execute();
   }
   
+  private void sendPlayerError() {
+    onPlayerErrorAction.execute();
+  }
+  
   
   public void enableUpdateTime() {
     updateTimeEnabled = true;
@@ -501,7 +506,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   // --> MediaPlayer.OnErrorListener
   @Override
   public boolean onError(MediaPlayer player, int what, int extra) {
-    logd("MediaPlayer.onError(): " + what + "; " + extra);
+    loge("MediaPlayer.onError(): " + what + "; " + extra);
+    sendPlayerError();
     return true;
   }
   

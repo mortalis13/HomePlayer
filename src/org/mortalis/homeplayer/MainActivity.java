@@ -260,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.onPlayerPausedAction = () -> onPlayerPaused();
         playerService.onPlayerResumedAction = () -> onPlayerResumed();
         playerService.onPlayerStoppedAction = () -> onPlayerStopped();
+        playerService.onPlayerErrorAction = () -> onPlayerError();
         playerService.onHeadphonesPlugAction = (state) -> onHeadphonesPlug(state);
         
         serviceBound = true;
@@ -750,6 +751,22 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void onPlayerError() {
+    progressSlider.reset();
+    progressSlider.disable();
+    setPlayButtonDefault();
+    
+    if (playerService == null) return;
+    filesAdapter.markError(playerService.getAudioPath());
+    
+    updatePlayingStats();
+    selectPlayingDirOrFile();
+    
+    textTimePlaying.setText("00:00");
+    textTimeLeft.setText("-00:00");
+    textTimeTotal.setText("00:00");
+  }
+  
   private void onHeadphonesPlug(int state) {
     updateVolumeLevel();
   }
@@ -826,7 +843,7 @@ public class MainActivity extends AppCompatActivity {
       mediaExtractor.release();
     }
     catch (Exception e) {
-      e.printStackTrace();
+      logw("Could not load media extractor for: " + filePath);
     }
     
     return time;
@@ -978,8 +995,8 @@ public class MainActivity extends AppCompatActivity {
     String timeLeft    = "-" + Fun.formatTime(timeDiff, false);
     
     textTimePlaying.setText(timePlaying);
-    textTimeTotal.setText(timeTotal);
     textTimeLeft.setText(timeLeft);
+    textTimeTotal.setText(timeTotal);
   }
   
   private void showExtraAudioInfo() {
@@ -1002,18 +1019,18 @@ public class MainActivity extends AppCompatActivity {
     AudioInfo info = new AudioInfo();
     info.file = new File(filePath);
     
-    MediaMetadataRetriever metadata = new MediaMetadataRetriever();
-    metadata.setDataSource(filePath);
-    
-    info.title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-    info.artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-    info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-    info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
-    info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
-    info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
-    info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-    
     try {
+      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
+      metadata.setDataSource(filePath);
+      
+      info.title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+      info.artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+      info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+      info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
+      info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
+      info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+      info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+    
       MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
       
@@ -1021,7 +1038,7 @@ public class MainActivity extends AppCompatActivity {
       info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      loge("Could not get audio metadata for: " + filePath);
     }
     
     fillAudioInfo(info);
