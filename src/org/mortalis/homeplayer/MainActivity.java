@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     }
     if (playerService != null) {
       Intent playerIntent = new Intent(this, PlayerService.class);
-      playerService.stopService(playerIntent);
+      stopService(playerIntent);
     }
     
     unregisterReceiver(volumeReceiver);
@@ -247,7 +247,9 @@ public class MainActivity extends AppCompatActivity {
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
     
     serviceConnection = new ServiceConnection() {
-      public void onServiceConnected(ComponentName className, IBinder service) {
+      public void onServiceConnected(ComponentName name, IBinder service) {
+        logd("onServiceConnected()");
+        
         PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
         playerService = binder.getService();
         
@@ -271,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         }
       }
 
-      public void onServiceDisconnected(ComponentName arg0) {
+      public void onServiceDisconnected(ComponentName name) {
         playerService = null;
         serviceBound = false;
       }
@@ -553,12 +555,7 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
     
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      startForegroundService(playerIntent);
-    }
-    else {
-      startService(playerIntent);
-    }
+    startService(playerIntent);
     
     removeFromShuffleList(playingFile);
     
@@ -761,10 +758,7 @@ public class MainActivity extends AppCompatActivity {
     
     updatePlayingStats();
     selectPlayingDirOrFile();
-    
-    textTimePlaying.setText("00:00");
-    textTimeLeft.setText("-00:00");
-    textTimeTotal.setText("00:00");
+    updatePlayingTime(0, 0);
   }
   
   private void onHeadphonesPlug(int state) {

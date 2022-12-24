@@ -42,6 +42,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public static final int ACTION_PAUSE_ID = 1;
   public static final int ACTION_EXIT_ID = 2;
   
+  public static final int MEDIA_ERROR_SYSTEM = -2147483648;
+  
   private final IBinder binder = new PlayerBinder();
   
   private MediaPlayer mediaPlayer;
@@ -250,7 +252,9 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   public void pause() {
-    mediaPlayer.pause();
+    if (mediaPlayer.isPlaying()) {
+      mediaPlayer.pause();
+    }
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
     log("Playback paused");
@@ -507,7 +511,16 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   @Override
   public boolean onError(MediaPlayer player, int what, int extra) {
     loge("MediaPlayer.onError(): " + what + "; " + extra);
-    sendPlayerError();
+    
+    if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == MEDIA_ERROR_SYSTEM) {
+      // Detected when trying to play unsupported file
+      if (mediaPlayer != null) mediaPlayer.release();
+      playerLoaded = false;
+      stopForeground(true);
+      stopSelf();
+      sendPlayerError();
+    }
+    
     return true;
   }
   
