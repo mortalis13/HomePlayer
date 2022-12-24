@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Picture;
+import android.graphics.BlendMode;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,6 +20,7 @@ import static org.mortalis.homeplayer.Fun.log;
 public class SliderView extends View {
   
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
+  private static final int WAVEFORM_PAD = (int) Fun.dpToPx(2);
   
   private boolean sliderEnabled;
   private boolean touchEnabled;
@@ -25,18 +28,22 @@ public class SliderView extends View {
   private Paint canvasPaint;
   private Paint borderPaint;
   private Paint progressPaint;
+  private Paint waveformPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
   private RectF borderRect;
   
+  private Picture waveformPicture;
+  
   private int canvasWidth;
   private int canvasHeight;
   
-  private float borderWidth;
+  private int workingWidth;
+  private int workingHeight;
+  
+  private int borderWidth;
   private float snapPosX;
-  private float leftOffset;
-  private float topOffset;
   
   private int maxValue;
   private int progress;
@@ -55,24 +62,22 @@ public class SliderView extends View {
   
   
   private void init(Context context) {
-    this.borderWidth = (float) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
+    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
     this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
     
-    this.leftOffset = this.borderWidth;
-    this.topOffset = this.borderWidth;
-    
     this.canvasPaint = new Paint();
-    this.canvasPaint.setAntiAlias(true);
     this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_background_color));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
-    this.progressPaint.setAntiAlias(true);
     this.progressPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_progress_color));
     this.progressPaint.setStyle(Paint.Style.FILL);
+    this.progressPaint.setBlendMode(BlendMode.MULTIPLY);
+    
+    this.waveformPaint = new Paint();
+    this.waveformPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_waveform_color));
     
     this.borderPaint = new Paint();
-    this.borderPaint.setAntiAlias(true);
     this.borderPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_border_color));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
@@ -94,30 +99,35 @@ public class SliderView extends View {
   
   public void setProgress(int value) {
     this.progress = value;
-    rebuildUI();
+    rebuildProgess();
+    invalidate();
   }
   
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = this.borderWidth / 2;
-    float top    = this.borderWidth / 2;
-    float right  = this.canvasWidth  - this.borderWidth / 2;
-    float bottom = this.canvasHeight - this.borderWidth / 2;
+    float left   = (float) this.borderWidth / 2;
+    float top    = (float) this.borderWidth / 2;
+    float right  = this.canvasWidth  - (float) this.borderWidth / 2;
+    float bottom = this.canvasHeight - (float) this.borderWidth / 2;
     this.borderRect.set(left, top, right, bottom);
     
-    if (this.maxValue == 0) setMax(this.canvasWidth);
+    if (this.maxValue == 0) setMax(this.workingWidth);
     if (this.maxValue == 0) return;
     
-    float _progress = (float) this.progress * this.canvasWidth / this.maxValue;
-    
-    left   = this.leftOffset;
-    top    = this.topOffset;
-    right  = left + _progress;
-    bottom = this.canvasHeight - this.borderWidth;
-    this.progressRect.set(left, top, right, bottom);
+    rebuildProgess();
     
     invalidate();
+  }
+  
+  private void rebuildProgess() {
+    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
+    
+    float left   = this.borderWidth;
+    float top    = this.borderWidth;
+    float right  = left + _progress;
+    float bottom = this.canvasHeight - this.borderWidth;
+    this.progressRect.set(left, top, right, bottom);
   }
   
   
@@ -126,19 +136,19 @@ public class SliderView extends View {
     if (!this.sliderEnabled) return true;
     
     int action = event.getAction();
-    int x = (int) event.getX();
-    int y = (int) event.getY();
+    int x = (int) event.getX() - this.borderWidth;
+    int y = (int) event.getY() - this.borderWidth;
     
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
       if (!this.touchEnabled) return true;
       
       if (x < this.snapPosX) x = 0;
-      if (x > this.canvasWidth - this.snapPosX) x = this.canvasWidth;
+      if (x > this.workingWidth - this.snapPosX) x = this.workingWidth;
       
       // Detect if vertical offset is greater than max and reset the position
       int outerVerticalOffset = 0;
       if (y < 0) outerVerticalOffset = Math.abs(y);
-      if (y > this.canvasHeight) outerVerticalOffset = y - this.canvasHeight;
+      if (y > this.workingHeight) outerVerticalOffset = y - this.workingHeight;
       
       if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
         this.touchEnabled = false;
@@ -146,7 +156,7 @@ public class SliderView extends View {
         return true;
       }
       
-      int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
+      int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
       setProgress(_progress);
       
       sendPosition(this.progress);
@@ -169,14 +179,17 @@ public class SliderView extends View {
     if (w == 0 || h == 0) return;
     this.canvasWidth = w;
     this.canvasHeight = h;
+    this.workingWidth = this.canvasWidth - this.borderWidth * 2;
+    this.workingHeight = this.canvasHeight - this.borderWidth * 2;
     rebuildUI();
   }
   
   @Override
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
-    canvas.drawRect(this.progressRect, this.progressPaint);
     canvas.drawRect(this.borderRect, this.borderPaint);
+    drawWaveform(canvas);
+    canvas.drawRect(this.progressRect, this.progressPaint);
   }
   
   @Override
@@ -212,6 +225,37 @@ public class SliderView extends View {
   }
   
   
+  public void updateWaveform(short[] samples) {
+    this.waveformPicture = new Picture();
+    Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
+    
+    float center = (float) this.canvasHeight / 2;
+    
+    for (int i = 0; i < samples.length; i++) {
+      float h = samples[i];
+
+      float x = this.borderWidth + i;
+      float y0 = center - h;
+      float y1 = center + h + 1;
+      
+      waveformCanvas.drawLine(x, y0, x, y1, this.waveformPaint);
+    }
+    
+    this.waveformPicture.endRecording();
+    postInvalidate();
+  }
+  
+  public void clearWaveform() {
+    this.waveformPicture = null;
+    invalidate();
+  }
+  
+  private void drawWaveform(Canvas canvas) {
+    if (waveformPicture == null) return;
+    canvas.drawPicture(waveformPicture);
+  }
+  
+  
   private int measureHeight(int measureSpec) {
     int size = getPaddingTop() + getPaddingBottom();
     return resolveSizeAndState(size, measureSpec, 0);
@@ -229,7 +273,15 @@ public class SliderView extends View {
     this.progressChangeListener = progressChangeListener;
   }
   
+  public int getWaveformWidth() {
+    return this.workingWidth;
+  }
   
+  public int getWaveformHeight() {
+    return this.workingHeight - WAVEFORM_PAD;
+  }
+  
+
   // ------------------ Classes ------------------
   
   public interface ProgressChangeListener {

@@ -45,9 +45,10 @@
   <color name="secondary_toggle_button_background_selected">#c4d6de</color>
   <color name="secondary_toggle_button_background_default">@color/transparent</color>
   
-  <color name="plain_slider_background_color">#e9e9e9</color>
+  <color name="plain_slider_background_color">#00ffffff</color>
   <color name="plain_slider_progress_color">#bacbd3</color>
   <color name="plain_slider_border_color">#888</color>
+  <color name="plain_slider_waveform_color">#909090</color>
   
   <color name="volume_slider_background_color">@color/status_background</color>
   

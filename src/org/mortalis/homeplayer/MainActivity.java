@@ -29,6 +29,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -37,6 +39,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.mortalis.homeplayer.components.SliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
+import org.mortalis.homeplayer.decoder.DecoderNative;
+import org.mortalis.homeplayer.decoder.DecoderResult;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -94,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
   private AudioManager audioManager;
   private VolumeReceiver volumeReceiver = new VolumeReceiver();
   
+  private Object lock = new Object();
+  private Thread waveformDecodeThread;
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -144,6 +151,12 @@ public class MainActivity extends AppCompatActivity {
   private TextView textVolumeLevel;
   
   private VolumeSliderView volumeSlider;
+  
+  
+  static {
+    Fun.log("Loading Decoder native library");
+    System.loadLibrary("decoder");
+  }
   
 
   @Override
@@ -521,6 +534,8 @@ public class MainActivity extends AppCompatActivity {
       loge("The file does not exist: " + filePath);
       return;
     }
+    
+    updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
     updateShuffleList(playingFile);
@@ -1108,6 +1123,38 @@ public class MainActivity extends AppCompatActivity {
     textVolumeLevel.setText(volumeLevel);
     
     volumeSlider.setProgress(volume);
+  }
+  
+  private void updateWaveform(String audioPath) {
+    int sliderWidth = progressSlider.getWaveformWidth();
+    int sliderHeight = progressSlider.getWaveformHeight();
+    
+    if (sliderWidth <= 0 || sliderHeight <= 0) {
+      loge(String.format("Incorrect values for waveform %d x %d", sliderWidth, sliderHeight));
+      return;
+    }
+    
+    log(String.format("Updating waveform for size %d x %d", sliderWidth, sliderHeight));
+    
+    if (waveformDecodeThread != null) waveformDecodeThread.interrupt();
+    DecoderNative.stopDecoding();
+    
+    waveformDecodeThread = new Thread(() -> {
+      synchronized (lock) {
+        if (Thread.interrupted()) return;
+        
+        DecoderResult result = DecoderNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
+        log("Decode result: " + result);
+        
+        if (result == null) return;
+        if (Thread.interrupted()) return;
+        
+        progressSlider.updateWaveform(result.samples);
+      }
+    });
+    
+    waveformDecodeThread.start();
+    progressSlider.clearWaveform();
   }
   
 
