@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Picture;
+import android.graphics.BlendMode;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -71,6 +72,7 @@ public class SliderView extends View {
     this.progressPaint = new Paint();
     this.progressPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_progress_color));
     this.progressPaint.setStyle(Paint.Style.FILL);
+    this.progressPaint.setBlendMode(BlendMode.MULTIPLY);
     
     this.waveformPaint = new Paint();
     this.waveformPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_waveform_color));
@@ -185,9 +187,9 @@ public class SliderView extends View {
   @Override
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
-    canvas.drawRect(this.progressRect, this.progressPaint);
     canvas.drawRect(this.borderRect, this.borderPaint);
     drawWaveform(canvas);
+    canvas.drawRect(this.progressRect, this.progressPaint);
   }
   
   @Override
