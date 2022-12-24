@@ -42,14 +42,14 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
   int pixel_size = block_size;
   
   if (decoderUnloaded) {
-    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded -decode_0");
+    __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded");
     return 0;
   }
   
   // submit the packet to the decoder
   ret = avcodec_send_packet(_codec_context, pkt);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_SUBMITTING_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_SUBMITTING_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
   
@@ -58,7 +58,7 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
     ret = avcodec_receive_frame(_codec_context, frame);
     if (ret < 0) {
       if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) return 0;
-      __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "DECODING_PROC");
+      __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "DECODING_ERROR: %d: %s", ret, av_err2str(ret));
       return ret;
     }
     
@@ -68,7 +68,7 @@ static int decode_packet(AVCodecContext *_codec_context, const AVPacket *pkt, st
     
     for (int sid = 0; sid < frame->nb_samples; sid++) {
       if (decoderUnloaded) {
-        __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded -decode_1");
+        __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "decoder unloaded");
         av_frame_unref(frame);
         return 0;
       }
@@ -158,20 +158,20 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
   // open input file, and allocate format context
   ret = avformat_open_input(&format_context, audio_path, NULL, NULL);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "FILE_OPEN_IO");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "FILE_OPEN_IO: %d: %s", ret, av_err2str(ret));
     return ret;
   }
 
   // retrieve stream information
   ret = avformat_find_stream_info(format_context, NULL);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "STREAM_INFO_NOT_FOUND_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "STREAM_INFO_NOT_FOUND_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
 
   ret = av_find_best_stream(format_context, type, -1, -1, NULL, 0);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "STREAM_NOT_FOUND_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "STREAM_NOT_FOUND_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
   
@@ -181,42 +181,43 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
   // find decoder for the stream
   codec = avcodec_find_decoder(stream->codecpar->codec_id);
   if (!codec) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_NOT_FOUND_PROC: %x", stream->codecpar->codec_id);
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_NOT_FOUND_ERROR: %x", stream->codecpar->codec_id);
     return AVERROR(EINVAL);
   }
 
   // Allocate a codec context for the decoder
   codec_context = avcodec_alloc_context3(codec);
   if (!codec_context) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_CONTEXT_ALLOC");
-    return AVERROR(ENOMEM);
+    ret = AVERROR(ENOMEM);
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_CONTEXT_ALLOC_ERROR: %d: %s", ret, av_err2str(ret));
+    return ret;
   }
 
   // Copy codec parameters from input stream to output codec context
   ret = avcodec_parameters_to_context(codec_context, stream->codecpar);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_PARAMETERS_COPY_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_PARAMETERS_COPY_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
 
   // Init the decoders
   ret = avcodec_open2(codec_context, codec, &opts);
   if (ret < 0) {
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_OPEN_PROC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "CODEC_OPEN_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
   
   frame = av_frame_alloc();
   if (!frame) {
     ret = AVERROR(ENOMEM);
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "FRAME_ALLOC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "FRAME_ALLOC_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
 
   pkt = av_packet_alloc();
   if (!pkt) {
     ret = AVERROR(ENOMEM);
-    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_ALLOC");
+    __android_log_print(ANDROID_LOG_ERROR, CPP_LOG_TAG, "PACKET_ALLOC_ERROR: %d: %s", ret, av_err2str(ret));
     return ret;
   }
 
@@ -257,19 +258,27 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
   }
     
   // estimate if it's enough to group each frame or a custom block size should be used
-  int total_samples = (int) ((format_context->duration / (float) AV_TIME_BASE) * codec_context->sample_rate);
-  int estimated_frames = total_samples / codec_context->frame_size;
+  int64_t total_samples = (int64_t) ((format_context->duration / (double) AV_TIME_BASE) * codec_context->sample_rate);
+  int64_t estimated_frames = (codec_context->frame_size != 0) ? total_samples / codec_context->frame_size: 0;
   
+  // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "duration: %ld", format_context->duration);
   // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "frame_size: %d", codec_context->frame_size);
-  // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_samples: %d", total_samples);
-  __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "estimated_frames: %d", estimated_frames);
+  // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_samples: %ld", total_samples);
+  // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "estimated_frames: %ld", estimated_frames);
   
   int block_size = 0;
   if (estimated_frames < view_width) {
     block_size = 10;
-    // for short audios
-    if (total_samples < view_width * block_size) block_size = 1;
+    if (total_samples < 0) {
+      __android_log_print(ANDROID_LOG_WARN, CPP_LOG_TAG, "total_samples < 0");
+      block_size = 1000;
+    }
+    else {
+      while (view_width * block_size * 10 < total_samples) block_size *= 10;
+    }
   }
+  
+  __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "block_size: %d", block_size);
   
   bool is_planar = av_sample_fmt_is_planar(codec_context->sample_fmt);
   
@@ -285,9 +294,6 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
     
     if (is_audio_stream) {
       ret = decode_packet(codec_context, pkt, pixel_buffer, block_size, is_planar);
-    }
-    else {
-      __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "not audio stream: %d", pkt->stream_index);
     }
     
     av_packet_unref(pkt);
@@ -305,7 +311,7 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
   int over_size = total_buf_size % view_width;
   
   // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "pixel_size: %d", pixel_size);
-  // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_buf_size: %d", total_buf_size);
+  __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "total_buf_size: %d", total_buf_size);
   // __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "over_size: %f", over_size);
   
   pixel_sum = 0;
