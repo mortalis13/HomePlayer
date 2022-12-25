@@ -544,6 +544,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
+    progressSlider.reset();
     updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
@@ -559,9 +560,11 @@ public class MainActivity extends AppCompatActivity {
     
     removeFromShuffleList(playingFile);
     
-    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", playingFile.getPath());
-    Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), playingFile.getPath());
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
+    Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), filePath);
+    
     markLastPlayedFile(currentPath);
+    selectItem(filePath);
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -724,7 +727,6 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
-    selectPlayingDirOrFile();
     if (extraInfoPanel.getVisibility() == View.VISIBLE) {
       showExtraAudioInfo();
     }
@@ -757,7 +759,6 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
     
     updatePlayingStats();
-    selectPlayingDirOrFile();
     updatePlayingTime(0, 0);
   }
   
@@ -807,14 +808,15 @@ public class MainActivity extends AppCompatActivity {
   
   private void selectPlayingDirOrFile() {
     if (playerService == null || !playerService.hasAudio()) return;
-    int playingItemPos = filesAdapter.getPositionForSubpath(playerService.getAudioPath());
+    selectItem(playerService.getAudioPath());
+  }
+  
+  private void selectItem(String filePath) {
+    int playingItemPos = filesAdapter.getPositionForSubpath(filePath);
     
     if (playingItemPos != -1) {
-      log("Selecting playing folder or file: " + fileList.get(playingItemPos).path);
+      log("Selecting item: " + filePath);
       filesAdapter.selectItem(playingItemPos);
-    }
-    else {
-      loge("Playing file or folder position is -1");
     }
   }
   

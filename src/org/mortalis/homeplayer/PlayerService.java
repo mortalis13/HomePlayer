@@ -480,15 +480,15 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     metadata.setDataSource(audioPath);
     
+    preload();
+
     if (startPlayback) {
-      preload();
       enableUpdateTime();
       startProgress();
       play();
       sendPlayerStarted();
     }
     else {
-      preload();
       sendPlayerPreloaded();
     }
     
