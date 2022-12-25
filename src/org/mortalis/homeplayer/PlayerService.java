@@ -241,7 +241,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     sendPlayerResumed();
   }
   
-  private void stop() {
+  public void stop() {
     progressHandler.removeCallbacks(progressRunnable);
     sendUpdateStoppedTime();
 

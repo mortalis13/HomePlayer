@@ -342,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
     
     filesAdapter.itemClickAction = (item) -> itemClick(item);
     filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
-    filesAdapter.afterFileRemovedAction = (path) -> refreshCurrentDir();
+    filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
     filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
     filesAdapter.itemBeforeBindAction = (position) -> {
       if (!itemsQueue.contains(position)) {
@@ -479,7 +479,7 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Actions ------------------------------
   private void playPauseAction() {
-    if (playerService == null || !playerService.hasAudio()) return;
+    if (playerService == null || !playerService.hasAudio() || !playerService.isPlayerLoaded()) return;
     
     if (playerService.isPlaying()) {
       playerService.pause();
@@ -565,6 +565,8 @@ public class MainActivity extends AppCompatActivity {
     
     markLastPlayedFile(currentPath);
     selectItem(filePath);
+    
+    if (!startPlayback) setPlayButtonDefault();
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -681,24 +683,32 @@ public class MainActivity extends AppCompatActivity {
     hideExtraPanels();
   }
   
+  private File getPlayingFile() {
+    if (playerService == null || !playerService.hasAudio()) return null;
+    File currentFile = new File(playerService.getAudioPath());
+    return currentFile;
+  }
+  
+  private boolean belongsToCurrentDir(File file) {
+    if (file == null) return false;
+    return file.getParentFile().equals(currentPath);
+  }
+  
   private void changeToPlayingDir() {
     logd("changeToPlayingDir()");
-    if (playerService == null || !playerService.hasAudio()) return;
-    File currentFile = new File(playerService.getAudioPath());
     
-    if (currentFile.getParentFile().equals(currentPath)) {
-      int scrollPos = filesAdapter.getItemPosition(currentFile.getPath());
+    File playingFile = getPlayingFile();
+    if (playingFile == null) return;
+
+    if (belongsToCurrentDir(playingFile)) {
+      int scrollPos = filesAdapter.getItemPosition(playingFile.getPath());
       if (scrollPos != -1) {
         listLayoutManager.scrollToPosition(scrollPos);
       }
     }
     else {
-      changeDir(currentFile.getParentFile());
+      changeDir(playingFile.getParentFile());
     }
-  }
-  
-  private void refreshCurrentDir() {
-    changeDir(currentPath);
   }
   
   private void markLastPlayedFile(File dir) {
@@ -751,19 +761,44 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerError() {
-    progressSlider.reset();
-    progressSlider.disable();
-    setPlayButtonDefault();
+    resetPlayer();
     
     if (playerService == null) return;
     filesAdapter.markError(playerService.getAudioPath());
-    
-    updatePlayingStats();
-    updatePlayingTime(0, 0);
   }
   
   private void onHeadphonesPlug(int state) {
     updateVolumeLevel();
+  }
+  
+  private void onItemRemoved(String filePath) {
+    log("File removed: " + filePath);
+    changeDir(currentPath);
+    
+    // Check if the removed file was in the current playlist
+    File playingFile = getPlayingFile();
+    
+    if (belongsToCurrentDir(playingFile)) {
+      if (playingFile.getPath().equals(filePath)) {
+        log("Playing file has been deleted, selecting next file");
+        playNextFile(false);
+      }
+      
+      reloadPlayingListForDir(playingFile.getParentFile());
+      updatePlayingStats();
+      
+      if (playingList.length == 0) {
+        log("Playing list is empty, resetting the player ui");
+        if (playerService != null) {
+          playerService.stop();
+          playerService.resetService();
+          playerService.stopForeground(true);
+        }
+        
+        progressSlider.clearWaveform();
+        resetPlayer();
+      }
+    }
   }
   
   
@@ -870,12 +905,30 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void resetPlayer() {
+    progressSlider.reset();
+    progressSlider.disable();
+    setPlayButtonDefault();
+    
+    updatePlayingStats();
+    updatePlayingTime(0, 0);
+  }
+  
   
   // ------------------------------ Utils ------------------------------
-  private void cachePlayingList(File file) {
-    logd("cachePlayingList(): " + file);
-    playingList = file.getParentFile().listFiles(Fun.fileFilter);
+  private void cachePlayingList(File dir) {
+    logd("cachePlayingList(): " + dir);
+    playingList = dir.listFiles(Fun.fileFilter);
     Arrays.sort(playingList, Fun.nocaseComp);
+  }
+  
+  private void reloadPlayingListForDir(File dir) {
+    cachePlayingList(dir);
+    resetPlayingDirTime();
+    
+    if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
+    loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(playingList);
+    loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
   
   private void itemClick(ListItem item) {
@@ -914,18 +967,13 @@ public class MainActivity extends AppCompatActivity {
         Fun.saveSharedPref(context, "TIME_" + currentAudioParent, lastAudioTime);
         log(String.format("Saved %d to TIME_%s", lastAudioTime, currentAudioParent));
         
-        cachePlayingList(newAudioFile);
+        cachePlayingList(newAudioFile.getParentFile());
         resetPlayingDirTime();
         if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.copyToPlayingDirTime();
       }
     }
     else {
-      cachePlayingList(newAudioFile);
-      resetPlayingDirTime();
-      
-      if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
-      loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(playingList);
-      loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      reloadPlayingListForDir(newAudioFile.getParentFile());
     }
   }
   
@@ -964,10 +1012,8 @@ public class MainActivity extends AppCompatActivity {
       }
     }
 
-    if (playingItemPos != -1) {
-      String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
-      textPlayingPosition.setText(stats);
-    }
+    String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
+    textPlayingPosition.setText(stats);
     
     String fileSize = Fun.formatSize(playingFile.length());
     textCurrentFileSize.setText(fileSize);
