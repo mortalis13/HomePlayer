@@ -17,7 +17,7 @@ import org.mortalis.homeplayer.R;
 import static org.mortalis.homeplayer.Fun.log;
 
 
-public class SliderView extends View {
+public class ProgressSliderView extends View {
   
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   private static final int WAVEFORM_PAD = (int) Fun.dpToPx(2);
@@ -51,11 +51,11 @@ public class SliderView extends View {
   private ProgressChangeListener progressChangeListener;
   
   
-  public SliderView(Context context) {
+  public ProgressSliderView(Context context) {
     this(context, null);
   }
   
-  public SliderView(Context context, AttributeSet attrs) {
+  public ProgressSliderView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
     init(context);
   }

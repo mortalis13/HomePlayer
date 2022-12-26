@@ -37,7 +37,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.mortalis.homeplayer.components.SliderView;
+import org.mortalis.homeplayer.components.ProgressSliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
 import org.mortalis.homeplayer.decoder.DecoderNative;
 import org.mortalis.homeplayer.decoder.DecoderResult;
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
   
-  private SliderView progressSlider;
+  private ProgressSliderView progressSlider;
   private RecyclerView listItems;
   
   private TextView textTimeLeft;
@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
     
     activeTitle.setOnClickListener(v -> changeToParentDir());
     
-    progressSlider.setProgressChangeListener(new SliderView.ProgressChangeListener() {
+    progressSlider.setProgressChangeListener(new ProgressSliderView.ProgressChangeListener() {
       public void onChanging(int value) {
         if (!serviceBound) return;
         playerService.disableUpdateTime();
