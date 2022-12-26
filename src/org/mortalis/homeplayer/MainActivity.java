@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
       public void onServiceConnected(ComponentName name, IBinder service) {
         logd("onServiceConnected()");
         
-        PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
+        var binder = (PlayerService.PlayerBinder) service;
         playerService = binder.getService();
         
         playerService.exitAction = () -> exitApp();
@@ -459,7 +459,6 @@ public class MainActivity extends AppCompatActivity {
       
       favoritesList = Fun.getSharedPrefList(context, "PREF_FAVORITES_LIST");
       // log("PREF favoritesList: " + favoritesList);
-      cleanFavorites();
       
       playbackRepeat = Fun.getSharedPrefBool(context, "PLAYBACK_REPEAT");
       log("PREF playbackRepeat: " + playbackRepeat);
@@ -470,6 +469,8 @@ public class MainActivity extends AppCompatActivity {
       log("PREF playbackShuffle: " + playbackShuffle);
       bShuffle.setSelected(playbackShuffle);
       playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
+      
+      cleanPrefs();
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -566,8 +567,8 @@ public class MainActivity extends AppCompatActivity {
     removeFromShuffleList(playingFile);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
-    Fun.saveSharedPref(context, "FILE_" + playingFile.getParent(), filePath);
-    
+    Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
+
     markLastPlayedFile(currentPath);
     selectItem(filePath);
     
@@ -717,13 +718,15 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void markLastPlayedFile(File dir) {
-    String lastFile = Fun.getSharedPref(this, "FILE_" + dir.getPath());
-    int lastTime = Fun.getSharedPrefInt(this, "TIME_" + dir.getPath());
+    String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + dir.getPath());
     
-    String lastFileName = lastFile != null ? new File(lastFile).getName() : null;
-
-    log(String.format("Last played file in dir '%s': '%s'. Time: %d", dir, lastFileName, lastTime));
-    filesAdapter.markLastPlayedItem(lastFile);
+    if (lastFile != null) {
+      String lastFileName = new File(lastFile).getName();
+      int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + dir.getPath());
+      
+      log(String.format("Last played file in dir '%s': '%s', Time: %d", dir, lastFileName, lastTime));
+      filesAdapter.markLastPlayedItem(lastFile);
+    }
   }
   
   private void markFavorites() {
@@ -855,7 +858,7 @@ public class MainActivity extends AppCompatActivity {
     int playingItemPos = filesAdapter.getPositionForSubpath(filePath);
     
     if (playingItemPos != -1) {
-      log("Selecting item: " + filePath);
+      log("Selecting item or its folder: " + filePath);
       filesAdapter.selectItem(playingItemPos);
     }
   }
@@ -948,7 +951,7 @@ public class MainActivity extends AppCompatActivity {
         int time = 0;
         if (item.isLastPlayed) {
           if (playerService != null && !playerService.getAudioPath().equals(item.path)) {
-            int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
+            int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + clickedFile.getParent());
             if (lastTime != -1) time = lastTime;
           }
         }
@@ -972,7 +975,7 @@ public class MainActivity extends AppCompatActivity {
       
       if (isDirectoryChanged) {
         log("Directory changed");
-        Fun.saveSharedPref(context, "TIME_" + currentAudioParent, lastAudioTime);
+        Fun.saveSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + currentAudioParent, lastAudioTime);
         log(String.format("Saved %d to TIME_%s", lastAudioTime, currentAudioParent));
         
         cachePlayingList(newAudioFile.getParentFile());
@@ -982,6 +985,28 @@ public class MainActivity extends AppCompatActivity {
     }
     else {
       reloadPlayingListForDir(newAudioFile.getParentFile());
+    }
+  }
+  
+  private void cleanPrefs() {
+    cleanFavorites();
+    
+    var allPrefs = Fun.getAllSharedPrefs(context);
+    for (var pref: allPrefs.entrySet()) {
+      String key = pref.getKey();
+      
+      if (key.startsWith(Vars.PREF_LAST_FILE_IN_FOLDER)) {
+        String dir = key.substring(Vars.PREF_LAST_FILE_IN_FOLDER.length());
+        String file = (String) pref.getValue();
+        
+        if (!Fun.fileExists(dir) || !Fun.fileExists(file)) {
+          log(String.format("Removing prefs for dir '%s', as dir or file doesn't exist", dir));
+          
+          Fun.removeSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + dir);
+          Fun.removeSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + dir);
+        }
+      }
+      
     }
   }
   

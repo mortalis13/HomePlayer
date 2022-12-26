@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.Map;
 import java.util.stream.Stream;
 
 
@@ -214,6 +215,20 @@ public class Fun {
     if (context == null) return null;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
     return sharedPreferences.getStringSet(key, new HashSet<String>());
+  }
+  
+  public static Map<String, ?> getAllSharedPrefs(Context context) {
+    if (context == null) return null;
+    SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
+    return sharedPreferences.getAll();
+  }
+  
+  public static void removeSharedPref(Context context, String key) {
+    if (context == null) return;
+    SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
+    var editor = sharedPreferences.edit();
+    editor.remove(key);
+    editor.commit();
   }
   
   
