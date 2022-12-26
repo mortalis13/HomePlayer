@@ -69,17 +69,17 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   private Handler progressHandler = new Handler();
   private Runnable progressRunnable;
   
-  public SimpleAction exitAction;
-  public Action<Integer> progressSetupAction;
-  public Action<Integer> progressUpdateAction;
-  public DoubleAction<Integer> timeUpdateAction;
-  public SimpleAction onPlayerPreloadedAction;
-  public SimpleAction onPlayerStartedAction;
-  public SimpleAction onPlayerPausedAction;
-  public SimpleAction onPlayerResumedAction;
-  public SimpleAction onPlayerStoppedAction;
-  public SimpleAction onPlayerErrorAction;
-  public Action<Integer> onHeadphonesPlugAction = (state) -> {};
+  public SimpleAction exitAction = () -> {};
+  public Action<Integer> progressSetupAction = (arg) -> {};
+  public Action<Integer> progressUpdateAction = (arg) -> {};
+  public DoubleAction<Integer> timeUpdateAction = (arg1, arg2) -> {};
+  public SimpleAction onPlayerPreloadedAction = () -> {};
+  public SimpleAction onPlayerStartedAction = () -> {};
+  public SimpleAction onPlayerPausedAction = () -> {};
+  public SimpleAction onPlayerResumedAction = () -> {};
+  public SimpleAction onPlayerStoppedAction = () -> {};
+  public SimpleAction onPlayerErrorAction = () -> {};
+  public Action<Integer> onHeadphonesPlugAction = (arg) -> {};
   
   @Override
   public void onCreate() {

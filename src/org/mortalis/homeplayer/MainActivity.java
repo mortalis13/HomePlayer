@@ -538,6 +538,11 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     logd("playAudio()");
+    if (!serviceBound || playerService == null) {
+      loge("Player service is not initialized");
+      return;
+    }
+    
     File playingFile = new File(filePath);
     if (!playingFile.exists()) {
       loge("The file does not exist: " + filePath);
@@ -941,9 +946,11 @@ public class MainActivity extends AppCompatActivity {
       }
       else {
         int time = 0;
-        if (item.isLastPlayed && !item.path.equals(playerService.getAudioPath())) {
-          int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
-          if (lastTime != -1) time = lastTime;
+        if (item.isLastPlayed) {
+          if (playerService != null && !playerService.getAudioPath().equals(item.path)) {
+            int lastTime = Fun.getSharedPrefInt(this, "TIME_" + clickedFile.getParent());
+            if (lastTime != -1) time = lastTime;
+          }
         }
         
         playAudio(item.path, time, true);
@@ -956,6 +963,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void processPlayingDirChange(File newAudioFile) {
     logd("processPlayingDirChange(): " + newAudioFile);
+    if (playerService == null) return;
     
     if (playerService.hasAudio()) {
       var currentAudio = new File(playerService.getAudioPath());
