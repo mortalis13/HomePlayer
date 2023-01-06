@@ -42,11 +42,17 @@ public class Vars {
     "m4b",
     "wma",
     
+    // Video with ffmpeg support
     "f4v",
     "m4v",
     "mov",
     "mp4",
     "wmv",
+    
+    // Other video
+    "avi",
+    "mkv",
+    "webm",
   };
   
 }
