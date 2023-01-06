@@ -224,13 +224,18 @@ public class ProgressSliderView extends View {
     }
   }
   
+  short[] samples;
   
   public void updateWaveform(short[] samples) {
+    this.samples = samples;
+    
+    log("updateWaveform()");
     this.waveformPicture = new Picture();
     Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
     
     float center = (float) this.canvasHeight / 2;
     
+    log("updateWaveform()-1");
     for (int i = 0; i < samples.length; i++) {
       float h = samples[i];
 
@@ -240,9 +245,11 @@ public class ProgressSliderView extends View {
       
       waveformCanvas.drawLine(x, y0, x, y1, this.waveformPaint);
     }
+    log("updateWaveform()-2");
     
     this.waveformPicture.endRecording();
-    postInvalidate();
+    log("updateWaveform()-3");
+    invalidate();
   }
   
   public void clearWaveform() {
