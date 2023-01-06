@@ -515,6 +515,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == MEDIA_ERROR_SYSTEM) {
       // Detected when trying to play unsupported file
       if (mediaPlayer != null) mediaPlayer.release();
+      mediaPlayer = null;
       playerLoaded = false;
       stopForeground(true);
       stopSelf();
