@@ -298,6 +298,11 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     progressRunnable = new Runnable() {
       public void run() {
+        if (mediaPlayer == null) {
+          loge("mediaPlayer is null, cannot start progress");
+          return;
+        }
+        
         if (updateTimeEnabled && mediaPlayer.isPlaying()) {
           sendUpdatePlayingTime();
           sendUpdateProgress();
@@ -516,6 +521,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       // Detected when trying to play unsupported file
       if (mediaPlayer != null) mediaPlayer.release();
       mediaPlayer = null;
+      
       playerLoaded = false;
       stopForeground(true);
       stopSelf();
