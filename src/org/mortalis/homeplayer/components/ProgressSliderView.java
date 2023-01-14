@@ -105,6 +105,10 @@ public class ProgressSliderView extends View {
     invalidate();
   }
   
+  public boolean atMaxProgress() {
+    return this.progress == this.maxValue;
+  }
+  
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     

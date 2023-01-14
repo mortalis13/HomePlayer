@@ -748,6 +748,10 @@ public class MainActivity extends AppCompatActivity {
     if (extraInfoPanel.getVisibility() == View.VISIBLE) {
       showExtraAudioInfo();
     }
+    
+    if (progressSlider.atMaxProgress()) {
+      progressSlider.disable();
+    }
   }
   
   private void onPlayerPaused() {
@@ -1035,6 +1039,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updatePlayingStats() {
+    if (playerService == null || !playerService.hasAudio()) return;
     File playingFile = new File(playerService.getAudioPath());
     
     int playingItemPos = -1;
