@@ -155,15 +155,14 @@ public class VolumeSliderView extends View {
       float steps = moveOffsetX / (this.progressStep * 100 / SLIDER_SENSITIVITY);
       int stepsProgress = (int) steps;
       
-      if (stepsProgress != 0) {
-        stepsProgress -= this.stepsDone;
-        this.stepsDone += stepsProgress;
-      }
+      stepsProgress -= this.stepsDone;
+      this.stepsDone += stepsProgress;
       
       int _progress = this.progress + stepsProgress;
-      setProgress(_progress);
-      
-      sendPosition(this.progress);
+      if (_progress != this.progress) {
+        setProgress(_progress);
+        sendPosition(this.progress);
+      }
     }
     
     if (action == MotionEvent.ACTION_UP) {
