@@ -480,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Actions ------------------------------
   private void playPauseAction() {
-    if (playerService == null || !playerService.hasAudio() || !playerService.isPlayerLoaded()) return;
+    if (playerService == null || !playerService.hasAudio()) return;
     
     if (playerService.isPlaying()) {
       playerService.pause();
