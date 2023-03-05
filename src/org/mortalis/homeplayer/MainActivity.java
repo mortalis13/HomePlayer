@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
   
   private Object lock = new Object();
   private Thread waveformDecodeThread;
+  private String currentWaveformFile;
   
   // -- Views
   private HorizontalScrollView titleScroller;
@@ -800,7 +801,7 @@ public class MainActivity extends AppCompatActivity {
       updatePlayingStats();
       
       if (playingList.length == 0) {
-        log("Playing list is empty, resetting the player ui");
+        log("Playing list is empty, resetting the player UI");
         if (playerService != null) {
           playerService.stop();
           playerService.resetService();
@@ -1234,6 +1235,11 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateWaveform(String audioPath) {
+    if (currentWaveformFile != null && currentWaveformFile.equals(audioPath)) {
+      log(String.format("The waveform is already built for the audio %s", audioPath));
+      return;
+    }
+    
     int sliderWidth = progressSlider.getWaveformWidth();
     int sliderHeight = progressSlider.getWaveformHeight();
     
@@ -1258,6 +1264,7 @@ public class MainActivity extends AppCompatActivity {
         if (Thread.interrupted()) return;
         
         progressSlider.updateWaveform(result.samples);
+        currentWaveformFile = audioPath;
       }
     });
     
