@@ -4,7 +4,7 @@
   android:id="@+id/controlsPanel"
   android:orientation="horizontal"
   android:layout_width="match_parent"
-  android:layout_height="62dp"
+  android:layout_height="70dp"
 >
   <ImageButton
     android:id="@+id/bPrevFile"
