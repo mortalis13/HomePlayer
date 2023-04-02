@@ -539,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
-    logd("playAudio()");
+    logd("playAudio() \"" + filePath + "\"");
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
       return;
@@ -1248,10 +1248,10 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    log(String.format("Updating waveform for size %d x %d", sliderWidth, sliderHeight));
+    log(String.format("Updating waveform for \"%s\" and size %d x %d", audioPath, sliderWidth, sliderHeight));
     
-    if (waveformDecodeThread != null) waveformDecodeThread.interrupt();
     DecoderNative.stopDecoding();
+    if (waveformDecodeThread != null) waveformDecodeThread.interrupt();
     
     waveformDecodeThread = new Thread(() -> {
       synchronized (lock) {
