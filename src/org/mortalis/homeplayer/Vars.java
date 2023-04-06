@@ -22,6 +22,8 @@ public class Vars {
   public static final String PREF_LAST_FILE_IN_FOLDER = "PREF_LAST_FILE_";
   public static final String PREF_LAST_TIME_IN_FOLDER = "PREF_LAST_TIME_";
   
+  public static final int MAX_TRIM = 300;
+  
   public static final String[] AUDIO_EXTS = new String[] {
     "flac",
     "mp3",

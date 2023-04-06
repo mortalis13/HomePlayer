@@ -1,0 +1,73 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+<RelativeLayout
+  android:id="@+id/trimAudioPanel"
+  android:layout_width="match_parent"
+  android:layout_height="49dp"
+  android:visibility="gone"
+>
+  <View
+    android:layout_width="2dp"
+    android:layout_height="match_parent"
+    android:background="#aaa"
+    android:layout_alignParentLeft="true"
+  />
+  <View
+    android:layout_width="2dp"
+    android:layout_height="match_parent"
+    android:background="#aaa"
+    android:layout_alignParentRight="true"
+  />
+
+  <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="20dp"
+    android:layout_alignParentTop="true"
+  >
+    <TextView
+      android:id="@+id/textTrimValue"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginLeft="4dp"
+      android:gravity="center_vertical"
+      android:text=""
+      android:layout_alignParentLeft="true"
+    />
+    
+    <TextView
+      android:id="@+id/textTrimMax"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginRight="4dp"
+      android:gravity="center_vertical"
+      android:text=""
+      android:layout_alignParentRight="true"
+    />
+  </RelativeLayout>
+
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:background="#aaa"
+    android:layout_above="@+id/trimAudioSlider"
+  />
+  
+  <org.mortalis.homeplayer.components.TrimSliderView
+    android:id="@+id/trimAudioSlider"
+    android:layout_width="match_parent"
+    android:layout_height="26dp"
+    android:layout_marginRight="2dp"
+    android:layout_marginLeft="2dp"
+    android:layout_marginBottom="2dp"
+    android:layout_alignParentBottom="true"
+  />
+  
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="2dp"
+    android:background="#aaa"
+    android:layout_alignParentBottom="true"
+  />
+</RelativeLayout>
+  
+</merge>

@@ -38,51 +38,70 @@
       android:tint="@color/play_control_button_tint_color"
       android:background="@drawable/control_button_background"
     />
-    <LinearLayout
+    <RelativeLayout
       android:layout_width="120dp"
       android:layout_height="match_parent"
     >
       <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:paddingLeft="16dp"
-        android:paddingTop="6dp"
+          android:layout_width="16dp"
+          android:layout_height="16dp"
+          android:layout_marginLeft="16dp"
+          android:layout_marginTop="6dp"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentTop="true"
       >
         <ImageView
           android:id="@+id/playExtraIconShuffle"
-          android:layout_width="16dp"
-          android:layout_height="16dp"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
           android:layout_gravity="center"
           android:gravity="center"
           android:tint="@color/play_control_extra_icon_tint_color"
-          android:layout_alignParentLeft="true"
-          android:layout_alignParentTop="true"
           android:src="@drawable/round_shuffle_black_18"
           android:visibility="gone"
         />
       </RelativeLayout>
+      
       <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:paddingRight="16dp"
-        android:paddingTop="6dp"
+          android:layout_width="16dp"
+          android:layout_height="16dp"
+          android:layout_marginRight="16dp"
+          android:layout_marginTop="6dp"
+          android:layout_alignParentRight="true"
+          android:layout_alignParentTop="true"
       >
         <ImageView
           android:id="@+id/playExtraIconRepeat"
-          android:layout_width="16dp"
-          android:layout_height="16dp"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
           android:layout_gravity="center"
           android:gravity="center"
           android:tint="@color/play_control_extra_icon_tint_color"
-          android:layout_alignParentRight="true"
-          android:layout_alignParentTop="true"
           android:src="@drawable/round_repeat_black_18"
           android:visibility="gone"
         />
       </RelativeLayout>
-    </LinearLayout>
+      
+      <RelativeLayout
+          android:layout_width="16dp"
+          android:layout_height="16dp"
+          android:layout_marginLeft="16dp"
+          android:layout_marginBottom="6dp"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentBottom="true"
+      >
+        <ImageView
+          android:id="@+id/playExtraIconTrim"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_gravity="center"
+          android:gravity="center"
+          android:tint="@color/play_control_extra_icon_tint_color"
+          android:src="@drawable/audio_trim_24dp"
+          android:visibility="gone"
+        />
+      </RelativeLayout>
+    </RelativeLayout>
   </FrameLayout>
   <ImageButton
     android:id="@+id/bFastForward"

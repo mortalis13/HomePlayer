@@ -437,6 +437,10 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     mediaPlayer.seekTo(time);
   }
   
+  public void seekToEnd() {
+    mediaPlayer.seekTo(mediaPlayer.getDuration());
+  }
+  
   public int getTotalTime() {
     if (mediaPlayer == null) return -1;
     return mediaPlayer.getDuration();
@@ -499,7 +503,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
   }
-  
   
   // --> MediaPlayer.OnCompletionListener
   @Override

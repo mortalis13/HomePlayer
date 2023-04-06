@@ -4,8 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Picture;
-import android.graphics.BlendMode;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,24 +15,19 @@ import org.mortalis.homeplayer.R;
 import static org.mortalis.homeplayer.Fun.log;
 
 
-public class ProgressSliderView extends View {
+public class TrimSliderView extends View {
   
-  private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
-  private static final int WAVEFORM_PAD = (int) Fun.dpToPx(2);
+  private final static int SLIDER_SENSITIVITY = 100;
   
   private boolean sliderEnabled;
-  private boolean touchEnabled;
   
   private Paint canvasPaint;
   private Paint borderPaint;
   private Paint progressPaint;
-  private Paint waveformPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
   private RectF borderRect;
-  
-  private Picture waveformPicture;
   
   private int canvasWidth;
   private int canvasHeight;
@@ -43,46 +36,51 @@ public class ProgressSliderView extends View {
   private int workingHeight;
   
   private int borderWidth;
-  private float snapPosX;
-  private int progressColor;
+  
+  private int mediumLevel;
+  private int highLevel;
+  
+  private int normalColor;
+  private int mediumColor;
+  private int highColor;
   
   private int maxValue;
   private int progress;
-
-  private short[] samples;
+  private float progressStep;
+  
+  private boolean hasMoved;
+  private int moveStartX;
+  private int stepsDone;
   
   private ProgressChangeListener progressChangeListener;
   
   
-  public ProgressSliderView(Context context) {
+  public TrimSliderView(Context context) {
     this(context, null);
   }
   
-  public ProgressSliderView(Context context, AttributeSet attrs) {
+  public TrimSliderView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
     init(context);
   }
   
   
   private void init(Context context) {
-    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
-    this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
-    this.progressColor = ContextCompat.getColor(context, R.color.plain_slider_progress_color);
+    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.trim_slider_border_width));
     
     this.canvasPaint = new Paint();
-    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_background_color));
+    this.canvasPaint.setAntiAlias(true);
+    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_background_color));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
-    this.progressPaint.setColor(progressColor);
+    this.progressPaint.setAntiAlias(true);
+    this.progressPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_progress_color));
     this.progressPaint.setStyle(Paint.Style.FILL);
-    this.progressPaint.setBlendMode(BlendMode.MULTIPLY);
-    
-    this.waveformPaint = new Paint();
-    this.waveformPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_waveform_color));
     
     this.borderPaint = new Paint();
-    this.borderPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_border_color));
+    this.borderPaint.setAntiAlias(true);
+    this.borderPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_border_color));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
     
@@ -92,23 +90,17 @@ public class ProgressSliderView extends View {
   }
   
   
-  public void reset() {
-    setProgress(0);
-    this.touchEnabled = true;
-  }
-  
   public void setMax(int value) {
     this.maxValue = value;
   }
   
   public void setProgress(int value) {
+    if (value > this.maxValue) value = this.maxValue;
+    if (value < 0) value = 0;
+
     this.progress = value;
     rebuildProgess();
     invalidate();
-  }
-  
-  public boolean atMaxProgress() {
-    return this.progress == this.maxValue;
   }
   
   private void rebuildUI() {
@@ -126,13 +118,14 @@ public class ProgressSliderView extends View {
     rebuildProgess();
     invalidate();
   }
-  
+
   private void rebuildProgess() {
-    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
+    this.progressStep = (float) this.workingWidth / this.maxValue;
+    float progressPx = this.progress * this.progressStep;
     
     float left   = this.borderWidth;
     float top    = this.borderWidth;
-    float right  = left + _progress;
+    float right  = left + progressPx;
     float bottom = this.canvasHeight - this.borderWidth;
     this.progressRect.set(left, top, right, bottom);
   }
@@ -146,36 +139,37 @@ public class ProgressSliderView extends View {
     int x = (int) event.getX() - this.borderWidth;
     int y = (int) event.getY() - this.borderWidth;
     
-    if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
-      if (!this.touchEnabled) return true;
+    if (action == MotionEvent.ACTION_DOWN) {
+      this.moveStartX = x;
+      this.stepsDone = 0;
+    }
+    
+    if (action == MotionEvent.ACTION_MOVE) {
+      this.hasMoved = true;
+      int moveOffsetX = x - this.moveStartX;
       
-      if (x < this.snapPosX) x = 0;
-      if (x > this.workingWidth - this.snapPosX) x = this.workingWidth;
+      float steps = moveOffsetX / (this.progressStep * 100 / SLIDER_SENSITIVITY);
+      int stepsProgress = (int) steps;
       
-      // Detect if vertical offset is greater than max and reset the position
-      int outerVerticalOffset = 0;
-      if (y < 0) outerVerticalOffset = Math.abs(y);
-      if (y > this.workingHeight) outerVerticalOffset = y - this.workingHeight;
+      stepsProgress -= this.stepsDone;
+      this.stepsDone += stepsProgress;
       
-      if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
-        this.touchEnabled = false;
-        cancelTouch();
-        return true;
+      int _progress = this.progress + stepsProgress;
+      if (_progress != this.progress) {
+        setProgress(_progress);
+        sendPosition(this.progress);
       }
-      
-      int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
-      setProgress(_progress);
-      
-      sendPosition(this.progress);
     }
     
     if (action == MotionEvent.ACTION_UP) {
-      if (!this.touchEnabled) {
-        this.touchEnabled = true;
-        return true;
+      if (!this.hasMoved) {
+        int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
+        setProgress(_progress);
+        sendPosition(this.progress);
       }
       
-      releaseTouch(this.progress);
+      this.moveStartX = 0;
+      this.hasMoved = false;
     }
     
     return true;
@@ -194,9 +188,8 @@ public class ProgressSliderView extends View {
   @Override
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
-    canvas.drawRect(this.borderRect, this.borderPaint);
-    drawWaveform(canvas);
     canvas.drawRect(this.progressRect, this.progressPaint);
+    canvas.drawRect(this.borderRect, this.borderPaint);
   }
   
   @Override
@@ -213,71 +206,11 @@ public class ProgressSliderView extends View {
     this.sliderEnabled = false;
   }
   
-  private void cancelTouch() {
-    if (this.progressChangeListener != null) {
-      this.progressChangeListener.onCancelled();
-    }
-  }
-  
   private void sendPosition(int position) {
     if (this.progressChangeListener != null) {
       this.progressChangeListener.onChanging(position);
     }
   }
-  
-  private void releaseTouch(int position) {
-    if (this.progressChangeListener != null) {
-      this.progressChangeListener.onChanged(position);
-    }
-  }
-  
-  public void restoreProgressColor() {
-    if (this.progressPaint.getColor() != this.progressColor) {
-      this.progressPaint.setColor(this.progressColor);
-      invalidate();
-    }
-  }
-  
-  public void changeProgressColor(int color) {
-    if (this.progressPaint.getColor() != color) {
-      this.progressPaint.setColor(color);
-      invalidate();
-    }
-  }
-  
-  public void updateWaveform(short[] samples) {
-    // Saving reference to possibly prevent SIGSEGV after returning from JNI
-    this.samples = samples;
-    
-    this.waveformPicture = new Picture();
-    Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
-    
-    float center = (float) this.canvasHeight / 2;
-    
-    for (int i = 0; i < samples.length; i++) {
-      float h = samples[i];
-
-      float x = this.borderWidth + i;
-      float y0 = center - h;
-      float y1 = center + h + 1;
-      
-      waveformCanvas.drawLine(x, y0, x, y1, this.waveformPaint);
-    }
-    
-    this.waveformPicture.endRecording();
-    postInvalidate();
-  }
-  
-  public void clearWaveform() {
-    this.waveformPicture = null;
-    invalidate();
-  }
-  
-  private void drawWaveform(Canvas canvas) {
-    if (waveformPicture == null) return;
-    canvas.drawPicture(waveformPicture);
-  }
-  
   
   private int measureHeight(int measureSpec) {
     int size = getPaddingTop() + getPaddingBottom();
@@ -296,21 +229,11 @@ public class ProgressSliderView extends View {
     this.progressChangeListener = progressChangeListener;
   }
   
-  public int getWaveformWidth() {
-    return this.workingWidth;
-  }
   
-  public int getWaveformHeight() {
-    return this.workingHeight - WAVEFORM_PAD;
-  }
-  
-
   // ------------------ Classes ------------------
   
   public interface ProgressChangeListener {
     public void onChanging(int value);
-    public void onChanged(int value);
-    public void onCancelled();
   }
   
 }

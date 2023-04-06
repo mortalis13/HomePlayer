@@ -1,41 +1,60 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-<RelativeLayout
+<LinearLayout
   android:id="@+id/extraControlPanel"
   android:layout_width="match_parent"
-  android:layout_height="60dp"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
   android:visibility="gone"
   android:background="@color/secondary_background"
 >
-  <ImageButton
-    android:id="@+id/bShuffle"
-    android:layout_width="60dp"
+
+<RelativeLayout
+  android:layout_width="match_parent"
+  android:layout_height="60dp"
+>
+  <View
+    android:layout_width="2dp"
     android:layout_height="match_parent"
-    android:src="@drawable/round_shuffle_black_24"
-    android:tint="@color/list_item_button_tint_color"
-    android:background="@drawable/secondary_toggle_button_background"
+    android:background="#aaa"
     android:layout_alignParentLeft="true"
   />
   <View
     android:layout_width="2dp"
     android:layout_height="match_parent"
     android:background="#aaa"
+    android:layout_alignParentRight="true"
+  />
+  
+  <ImageButton
+    android:id="@+id/bShuffle"
+    android:layout_width="60dp"
+    android:layout_height="match_parent"
+    android:layout_marginLeft="2dp"
+    android:src="@drawable/round_shuffle_black_24"
+    android:tint="@color/list_item_button_tint_color"
+    android:background="@drawable/toggle_button_background"
     android:layout_alignParentLeft="true"
+  />
+  
+  <ImageButton
+    android:id="@+id/bTrimAudio"
+    android:layout_width="60dp"
+    android:layout_height="match_parent"
+    android:src="@drawable/audio_trim_24dp"
+    android:tint="@color/list_item_button_tint_color"
+    android:background="@drawable/panel_toggle_button_background"
+    android:layout_toRightOf="@+id/bShuffle"
   />
   
   <ImageButton
     android:id="@+id/bRepeat"
     android:layout_width="60dp"
     android:layout_height="match_parent"
+    android:layout_marginRight="2dp"
     android:src="@drawable/round_repeat_black_24"
     android:tint="@color/list_item_button_tint_color"
-    android:background="@drawable/secondary_toggle_button_background"
-    android:layout_alignParentRight="true"
-  />
-  <View
-    android:layout_width="2dp"
-    android:layout_height="match_parent"
-    android:background="#aaa"
+    android:background="@drawable/toggle_button_background"
     android:layout_alignParentRight="true"
   />
   
@@ -46,5 +65,8 @@
     android:layout_alignParentBottom="true"
   />
 </RelativeLayout>
-  
+
+<include layout="@layout/main_trim_audio_panel"/>
+</LinearLayout>
+
 </merge>

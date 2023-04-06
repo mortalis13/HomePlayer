@@ -44,15 +44,24 @@
   <color name="control_button_background_pressed">#ddd</color>
   <color name="control_button_background_default">@color/transparent</color>
   
-  <color name="secondary_toggle_button_background_selected">#c4d6de</color>
-  <color name="secondary_toggle_button_background_default">@color/transparent</color>
+  <color name="toggle_button_background_pressed">#bfd0d7</color>
+  <color name="toggle_button_background_selected">#bacad1</color>
+  <color name="toggle_button_background_default">@color/transparent</color>
   
-  <color name="plain_slider_background_color">#00ffffff</color>
+  <color name="panel_toggle_button_background_pressed">#ccc</color>
+  <color name="panel_toggle_button_background_selected">#ccc</color>
+  <color name="panel_toggle_button_background_default">@color/transparent</color>
+  
+  <color name="plain_slider_background_color">@color/transparent</color>
   <color name="plain_slider_progress_color">#bacbd3</color>
   <color name="plain_slider_border_color">#888</color>
   <color name="plain_slider_waveform_color">#909090</color>
   
   <color name="volume_slider_background_color">@color/status_background</color>
+  
+  <color name="trim_slider_background_color">@color/transparent</color>
+  <color name="trim_slider_progress_color">#c0b4c6</color>
+  <color name="trim_slider_border_color">@color/transparent</color>
   
   <color name="volume_slider_progress_color">#aec6b4</color>
   <color name="volume_slider_progress_medium_color">#e2c8a6</color>

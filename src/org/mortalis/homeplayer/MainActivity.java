@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.mortalis.homeplayer.components.ProgressSliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
+import org.mortalis.homeplayer.components.TrimSliderView;
 import org.mortalis.homeplayer.decoder.DecoderNative;
 import org.mortalis.homeplayer.decoder.DecoderResult;
 
@@ -102,6 +103,10 @@ public class MainActivity extends AppCompatActivity {
   private Thread waveformDecodeThread;
   private String currentWaveformFile;
   
+  private boolean audioTrimEnabled;
+  private int audioTrimSeconds;
+  private int trimmedProgressColor;
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -124,14 +129,21 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bFastForward;
   private ImageView playExtraIconShuffle;
   private ImageView playExtraIconRepeat;
+  private ImageView playExtraIconTrim;
   
   private LinearLayout panelInfoLeft;
   private LinearLayout panelInfoCenter;
   private LinearLayout panelInfoRight;
   
-  private RelativeLayout extraControlPanel;
+  private LinearLayout extraControlPanel;
   private ImageButton bShuffle;
+  private ImageButton bTrimAudio;
   private ImageButton bRepeat;
+  
+  private RelativeLayout trimAudioPanel;
+  private TrimSliderView trimAudioSlider;
+  private TextView textTrimValue;
+  private TextView textTrimMax;
   
   private LinearLayout extraInfoPanel;
   private TextView textExtraFileName;
@@ -152,7 +164,6 @@ public class MainActivity extends AppCompatActivity {
   private TextView textVolumeLevel;
   
   private VolumeSliderView volumeSlider;
-  
   
   static {
     Fun.log("Loading Decoder native library");
@@ -247,6 +258,8 @@ public class MainActivity extends AppCompatActivity {
     audioManager = context.getSystemService(AudioManager.class);
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
     
+    trimmedProgressColor = ContextCompat.getColor(context, R.color.trim_slider_progress_color);
+    
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         logd("onServiceConnected()");
@@ -257,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.exitAction = () -> exitApp();
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
-        playerService.timeUpdateAction = (time, timeTotal) -> updatePlayingTime(time, timeTotal);
+        playerService.timeUpdateAction = (time, timeTotal) -> onPlayedTimeChanged(time, timeTotal);
         playerService.onPlayerPreloadedAction = () -> onPlayerPreloaded();
         playerService.onPlayerStartedAction = () -> onPlayerStarted();
         playerService.onPlayerPausedAction = () -> onPlayerPaused();
@@ -284,6 +297,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void configUI() {
+    // Find views
     titleScroller = findViewById(R.id.titleScroller);
     activeTitle = findViewById(R.id.activeTitle);
     
@@ -304,7 +318,13 @@ public class MainActivity extends AppCompatActivity {
     
     extraControlPanel = findViewById(R.id.extraControlPanel);
     bShuffle = findViewById(R.id.bShuffle);
+    bTrimAudio = findViewById(R.id.bTrimAudio);
     bRepeat = findViewById(R.id.bRepeat);
+    
+    trimAudioPanel = findViewById(R.id.trimAudioPanel);
+    trimAudioSlider = findViewById(R.id.trimAudioSlider);
+    textTrimValue = findViewById(R.id.textTrimValue);
+    textTrimMax = findViewById(R.id.textTrimMax);
     
     extraInfoPanel = findViewById(R.id.extraInfoPanel);
     textExtraFileName = findViewById(R.id.textExtraFileName);
@@ -327,6 +347,7 @@ public class MainActivity extends AppCompatActivity {
     
     playExtraIconShuffle = findViewById(R.id.playExtraIconShuffle);
     playExtraIconRepeat = findViewById(R.id.playExtraIconRepeat);
+    playExtraIconTrim = findViewById(R.id.playExtraIconTrim);
     
     textTotalFiles = findViewById(R.id.textTotalFiles);
     textTotalSize = findViewById(R.id.textTotalSize);
@@ -335,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
     
     volumeSlider = findViewById(R.id.volumeSlider);
     
-
+    // Init components
     titleScroller.setSmoothScrollingEnabled(false);
     
     fileList = new ArrayList<>();
@@ -350,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
         itemsQueue.add(position);
       }
       else {
-        logw("itemsQueue already contains pos " + position);
+        logw("itemsQueue already contains position " + position);
       }
     };
     
@@ -410,11 +431,15 @@ public class MainActivity extends AppCompatActivity {
       playbackShuffleAction();
     });
     
+    bTrimAudio.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      toggleTrimAudioPanel();
+    });
+    
     bRepeat.setOnClickListener(v -> {
       v.setSelected(!v.isSelected());
       playbackRepeatAction();
     });
-    
     
     bPrevFile.setOnClickListener(v -> playPrevFileAction());
     bPlayPause.setOnClickListener(v -> playPauseAction());
@@ -444,6 +469,35 @@ public class MainActivity extends AppCompatActivity {
     
     volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     updateVolumeLevel();
+    
+    textTrimMax.setText(Fun.formatTime(Vars.MAX_TRIM, false));
+    updateAudioTrimText(0);
+    
+    trimAudioSlider.setMax(Vars.MAX_TRIM);
+    trimAudioSlider.setProgress(0);
+    trimAudioSlider.enable();
+    
+    trimAudioSlider.setProgressChangeListener(new TrimSliderView.ProgressChangeListener() {
+      public void onChanging(int value) {
+        updateAudioTrimText(value);
+        
+        int visibility = (value > 0) ? View.VISIBLE: View.GONE;
+        if (playExtraIconTrim.getVisibility() != visibility) {
+          playExtraIconTrim.setVisibility(visibility);
+        }
+        
+        if (value > 0) {
+          progressSlider.changeProgressColor(trimmedProgressColor);
+        }
+        else {
+          progressSlider.restoreProgressColor();
+        }
+
+        audioTrimSeconds = value;
+        // Reset the trimming configuration until new playback is started
+        audioTrimEnabled = false;
+      }
+    });
   }
   
   private void restoreState() {
@@ -526,6 +580,11 @@ public class MainActivity extends AppCompatActivity {
     if (shuffleList != null) shuffleList.clear();
   }
   
+  private void toggleTrimAudioPanel() {
+    int visibility = trimAudioPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    trimAudioPanel.setVisibility(visibility);
+  }
+  
   private void playbackRepeatAction() {
     playbackRepeat = !playbackRepeat;
     Fun.saveSharedPref(context, "PLAYBACK_REPEAT", playbackRepeat);
@@ -550,6 +609,8 @@ public class MainActivity extends AppCompatActivity {
       loge("The file does not exist: " + filePath);
       return;
     }
+    
+    this.audioTrimEnabled = (audioTrimSeconds > 0 && time == 0);
     
     progressSlider.reset();
     updateWaveform(filePath);
@@ -780,6 +841,19 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
   }
   
+  private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
+    updatePlayingTime(playingTime, totalTime);
+    
+    if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
+      if (isPlayingLastFile()) {
+        if (playerService != null) playerService.seekToEnd();
+      }
+      else {
+        playNextFile(true);
+      }
+    }
+  }
+  
   private void onHeadphonesPlug(int state) {
     updateVolumeLevel();
   }
@@ -802,14 +876,7 @@ public class MainActivity extends AppCompatActivity {
       
       if (playingList.length == 0) {
         log("Playing list is empty, resetting the player UI");
-        if (playerService != null) {
-          playerService.stop();
-          playerService.resetService();
-          playerService.stopForeground(true);
-        }
-        
-        progressSlider.clearWaveform();
-        resetPlayer();
+        fullStop();
       }
     }
   }
@@ -916,6 +983,17 @@ public class MainActivity extends AppCompatActivity {
     if (currentAudioPath == null || !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
       generateShuffleList(audioFile);
     }
+  }
+  
+  private void fullStop() {
+    if (playerService != null) {
+      playerService.stop();
+      playerService.resetService();
+      playerService.stopForeground(true);
+    }
+    
+    progressSlider.clearWaveform();
+    resetPlayer();
   }
   
   private void resetPlayer() {
@@ -1058,20 +1136,20 @@ public class MainActivity extends AppCompatActivity {
     textCurrentFileSize.setText(fileSize);
   }
   
-  private void updatePlayingTime(int playingPos, int totalTime) {
-    if (playingPos == -1 || totalTime == -1) {
-      loge(String.format("updatePlayingTime(): time is -1, playingPos: %d, totalTime: %d", playingPos, totalTime));
+  private void updatePlayingTime(int playingTime, int totalTime) {
+    if (playingTime == -1 || totalTime == -1) {
+      loge(String.format("updatePlayingTime(): time is -1, playingTime: %d, totalTime: %d", playingTime, totalTime));
       return;
     }
     
-    Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingPos);
-    lastAudioTime = playingPos;
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingTime);
+    lastAudioTime = playingTime;
     
-    playingPos /= 1000;
+    playingTime /= 1000;
     totalTime  /= 1000;
-    String timePlaying = Fun.formatTime(playingPos, false);
+    String timePlaying = Fun.formatTime(playingTime, false);
     String timeTotal   = Fun.formatTime(totalTime, false);
-    int timeDiff = totalTime - playingPos;
+    int timeDiff = totalTime - playingTime;
     if (timeDiff < 0) timeDiff = 0;
     String timeLeft    = "-" + Fun.formatTime(timeDiff, false);
     
@@ -1141,6 +1219,14 @@ public class MainActivity extends AppCompatActivity {
     textExtraChannels.setText(String.valueOf(info.channels));
   }
   
+  private void updateAudioTrimText(int value) {
+    String timeStr = "OFF";
+    if (value > 0) {
+      timeStr = Fun.formatTime(value, false);
+    }
+    textTrimValue.setText(timeStr);
+  }
+  
   private void exitApp() {
     logd("exitApp()");
     finishAndRemoveTask();
@@ -1164,13 +1250,21 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void hideExtraPanels() {
-    if (extraControlPanel.getVisibility() == View.VISIBLE) extraControlPanel.setVisibility(View.GONE);
-    if (extraInfoPanel.getVisibility() == View.VISIBLE)  extraInfoPanel.setVisibility(View.GONE);
+    if (extraControlPanel.getVisibility() == View.VISIBLE) {
+      extraControlPanel.setVisibility(View.GONE);
+      trimAudioPanel.setVisibility(View.GONE);
+      bTrimAudio.setSelected(false);
+    }
+    if (extraInfoPanel.getVisibility() == View.VISIBLE) extraInfoPanel.setVisibility(View.GONE);
   }
   
   private void toggleExtraControlPanel() {
     int visibility = extraControlPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
     extraControlPanel.setVisibility(visibility);
+    if (visibility == View.GONE) {
+      trimAudioPanel.setVisibility(View.GONE);
+      bTrimAudio.setSelected(false);
+    }
   }
   
   private void toggleExtraInfoPanel() {
