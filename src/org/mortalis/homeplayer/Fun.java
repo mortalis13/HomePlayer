@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
+
 
 public class Fun {
   
@@ -45,12 +47,9 @@ public class Fun {
   
   public static Comparator<File> nocaseComp = (item1, item2) -> {
     if (item1 == null || item2 == null) return 0;
-    return item1.getName().compareToIgnoreCase(item2.getName());
-  };
-  
-  public static Comparator<String> nocaseCompStr = (item1, item2) -> {
-    if (item1 == null || item2 == null) return 0;
-    return item1.compareToIgnoreCase(item2);
+    // Custom comparator to sort the names with numbers in natural readable order
+    Comparator<String> comparator = CaseInsensitiveSimpleNaturalComparator.getInstance();
+    return comparator.compare(item1.getName(), item2.getName());
   };
   
   

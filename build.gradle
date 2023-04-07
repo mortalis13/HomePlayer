@@ -93,10 +93,17 @@ android {
 }
 
 dependencies {
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation fileTree(dir: 'libs', include: ['*.aar'])
+    
   implementation 'androidx.appcompat:appcompat:1.4.2'
   implementation "androidx.core:core:1.8.0"
   implementation "androidx.media:media:1.6.0"
   implementation 'androidx.recyclerview:recyclerview:1.2.1'
+  
+  // https://github.com/gpanther/java-nat-sort
+  // Check for libs folder for a backup version
+  implementation 'net.grey-panther:natural-comparator:1.1'
 }
 
 def appStart() {
