@@ -1,6 +1,7 @@
 package org.mortalis.homeplayer;
 
 import java.io.File;
+import android.graphics.Bitmap;
 
 
 public class AudioInfo {
@@ -13,4 +14,5 @@ public class AudioInfo {
   int frequency;
   int channels;
   int time;
+  Bitmap image;
 }

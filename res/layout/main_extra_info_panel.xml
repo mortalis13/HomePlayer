@@ -1,26 +1,34 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
+<LinearLayout
+  android:id="@+id/extraInfoPanel"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:visibility="gone"
+  android:background="@color/secondary_background"
+>
+
 <ScrollView
+  android:id="@+id/mainScroll"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:fillViewport="true"
 >
 <LinearLayout
-  android:id="@+id/extraInfoPanel"
+  android:id="@+id/mainInfo"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:paddingTop="2dp"
   android:orientation="vertical"
-  android:visibility="gone"
-  android:background="@color/secondary_background"
+  android:paddingLeft="@dimen/extra_info_row_padding"
+  android:paddingRight="@dimen/extra_info_row_padding"
 >
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -44,8 +52,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -69,8 +75,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -94,8 +98,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -119,8 +121,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -146,8 +146,6 @@
     android:layout_marginTop="8dp"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -171,8 +169,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -196,8 +192,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -221,8 +215,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -246,8 +238,6 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -272,8 +262,6 @@
     android:layout_marginBottom="4dp"
     android:minHeight="@dimen/extra_info_row_min_height"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/extra_info_row_padding"
-    android:paddingRight="@dimen/extra_info_row_padding"
   >
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
@@ -291,14 +279,36 @@
     android:textColor="@color/extra_info_secondary_text_color"
   />
   </LinearLayout>
-  
-  <View
+</LinearLayout>
+<!-- mainInfo -->
+
+</ScrollView>
+
+
+<LinearLayout
+  android:id="@+id/imageInfo"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:visibility="gone"
+>
+  <ImageView
+    android:id="@+id/audioImage"
     android:layout_width="match_parent"
-    android:layout_height="2dp"
-    android:background="#aaa"
+    android:layout_height="300dp"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:scaleType="fitCenter"
   />
 </LinearLayout>
+
+
+<View
+  android:layout_width="match_parent"
+  android:layout_height="2dp"
+  android:background="#aaa"
+/>
+
+</LinearLayout>
 <!-- extraInfoPanel -->
-</ScrollView>
   
 </merge>

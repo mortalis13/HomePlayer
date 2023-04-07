@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -146,6 +148,9 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTrimMax;
   
   private LinearLayout extraInfoPanel;
+  private LinearLayout mainInfo;
+  private LinearLayout imageInfo;
+  
   private TextView textExtraFileName;
   private TextView textExtraTitle;
   private TextView textExtraArtist;
@@ -157,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraChannels;
   private TextView textExtraSize;
   private TextView textExtraPath;
+  
+  private ImageView audioImage;
   
   private TextView textTotalFiles;
   private TextView textTotalSize;
@@ -327,6 +334,9 @@ public class MainActivity extends AppCompatActivity {
     textTrimMax = findViewById(R.id.textTrimMax);
     
     extraInfoPanel = findViewById(R.id.extraInfoPanel);
+    mainInfo = findViewById(R.id.mainInfo);
+    imageInfo = findViewById(R.id.imageInfo);
+    
     textExtraFileName = findViewById(R.id.textExtraFileName);
     textExtraTitle = findViewById(R.id.textExtraTitle);
     textExtraArtist = findViewById(R.id.textExtraArtist);
@@ -338,6 +348,8 @@ public class MainActivity extends AppCompatActivity {
     textExtraChannels = findViewById(R.id.textExtraChannels);
     textExtraSize = findViewById(R.id.textExtraSize);
     textExtraPath = findViewById(R.id.textExtraPath);
+    
+    audioImage = findViewById(R.id.audioImage);
     
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
@@ -447,19 +459,47 @@ public class MainActivity extends AppCompatActivity {
     bFastRewind.setOnClickListener(v -> fastRewindAction());
     bFastForward.setOnClickListener(v -> fastForwardAction());
     
-    extraInfoPanel.setOnTouchListener(new OnSwipeTouchListener(this) {
+    mainInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
         if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          showExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          AudioInfo info = loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          fillAudioInfo(info);
         }
       }
       public void onSwipeRight() {
         if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          showExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          AudioInfo info = loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          fillAudioInfo(info);
         }
       }
       public void onSwipeUp() {
         hideExtraInfoPanel(true);
+      }
+      public void onSwipeDown() {
+        showAudioImagePanel();
+      }
+      public void processDoubleTap(MotionEvent e) {
+        if (e.getX() < Fun.dpToPx(80) && e.getY() < Fun.dpToPx(80)) {
+          this.onSwipeDown();
+        }
+      }
+    });
+    
+    imageInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
+      public void onSwipeLeft() {
+        if (currentExtraInfo != null && currentExtraInfo.file != null) {
+          AudioInfo info = loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          fillAudioInfo(info);
+        }
+      }
+      public void onSwipeRight() {
+        if (currentExtraInfo != null && currentExtraInfo.file != null) {
+          AudioInfo info = loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          fillAudioInfo(info);
+        }
+      }
+      public void onSwipeUp() {
+        showMainInfoPanel();
       }
     });
     
@@ -1146,21 +1186,16 @@ public class MainActivity extends AppCompatActivity {
     textTimeTotal.setText(timeTotal);
   }
   
-  private void showExtraAudioInfo() {
-    if (playerService == null || !playerService.hasAudio()) return;
-    showExtraAudioInfo(playerService.getAudioPath());
-  }
-  
-  private void showExtraAudioInfo(String filePath) {
-    logd("showExtraAudioInfo()");
+  private AudioInfo loadExtraAudioInfo(String filePath) {
+    logd("loadExtraAudioInfo(): " + filePath);
     
     if (filePath == null) {
       loge("filePath is null");
-      return;
+      return null;
     }
     if (!Fun.fileExists(filePath)) {
       loge("File doesn't exist: " + filePath);
-      return;
+      return null;
     }
     
     AudioInfo info = new AudioInfo();
@@ -1177,7 +1212,17 @@ public class MainActivity extends AppCompatActivity {
       info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
       info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
       info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-    
+      
+      try {
+        byte[] pictureData = metadata.getEmbeddedPicture();
+        if (pictureData != null) {
+          info.image = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
+        }
+      }
+      catch (Exception e) {
+        logw("The file doesn't contain image");
+      }
+      
       MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
       
@@ -1188,12 +1233,16 @@ public class MainActivity extends AppCompatActivity {
       loge("Could not get audio metadata for: " + filePath);
     }
     
-    fillAudioInfo(info);
-    extraInfoPanel.setVisibility(View.VISIBLE);
     currentExtraInfo = info;
+    return info;
   }
   
   private void fillAudioInfo(AudioInfo info) {
+    if (info == null) {
+      logw("Audio info is null, skipping the metadata update");
+      return;
+    }
+    
     textExtraFileName.setText(info.file.getName());
     textExtraTitle.setText(info.title);
     textExtraArtist.setText(info.artist);
@@ -1205,6 +1254,7 @@ public class MainActivity extends AppCompatActivity {
     textExtraPath.setText(info.file.getPath());
     textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
     textExtraChannels.setText(String.valueOf(info.channels));
+    audioImage.setImageBitmap(info.image);
   }
   
   private void updateAudioTrimText(int value) {
@@ -1252,6 +1302,32 @@ public class MainActivity extends AppCompatActivity {
   
   private void setPlayButtonAsPause() {
     bPlayPause.setImageResource(R.drawable.baseline_pause_black_36);
+  }
+  
+  private void showExtraAudioInfo() {
+    if (playerService == null || !playerService.hasAudio()) return;
+    showExtraAudioInfo(playerService.getAudioPath());
+  }
+  
+  private void showExtraAudioInfo(String filePath) {
+    logd("showExtraAudioInfo()");
+    
+    AudioInfo info = loadExtraAudioInfo(filePath);
+    fillAudioInfo(info);
+    
+    extraInfoPanel.setVisibility(View.VISIBLE);
+    imageInfo.setVisibility(View.GONE);
+    mainInfo.setVisibility(View.VISIBLE);
+  }
+  
+  private void showMainInfoPanel() {
+    imageInfo.setVisibility(View.GONE);
+    mainInfo.setVisibility(View.VISIBLE);
+  }
+  
+  private void showAudioImagePanel() {
+    mainInfo.setVisibility(View.GONE);
+    imageInfo.setVisibility(View.VISIBLE);
   }
   
   private void hideExtraPanels() {

@@ -22,7 +22,9 @@ public class OnSwipeTouchListener implements OnTouchListener {
   }
   
   public void processLongPress() {}
-  public void processDoubleTap() {}
+  public void processDoubleTap(MotionEvent e) {}
+  public void processDown() {}
+  
   public void onSwipeRight() {}
   public void onSwipeLeft() {}
   public void onSwipeUp() {}
@@ -40,12 +42,13 @@ public class OnSwipeTouchListener implements OnTouchListener {
     
     @Override
     public boolean onDown(MotionEvent e) {
+      processDown();
       return true;
     }
     
     @Override
     public boolean onDoubleTap(MotionEvent e) {
-      processDoubleTap();
+      processDoubleTap(e);
       return true;
     }
     
