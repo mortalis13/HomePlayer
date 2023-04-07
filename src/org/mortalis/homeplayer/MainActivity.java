@@ -1352,14 +1352,14 @@ public class MainActivity extends AppCompatActivity {
         if (Thread.interrupted()) return;
         
         DecoderResult result = DecoderNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
-        // int numSamples = (result != null && result.samples != null) ? result.samples.length: -1;
-        // log("Decode result: " + result + ", " + numSamples);
+        int numSamples = (result != null && result.samples != null) ? result.samples.length: -1;
+        log("Decode result: " + result + ", " + numSamples);
         
-        // if (result == null) return;
-        // if (Thread.interrupted()) return;
+        if (result == null) return;
+        if (Thread.interrupted()) return;
         
         // progressSlider.updateWaveform(result.samples);
-        // currentWaveformFile = audioPath;
+        currentWaveformFile = audioPath;
       }
     });
     
