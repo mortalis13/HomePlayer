@@ -479,20 +479,8 @@ public class MainActivity extends AppCompatActivity {
     
     trimAudioSlider.setProgressChangeListener(new TrimSliderView.ProgressChangeListener() {
       public void onChanging(int value) {
-        updateAudioTrimText(value);
+        onAudioTrimChanged(value);
         
-        int visibility = (value > 0) ? View.VISIBLE: View.GONE;
-        if (playExtraIconTrim.getVisibility() != visibility) {
-          playExtraIconTrim.setVisibility(visibility);
-        }
-        
-        if (value > 0) {
-          progressSlider.changeProgressColor(trimmedProgressColor);
-        }
-        else {
-          progressSlider.restoreProgressColor();
-        }
-
         audioTrimSeconds = value;
         // Reset the trimming configuration until new playback is started
         audioTrimEnabled = false;
@@ -1225,6 +1213,23 @@ public class MainActivity extends AppCompatActivity {
       timeStr = Fun.formatTime(value, false);
     }
     textTrimValue.setText(timeStr);
+  }
+  
+  private void onAudioTrimChanged(int trimTime) {
+    boolean trimEnabled = trimTime > 0;
+    updateAudioTrimText(trimTime);
+    
+    int visibility = trimEnabled ? View.VISIBLE: View.GONE;
+    if (playExtraIconTrim.getVisibility() != visibility) {
+      playExtraIconTrim.setVisibility(visibility);
+    }
+    
+    if (trimEnabled) {
+      progressSlider.changeProgressColor(trimmedProgressColor);
+    }
+    else {
+      progressSlider.restoreProgressColor();
+    }
   }
   
   private void exitApp() {
