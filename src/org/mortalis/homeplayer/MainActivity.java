@@ -219,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
     super.onResume();
     bindPlayerService();
     if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) playerService.resetService();
+    validateCurrentDir();
   }
   
   @Override
@@ -764,7 +765,7 @@ public class MainActivity extends AppCompatActivity {
     fileList.clear();
     itemsQueue.clear();
     
-    if (!path.exists()) path = ROOT_STORAGE;
+    if (path == null || !path.exists()) path = ROOT_STORAGE;
     currentPath = path;
     
     File[] dirs = path.listFiles(Fun.dirFilter);
@@ -796,7 +797,8 @@ public class MainActivity extends AppCompatActivity {
     updateListOverscroll();
     listLayoutManager.scrollToPositionWithOffset(0, 0);
     
-    Fun.saveSharedPref(context, "PREF_LAST_FOLDER", path.getPath());
+    lastFolder = path.getPath();
+    Fun.saveSharedPref(context, "PREF_LAST_FOLDER", lastFolder);
     
     selectPlayingDirOrFile();
     resetCurrentDirTime();
@@ -819,6 +821,14 @@ public class MainActivity extends AppCompatActivity {
     listLayoutManager.scrollToPosition(scrollPos);
     
     hideExtraPanels();
+  }
+  
+  private void validateCurrentDir() {
+    if (currentPath == null || !currentPath.exists()) {
+      logw("The last visited directory doesn't exist (" + currentPath + "), changing to its parent");
+      File parent = Fun.getNearestExistingParent(currentPath);
+      changeDir(parent);
+    }
   }
   
   private File getPlayingFile() {
@@ -993,6 +1003,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void selectPlayingDirOrFile() {
     if (playerService == null || !playerService.hasAudio()) return;
+    if (!new File(playerService.getAudioPath()).exists()) return;
     selectItem(playerService.getAudioPath());
   }
   

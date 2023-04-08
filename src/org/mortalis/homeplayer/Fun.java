@@ -114,6 +114,16 @@ public class Fun {
     return null;
   }
   
+  public static File getNearestExistingParent(File file) {
+    if (file == null) return null;
+    
+    File parent = file.getParentFile();
+    while (parent != null && !parent.exists()) {
+      parent = parent.getParentFile();
+    }
+    
+    return parent;
+  }
   
   public static String formatTime(int time, boolean includeHours) {  // time in s
     int _time  = time < 0 ? -time: time;
