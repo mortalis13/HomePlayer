@@ -182,6 +182,9 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTotalTime;
   private TextView textVolumeLevel;
   
+  private LinearLayout totalFavoritesBlock;
+  private TextView textTotalFavorites;
+  
   private VolumeSliderView volumeSlider;
   
   static {
@@ -384,6 +387,9 @@ public class MainActivity extends AppCompatActivity {
     textTotalSize = findViewById(R.id.textTotalSize);
     textTotalTime = findViewById(R.id.textTotalTime);
     textVolumeLevel = findViewById(R.id.textVolumeLevel);
+    
+    totalFavoritesBlock = findViewById(R.id.totalFavoritesBlock);
+    textTotalFavorites = findViewById(R.id.textTotalFavorites);
     
     volumeSlider = findViewById(R.id.volumeSlider);
     
@@ -810,6 +816,7 @@ public class MainActivity extends AppCompatActivity {
 
     markLastPlayedFile(currentPath);
     markFavorites();
+    updateFavoritesStats();
   }
   
   private void changeToParentDir() {
@@ -877,9 +884,23 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void markFavorites() {
+    if (fileList == null) return;
+    
     fileList.stream()
       .filter(item -> favoritesList.contains(item.path))
       .forEach(item -> filesAdapter.markAsFavorite(item.path));
+  }
+  
+  private void updateFavoritesStats() {
+    if (fileList == null) return;
+    
+    long totalFavorites = fileList.stream()
+      .filter(item -> favoritesList.contains(item.path))
+      .count();
+    
+    textTotalFavorites.setText(String.valueOf(totalFavorites));
+    int visibility = (totalFavorites == 0) ? View.GONE: View.VISIBLE;
+    totalFavoritesBlock.setVisibility(visibility);
   }
   
   
@@ -1202,6 +1223,7 @@ public class MainActivity extends AppCompatActivity {
       favoritesList.remove(filePath);
     }
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
+    updateFavoritesStats();
   }
   
   private void updatePlayingStats() {

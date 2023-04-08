@@ -62,6 +62,34 @@
       android:text="00:41:27"
       android:layout_toRightOf="@+id/textTotalSize"
     />
+    
+    <LinearLayout
+      android:id="@+id/totalFavoritesBlock"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:orientation="horizontal"
+      android:layout_toRightOf="@+id/textTotalTime"
+    >
+      <TextView
+        android:id="@+id/textTotalFavorites"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="16dp"
+        android:gravity="center_vertical"
+        android:textSize="16dp"
+        android:textColor="@color/status_text_color"
+        android:text="6"
+      />
+      <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:tint="@color/status_text_color"
+        android:src="@drawable/outline_star_border_black_18"
+      />
+    </LinearLayout>
+    
     <TextView
       android:id="@+id/textVolumeLevel"
       android:layout_width="wrap_content"
