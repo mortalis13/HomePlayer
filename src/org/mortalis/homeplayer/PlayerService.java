@@ -100,7 +100,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     
     try {
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
-      audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);
+      audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
       boolean repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 

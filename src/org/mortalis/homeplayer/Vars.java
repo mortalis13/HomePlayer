@@ -14,7 +14,7 @@ public class Vars {
   public static final int APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE = 101;
   
   public static final String EXTRA_AUDIO_PATH = "extra_audio_path";
-  public static final String EXTRA_AUDIO_TIME = "extra_audio_time";
+  public static final String EXTRA_AUDIO_TIME = "extra_audio_time";  // ms
   public static final String EXTRA_START_PLAYBACK = "extra_start_playback";
   public static final String EXTRA_PLAYBACK_REPEAT = "extra_playback_repeat";
   
@@ -22,7 +22,8 @@ public class Vars {
   public static final String PREF_LAST_FILE_IN_FOLDER = "PREF_LAST_FILE_";
   public static final String PREF_LAST_TIME_IN_FOLDER = "PREF_LAST_TIME_";
   
-  public static final int MAX_TRIM = 300;
+  public static final int MIN_PLAYABLE_TIME = 2000;  // ms
+  public static final int MAX_TRIM = 300;  // s
   
   public static final String[] AUDIO_EXTS = new String[] {
     "flac",

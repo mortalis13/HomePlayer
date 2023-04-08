@@ -714,6 +714,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void preloadAudio(String filePath, int time) {
     logd("preloadAudio()");
+    if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
     playAudio(filePath, time, false);
   }
   
@@ -1117,6 +1118,7 @@ public class MainActivity extends AppCompatActivity {
           if (playerService != null && !playerService.getAudioPath().equals(item.path)) {
             int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + clickedFile.getParent());
             if (lastTime != -1) time = lastTime;
+            if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
           }
         }
         
