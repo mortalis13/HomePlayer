@@ -172,6 +172,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraSize;
   private TextView textExtraPath;
   
+  private TextView textImageFileName;
+  private TextView textLyricsFileName;
   private ImageView audioImage;
   private TextView textExtraLyrics;
   
@@ -363,6 +365,8 @@ public class MainActivity extends AppCompatActivity {
     textExtraSize = findViewById(R.id.textExtraSize);
     textExtraPath = findViewById(R.id.textExtraPath);
     
+    textImageFileName = findViewById(R.id.textImageFileName);
+    textLyricsFileName = findViewById(R.id.textLyricsFileName);
     audioImage = findViewById(R.id.audioImage);
     textExtraLyrics = findViewById(R.id.textExtraLyrics);
     
@@ -1329,8 +1333,10 @@ public class MainActivity extends AppCompatActivity {
     textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
     textExtraChannels.setText(String.valueOf(info.channels));
     
+    textImageFileName.setText(info.file.getName());
     audioImage.setImageBitmap(info.image);
     
+    textLyricsFileName.setText(info.file.getName());
     String lyrics = info.lyrics;
     if (lyrics == null || lyrics.isEmpty()) lyrics = "No Lyrics";
     textExtraLyrics.setText(lyrics);

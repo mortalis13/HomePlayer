@@ -290,8 +290,19 @@
   android:id="@+id/imageInfo"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
+  android:orientation="vertical"
   android:visibility="gone"
 >
+  <TextView
+    android:id="@+id/textImageFileName"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
+    android:textSize="@dimen/extra_info_font"
+    android:textColor="@color/extra_info_primary_text_color"
+    android:gravity="center"
+  />
   <ImageView
     android:id="@+id/audioImage"
     android:layout_width="match_parent"
@@ -315,7 +326,6 @@
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:minHeight="300dp"
-  android:paddingTop="4dp"
   android:orientation="vertical"
   android:paddingLeft="10dp"
   android:paddingRight="10dp"
@@ -323,18 +333,19 @@
   android:visibility="gone"
 >
   <TextView
-    android:layout_width="@dimen/extra_info_caption_width"
-    android:layout_height="match_parent"
+    android:id="@+id/textLyricsFileName"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
     android:textSize="@dimen/extra_info_font"
-    android:textStyle="bold"
     android:textColor="@color/extra_info_primary_text_color"
-    android:text="Lyrics"
+    android:gravity="center"
   />
   <TextView
     android:id="@+id/textExtraLyrics"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="4dp"
     android:textSize="@dimen/extra_info_font"
     android:textColor="@color/extra_info_primary_text_color"
     android:text="No Lyrics"
