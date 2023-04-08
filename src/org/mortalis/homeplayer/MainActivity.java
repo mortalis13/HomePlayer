@@ -28,6 +28,7 @@ import android.view.animation.TranslateAnimation;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -59,6 +60,11 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.FieldKey;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -148,8 +154,11 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTrimMax;
   
   private LinearLayout extraInfoPanel;
+  private ScrollView mainScroll;
   private LinearLayout mainInfo;
   private LinearLayout imageInfo;
+  private ScrollView lyricsScroll;
+  private LinearLayout lyricsInfo;
   
   private TextView textExtraFileName;
   private TextView textExtraTitle;
@@ -164,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraPath;
   
   private ImageView audioImage;
+  private TextView textExtraLyrics;
   
   private TextView textTotalFiles;
   private TextView textTotalSize;
@@ -334,8 +344,11 @@ public class MainActivity extends AppCompatActivity {
     textTrimMax = findViewById(R.id.textTrimMax);
     
     extraInfoPanel = findViewById(R.id.extraInfoPanel);
+    mainScroll = findViewById(R.id.mainScroll);
     mainInfo = findViewById(R.id.mainInfo);
     imageInfo = findViewById(R.id.imageInfo);
+    lyricsScroll = findViewById(R.id.lyricsScroll);
+    lyricsInfo = findViewById(R.id.lyricsInfo);
     
     textExtraFileName = findViewById(R.id.textExtraFileName);
     textExtraTitle = findViewById(R.id.textExtraTitle);
@@ -350,6 +363,7 @@ public class MainActivity extends AppCompatActivity {
     textExtraPath = findViewById(R.id.textExtraPath);
     
     audioImage = findViewById(R.id.audioImage);
+    textExtraLyrics = findViewById(R.id.textExtraLyrics);
     
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
@@ -461,15 +475,15 @@ public class MainActivity extends AppCompatActivity {
     
     mainInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
-        if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          AudioInfo info = loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
-          fillAudioInfo(info);
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          fillAudioInfo();
         }
       }
       public void onSwipeRight() {
-        if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          AudioInfo info = loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
-          fillAudioInfo(info);
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          fillAudioInfo();
         }
       }
       public void onSwipeUp() {
@@ -487,19 +501,47 @@ public class MainActivity extends AppCompatActivity {
     
     imageInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
-        if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          AudioInfo info = loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
-          fillAudioInfo(info);
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          fillAudioInfo();
         }
       }
       public void onSwipeRight() {
-        if (currentExtraInfo != null && currentExtraInfo.file != null) {
-          AudioInfo info = loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
-          fillAudioInfo(info);
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          fillAudioInfo();
         }
       }
       public void onSwipeUp() {
         showMainInfoPanel();
+      }
+      public void onSwipeDown() {
+        loadAudioLyrics();
+        fillAudioInfo();
+        showLyricsPanel();
+      }
+    });
+    
+    lyricsInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
+      public void onSwipeLeft() {
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          loadAudioLyrics();
+          fillAudioInfo();
+        }
+      }
+      public void onSwipeRight() {
+        if (currentExtraInfo != null) {
+          loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          loadAudioLyrics();
+          fillAudioInfo();
+        }
+      }
+      public void onSwipeUp() {
+        showAudioImagePanel();
+      }
+      public void onSwipeDown() {
+        hideExtraInfoPanel();
       }
     });
     
@@ -1186,16 +1228,16 @@ public class MainActivity extends AppCompatActivity {
     textTimeTotal.setText(timeTotal);
   }
   
-  private AudioInfo loadExtraAudioInfo(String filePath) {
+  private void loadExtraAudioInfo(String filePath) {
     logd("loadExtraAudioInfo(): " + filePath);
     
     if (filePath == null) {
       loge("filePath is null");
-      return null;
+      return;
     }
     if (!Fun.fileExists(filePath)) {
       loge("File doesn't exist: " + filePath);
-      return null;
+      return;
     }
     
     AudioInfo info = new AudioInfo();
@@ -1220,7 +1262,7 @@ public class MainActivity extends AppCompatActivity {
         }
       }
       catch (Exception e) {
-        logw("The file doesn't contain image");
+        logw("The file doesn't contain image: " + e);
       }
       
       MediaExtractor mediaExtractor = new MediaExtractor();
@@ -1234,11 +1276,30 @@ public class MainActivity extends AppCompatActivity {
     }
     
     currentExtraInfo = info;
-    return info;
+  }
+  
+  private void loadAudioLyrics() {
+    if (currentExtraInfo == null || currentExtraInfo.file == null) {
+      loge("Current audio info is null");
+      return;
+    }
+    
+    try {
+      AudioFile tagger = AudioFileIO.read(currentExtraInfo.file);
+      Tag tag = tagger.getTag();
+      currentExtraInfo.lyrics = tag.getFirst(FieldKey.LYRICS);
+    }
+    catch (Exception e) {
+      loge("Error retrieving lyrics: " + e);
+    }
+  }
+  
+  private void fillAudioInfo() {
+    fillAudioInfo(currentExtraInfo);
   }
   
   private void fillAudioInfo(AudioInfo info) {
-    if (info == null) {
+    if (info == null || info.file == null) {
       logw("Audio info is null, skipping the metadata update");
       return;
     }
@@ -1254,7 +1315,12 @@ public class MainActivity extends AppCompatActivity {
     textExtraPath.setText(info.file.getPath());
     textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
     textExtraChannels.setText(String.valueOf(info.channels));
+    
     audioImage.setImageBitmap(info.image);
+    
+    String lyrics = info.lyrics;
+    if (lyrics == null || lyrics.isEmpty()) lyrics = "No Lyrics";
+    textExtraLyrics.setText(lyrics);
   }
   
   private void updateAudioTrimText(int value) {
@@ -1312,22 +1378,31 @@ public class MainActivity extends AppCompatActivity {
   private void showExtraAudioInfo(String filePath) {
     logd("showExtraAudioInfo()");
     
-    AudioInfo info = loadExtraAudioInfo(filePath);
-    fillAudioInfo(info);
+    loadExtraAudioInfo(filePath);
+    fillAudioInfo();
     
+    showMainInfoPanel();
     extraInfoPanel.setVisibility(View.VISIBLE);
-    imageInfo.setVisibility(View.GONE);
-    mainInfo.setVisibility(View.VISIBLE);
   }
   
   private void showMainInfoPanel() {
     imageInfo.setVisibility(View.GONE);
+    lyricsInfo.setVisibility(View.GONE);
     mainInfo.setVisibility(View.VISIBLE);
+    mainScroll.scrollTo(0, 0);
   }
   
   private void showAudioImagePanel() {
     mainInfo.setVisibility(View.GONE);
+    lyricsInfo.setVisibility(View.GONE);
     imageInfo.setVisibility(View.VISIBLE);
+  }
+  
+  private void showLyricsPanel() {
+    mainInfo.setVisibility(View.GONE);
+    imageInfo.setVisibility(View.GONE);
+    lyricsInfo.setVisibility(View.VISIBLE);
+    lyricsScroll.scrollTo(0, 0);
   }
   
   private void hideExtraPanels() {

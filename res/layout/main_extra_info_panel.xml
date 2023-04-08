@@ -9,6 +9,7 @@
   android:background="@color/secondary_background"
 >
 
+<!-- =========== Audio Tags =========== -->
 <ScrollView
   android:id="@+id/mainScroll"
   android:layout_width="match_parent"
@@ -281,10 +282,10 @@
   </LinearLayout>
 </LinearLayout>
 <!-- mainInfo -->
-
 </ScrollView>
 
 
+<!-- =========== Audio Image =========== -->
 <LinearLayout
   android:id="@+id/imageInfo"
   android:layout_width="match_parent"
@@ -300,6 +301,46 @@
     android:scaleType="fitCenter"
   />
 </LinearLayout>
+
+
+<!-- =========== Audio Lyrics =========== -->
+<ScrollView
+  android:id="@+id/lyricsScroll"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:fillViewport="true"
+>
+<LinearLayout
+  android:id="@+id/lyricsInfo"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:minHeight="300dp"
+  android:paddingTop="4dp"
+  android:orientation="vertical"
+  android:paddingLeft="10dp"
+  android:paddingRight="10dp"
+  android:paddingBottom="10dp"
+  android:visibility="gone"
+>
+  <TextView
+    android:layout_width="@dimen/extra_info_caption_width"
+    android:layout_height="match_parent"
+    android:textSize="@dimen/extra_info_font"
+    android:textStyle="bold"
+    android:textColor="@color/extra_info_primary_text_color"
+    android:text="Lyrics"
+  />
+  <TextView
+    android:id="@+id/textExtraLyrics"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="4dp"
+    android:textSize="@dimen/extra_info_font"
+    android:textColor="@color/extra_info_primary_text_color"
+    android:text="No Lyrics"
+  />
+</LinearLayout>
+</ScrollView>
 
 
 <View

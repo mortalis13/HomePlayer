@@ -102,8 +102,11 @@ dependencies {
   implementation 'androidx.recyclerview:recyclerview:1.2.1'
   
   // https://github.com/gpanther/java-nat-sort
-  // Check for libs folder for a backup version
+  // Check the libs folder for a backup version
   implementation 'net.grey-panther:natural-comparator:1.1'
+  
+  // https://bitbucket.org/ijabz/jaudiotagger
+  implementation 'net.jthink:jaudiotagger:3.0.1'
 }
 
 def appStart() {
