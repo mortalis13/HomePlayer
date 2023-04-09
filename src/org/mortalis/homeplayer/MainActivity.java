@@ -176,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView textLyricsFileName;
   private ImageView audioImage;
   private TextView textExtraLyrics;
+  private TextView textLyricsPlaceholder;
   
   private TextView textTotalFiles;
   private TextView textTotalSize;
@@ -372,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
     textLyricsFileName = findViewById(R.id.textLyricsFileName);
     audioImage = findViewById(R.id.audioImage);
     textExtraLyrics = findViewById(R.id.textExtraLyrics);
+    textLyricsPlaceholder = findViewById(R.id.textLyricsPlaceholder);
     
     bPrevFile = findViewById(R.id.bPrevFile);
     bPlayPause = findViewById(R.id.bPlayPause);
@@ -1360,8 +1362,8 @@ public class MainActivity extends AppCompatActivity {
     
     textLyricsFileName.setText(info.file.getName());
     String lyrics = info.lyrics;
-    if (lyrics == null || lyrics.isEmpty()) lyrics = "No Lyrics";
     textExtraLyrics.setText(lyrics);
+    textLyricsPlaceholder.setVisibility((lyrics == null || lyrics.isEmpty()) ? View.VISIBLE: View.GONE);
   }
   
   private void updateAudioTrimText(int value) {

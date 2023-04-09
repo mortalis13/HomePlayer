@@ -303,14 +303,30 @@
     android:textColor="@color/extra_info_primary_text_color"
     android:gravity="center"
   />
+  
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="300dp"
+  >
+  <TextView
+    android:id="@+id/textImagePlaceholder"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="20dp"
+    android:textSize="@dimen/extra_info_font"
+    android:textColor="@color/extra_info_secondary_text_color"
+    android:gravity="center|center_vertical"
+    android:text="Cover"
+  />
   <ImageView
     android:id="@+id/audioImage"
     android:layout_width="match_parent"
-    android:layout_height="300dp"
+    android:layout_height="match_parent"
     android:layout_gravity="center"
     android:gravity="center"
     android:scaleType="fitCenter"
   />
+  </FrameLayout>
 </LinearLayout>
 
 
@@ -325,11 +341,7 @@
   android:id="@+id/lyricsInfo"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:minHeight="300dp"
   android:orientation="vertical"
-  android:paddingLeft="10dp"
-  android:paddingRight="10dp"
-  android:paddingBottom="10dp"
   android:visibility="gone"
 >
   <TextView
@@ -342,14 +354,33 @@
     android:textColor="@color/extra_info_primary_text_color"
     android:gravity="center"
   />
+  
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="300dp"
+  >
+  <TextView
+    android:id="@+id/textLyricsPlaceholder"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="20dp"
+    android:textSize="@dimen/extra_info_font"
+    android:textColor="@color/extra_info_secondary_text_color"
+    android:gravity="center|center_vertical"
+    android:text="Lyrics"
+  />
   <TextView
     android:id="@+id/textExtraLyrics"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingBottom="10dp"
     android:textSize="@dimen/extra_info_font"
     android:textColor="@color/extra_info_primary_text_color"
-    android:text="No Lyrics"
   />
+  </FrameLayout>
 </LinearLayout>
 </ScrollView>
 
