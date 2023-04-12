@@ -252,7 +252,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   public void pause() {
-    if (mediaPlayer.isPlaying()) {
+    if (this.isPlaying()) {
       mediaPlayer.pause();
     }
     sendPlayerPaused();
@@ -302,8 +302,17 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
           loge("mediaPlayer is null, cannot start progress");
           return;
         }
+
+        boolean isPlaying_ = false;
+        try {
+          isPlaying_ = mediaPlayer.isPlaying();
+        }
+        catch (IllegalStateException e) {
+          loge("mediaPlayer in invalid state, cannot start progress");
+          return;
+        }
         
-        if (updateTimeEnabled && mediaPlayer.isPlaying()) {
+        if (updateTimeEnabled && isPlaying_) {
           sendUpdatePlayingTime();
           sendUpdateProgress();
         }
@@ -452,7 +461,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   }
   
   public boolean isPlaying() {
-    return mediaPlayer != null && mediaPlayer.isPlaying();
+    try {
+      return mediaPlayer != null && mediaPlayer.isPlaying();
+    }
+    catch (IllegalStateException e) {
+      loge("isPlaying() -> mediaPlayer has thrown IllegalStateException");
+      return false;
+    }
   }
   
   public boolean hasAudio() {
