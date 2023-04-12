@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -16,8 +17,9 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.actions.Action;
 import org.mortalis.homeplayer.components.SimplePaintView;
@@ -55,10 +57,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   public FilesAdapter(List<ListItem> fileList, Context context) {
     this.fileList = fileList;
     
-    item_icon_color_default = ContextCompat.getColor(context, R.color.list_item_icon_color);
-    item_icon_color_lastplayed = ContextCompat.getColor(context, R.color.list_item_is_last_played_file);
-    text_color_default = ContextCompat.getColor(context, R.color.list_item_text_color);
-    text_color_error = ContextCompat.getColor(context, R.color.list_item_text_color_error);
+    item_icon_color_default = MaterialColors.getColor(context, R.attr.listItemIconColor, Color.TRANSPARENT);
+    item_icon_color_lastplayed = MaterialColors.getColor(context, R.attr.listItemIconColorHighlight, Color.TRANSPARENT);
+    text_color_default = MaterialColors.getColor(context, R.attr.primaryTextColor, Color.TRANSPARENT);
+    text_color_error = MaterialColors.getColor(context, R.attr.listItemTextColorError, Color.TRANSPARENT);
+    
     itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
   }
   
@@ -332,12 +335,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     public void setRemoveState() {
       isRemovePressed = true;
-      bRemoveFile.setBackgroundResource(R.color.remove_file_confirm);
+      bRemoveFile.setBackgroundResource(R.color.danger_button_background);
     }
     
     public void resetRemoveState() {
       isRemovePressed = false;
-      bRemoveFile.setBackgroundResource(R.color.list_item_button_background_default);
+      bRemoveFile.setBackgroundResource(R.color.list_item_button_background);
     }
     
     public void bind(ListItem item) {

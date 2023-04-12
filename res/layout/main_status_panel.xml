@@ -5,6 +5,7 @@
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:orientation="vertical"
+  android:background="?statusBackground"
   android:layout_alignParentBottom="true"
 >
   <include layout="@layout/divider_horizontal_include"/>
@@ -28,7 +29,6 @@
     android:paddingRight="6dp"
     android:focusable="true"
     android:gravity="center_vertical"
-    android:background="@color/transparent"
   >
     <TextView
       android:id="@+id/textTotalFiles"
@@ -36,7 +36,7 @@
       android:layout_height="match_parent"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="@color/status_text_color"
+      android:textColor="?primaryTextColor"
       android:text="15"
       android:layout_alignParentLeft="true"
     />
@@ -47,7 +47,7 @@
       android:layout_marginLeft="16dp"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="@color/status_text_color"
+      android:textColor="?primaryTextColor"
       android:text="128.3 MB"
       android:layout_toRightOf="@+id/textTotalFiles"
     />
@@ -58,7 +58,7 @@
       android:layout_marginLeft="16dp"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="@color/status_text_color"
+      android:textColor="?primaryTextColor"
       android:text="00:41:27"
       android:layout_toRightOf="@+id/textTotalSize"
     />
@@ -77,7 +77,7 @@
         android:layout_marginLeft="16dp"
         android:gravity="center_vertical"
         android:textSize="16dp"
-        android:textColor="@color/status_text_color"
+        android:textColor="?primaryTextColor"
         android:text="6"
       />
       <ImageView
@@ -85,8 +85,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
-        android:tint="@color/status_text_color"
         android:src="@drawable/outline_star_border_black_18"
+        android:tint="?primaryTextColor"
       />
     </LinearLayout>
     
@@ -96,7 +96,7 @@
       android:layout_height="match_parent"
       android:gravity="center_vertical"
       android:textSize="16dp"
-      android:textColor="@color/status_text_color"
+      android:textColor="?primaryTextColor"
       android:text="63%"
       android:layout_alignParentRight="true"
     />

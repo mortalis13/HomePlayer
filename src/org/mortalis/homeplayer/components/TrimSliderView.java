@@ -10,6 +10,8 @@ import android.view.View;
 
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.color.MaterialColors;
+
 import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
 import static org.mortalis.homeplayer.Fun.log;
@@ -70,17 +72,17 @@ public class TrimSliderView extends View {
     
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
-    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_background_color));
+    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
     this.progressPaint.setAntiAlias(true);
-    this.progressPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_progress_color));
+    this.progressPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderProgressColor));
     this.progressPaint.setStyle(Paint.Style.FILL);
     
     this.borderPaint = new Paint();
     this.borderPaint.setAntiAlias(true);
-    this.borderPaint.setColor(ContextCompat.getColor(context, R.color.trim_slider_border_color));
+    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBorderColor));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
     

@@ -9,13 +9,13 @@
   <View
     android:layout_width="2dp"
     android:layout_height="match_parent"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentLeft="true"
   />
   <View
     android:layout_width="2dp"
     android:layout_height="match_parent"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentRight="true"
   />
 
@@ -30,7 +30,7 @@
       android:layout_height="match_parent"
       android:layout_marginLeft="4dp"
       android:gravity="center_vertical"
-      android:text=""
+      android:textColor="?secondaryTextColor"
       android:layout_alignParentLeft="true"
     />
     
@@ -40,7 +40,7 @@
       android:layout_height="match_parent"
       android:layout_marginRight="4dp"
       android:gravity="center_vertical"
-      android:text=""
+      android:textColor="?secondaryTextColor"
       android:layout_alignParentRight="true"
     />
   </RelativeLayout>
@@ -48,7 +48,7 @@
   <View
     android:layout_width="match_parent"
     android:layout_height="1dp"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_above="@+id/trimAudioSlider"
   />
   
@@ -65,7 +65,7 @@
   <View
     android:layout_width="match_parent"
     android:layout_height="2dp"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentBottom="true"
   />
 </RelativeLayout>

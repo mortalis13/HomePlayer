@@ -10,6 +10,8 @@ import android.view.View;
 
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.color.MaterialColors;
+
 import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
 import static org.mortalis.homeplayer.Fun.log;
@@ -66,16 +68,16 @@ public class VolumeSliderView extends View {
     this.mediumLevel = getResources().getInteger(R.integer.volume_slider_medium_level);
     this.highLevel = getResources().getInteger(R.integer.volume_slider_high_level);
     
-    this.normalColor = ContextCompat.getColor(context, R.color.volume_slider_progress_color);
-    this.mediumColor = ContextCompat.getColor(context, R.color.volume_slider_progress_medium_color);
-    this.highColor = ContextCompat.getColor(context, R.color.volume_slider_progress_high_color);
+    this.normalColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressColor);
+    this.mediumColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressMediumColor);
+    this.highColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressHighColor);
     
     this.leftOffset = this.borderWidth;
     this.topOffset = this.borderWidth;
     
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
-    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.volume_slider_background_color));
+    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.volumeSliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
@@ -85,7 +87,7 @@ public class VolumeSliderView extends View {
     
     this.borderPaint = new Paint();
     this.borderPaint.setAntiAlias(true);
-    this.borderPaint.setColor(ContextCompat.getColor(context, R.color.volume_slider_border_color));
+    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.volumeSliderBorderColor));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
     

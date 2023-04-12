@@ -2,6 +2,7 @@ package org.mortalis.homeplayer.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Picture;
@@ -10,7 +11,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import androidx.core.content.ContextCompat;
+import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
@@ -60,29 +61,31 @@ public class ProgressSliderView extends View {
   
   public ProgressSliderView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
-    init(context);
+    init();
   }
   
   
-  private void init(Context context) {
-    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.plain_slider_border_width));
-    this.snapPosX = (int) getResources().getDimension(R.dimen.plain_slider_left_right_snap_size);
-    this.progressColor = ContextCompat.getColor(context, R.color.plain_slider_progress_color);
+  private void init() {
+    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.slider_border_width));
+    this.snapPosX = (int) getResources().getDimension(R.dimen.slider_left_right_snap_size);
+    this.progressColor = MaterialColors.getColor(this, R.attr.sliderProgressColor);
     
     this.canvasPaint = new Paint();
-    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_background_color));
+    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.sliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
     this.progressPaint.setColor(progressColor);
     this.progressPaint.setStyle(Paint.Style.FILL);
-    this.progressPaint.setBlendMode(BlendMode.MULTIPLY);
     
     this.waveformPaint = new Paint();
-    this.waveformPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_waveform_color));
+    this.waveformPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformColor));
+    // this.waveformPaint.setBlendMode(BlendMode.COLOR_DODGE);
+    // this.waveformPaint.setBlendMode(BlendMode.PLUS);
+    this.waveformPaint.setBlendMode(BlendMode.SCREEN);
     
     this.borderPaint = new Paint();
-    this.borderPaint.setColor(ContextCompat.getColor(context, R.color.plain_slider_border_color));
+    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.sliderBorderColor));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
     
@@ -195,8 +198,8 @@ public class ProgressSliderView extends View {
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.borderRect, this.borderPaint);
-    drawWaveform(canvas);
     canvas.drawRect(this.progressRect, this.progressPaint);
+    drawWaveform(canvas);
   }
   
   @Override

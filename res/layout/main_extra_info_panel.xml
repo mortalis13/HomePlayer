@@ -6,7 +6,7 @@
   android:layout_height="wrap_content"
   android:orientation="vertical"
   android:visibility="gone"
-  android:background="@color/secondary_background"
+  android:background="?secondaryBackground"
 >
 
 <!-- =========== Audio Tags =========== -->
@@ -36,7 +36,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:text="File:"
   />
   <TextView
@@ -44,7 +44,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </LinearLayout>
   
@@ -59,7 +59,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:text="Title:"
   />
   <TextView
@@ -67,7 +67,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </LinearLayout>
   
@@ -82,7 +82,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:text="Artist:"
   />
   <TextView
@@ -90,7 +90,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </LinearLayout>
   
@@ -105,7 +105,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:text="Album:"
   />
   <TextView
@@ -113,7 +113,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </LinearLayout>
   
@@ -128,7 +128,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:text="Year:"
   />
   <TextView
@@ -136,7 +136,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </LinearLayout>
   
@@ -153,7 +153,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Length:"
   />
   <TextView
@@ -161,7 +161,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
   
@@ -176,7 +176,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Bitrate:"
   />
   <TextView
@@ -184,7 +184,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
   
@@ -199,7 +199,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Frequency:"
   />
   <TextView
@@ -207,7 +207,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
   
@@ -222,7 +222,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Channels:"
   />
   <TextView
@@ -230,7 +230,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
   
@@ -245,7 +245,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Size:"
   />
   <TextView
@@ -253,7 +253,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
   
@@ -269,7 +269,7 @@
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
     android:textStyle="bold"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:text="Path:"
   />
   <TextView
@@ -277,7 +277,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
 </LinearLayout>
@@ -300,7 +300,7 @@
     android:paddingTop="2dp"
     android:paddingBottom="2dp"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:gravity="center"
   />
   
@@ -314,7 +314,7 @@
     android:layout_height="match_parent"
     android:paddingBottom="20dp"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:gravity="center|center_vertical"
     android:text="Cover"
   />
@@ -351,7 +351,7 @@
     android:paddingTop="2dp"
     android:paddingBottom="2dp"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
     android:gravity="center"
   />
   
@@ -366,7 +366,7 @@
     android:layout_height="match_parent"
     android:paddingBottom="20dp"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_secondary_text_color"
+    android:textColor="?tertiaryTextColor"
     android:gravity="center|center_vertical"
     android:text="Lyrics"
   />
@@ -378,7 +378,7 @@
     android:paddingRight="10dp"
     android:paddingBottom="10dp"
     android:textSize="@dimen/extra_info_font"
-    android:textColor="@color/extra_info_primary_text_color"
+    android:textColor="?primaryTextColor"
   />
   </FrameLayout>
 </LinearLayout>
@@ -388,7 +388,7 @@
 <View
   android:layout_width="match_parent"
   android:layout_height="2dp"
-  android:background="#aaa"
+  android:background="?separatorColor"
 />
 
 </LinearLayout>

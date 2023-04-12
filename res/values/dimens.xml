@@ -7,9 +7,9 @@
   <dimen name="item_menu_button_width">70dp</dimen>
   <dimen name="item_menu_divider_width">1dp</dimen>
   
-  <dimen name="plain_slider_height">54dp</dimen>
-  <dimen name="plain_slider_border_width">1dp</dimen>
-  <dimen name="plain_slider_left_right_snap_size">8dp</dimen>
+  <dimen name="slider_height">54dp</dimen>
+  <dimen name="slider_border_width">1dp</dimen>
+  <dimen name="slider_left_right_snap_size">8dp</dimen>
   
   <dimen name="volume_slider_border_width">0dp</dimen>
   

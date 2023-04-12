@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <attr name="mainBackground" format="color"/>
+  <attr name="secondaryBackground" format="color"/>
+  
+  <attr name="primaryTextColor" format="color"/>
+  <attr name="secondaryTextColor" format="color"/>
+  <attr name="tertiaryTextColor" format="color"/>
+  
+  <attr name="titleBackground" format="color"/>
+  <attr name="separatorColor" format="color"/>
+  <attr name="extraIconTintColor" format="color"/>
+  <attr name="scrollbarDefaultBackground" format="color"/>
+  <attr name="scrollbarPressedBackground" format="color"/>
+  
+  <attr name="sliderBackgroundColor" format="color"/>
+  <attr name="sliderProgressColor" format="color"/>
+  <attr name="sliderBorderColor" format="color"/>
+  <attr name="sliderWaveformColor" format="color"/>
+  
+  <attr name="controlButtonBackgroundPressed" format="color"/>
+  <attr name="controlButtonBackgroundDefault" format="color"/>
+  
+  <attr name="listItemBackgroundPressed" format="color"/>
+  <attr name="listItemBackgroundSelected" format="color"/>
+  <attr name="listItemBackgroundDefault" format="color"/>
+  
+  <attr name="listItemButtonBackgroundPressed" format="color"/>
+  <attr name="listItemButtonBackgroundDefault" format="color"/>
+  
+  <attr name="listItemIconColor" format="color"/>
+  <attr name="listItemIconColorHighlight" format="color"/>
+  <attr name="listItemTextColorError" format="color"/>
+  <attr name="listItemSeparatorColor" format="color"/>
+  
+  <attr name="dangerButtonBackgroundPressed" format="color"/>
+  <attr name="dangerButtonBackgroundDefault" format="color"/>
+  
+  <attr name="favoriveMarkColor" format="color"/>
+  
+  <attr name="toggleButtonBackgroundPressed" format="color"/>
+  <attr name="toggleButtonBackgroundSelected" format="color"/>
+  <attr name="toggleButtonBackgroundDefault" format="color"/>
+  
+  <attr name="panelToggleButtonBackgroundPressed" format="color"/>
+  <attr name="panelToggleButtonBackgroundSelected" format="color"/>
+  <attr name="panelToggleButtonBackgroundDefault" format="color"/>
+  
+  <attr name="trimSliderBackgroundColor" format="color"/>
+  <attr name="trimSliderProgressColor" format="color"/>
+  <attr name="trimSliderBorderColor" format="color"/>
+  
+  <attr name="volumeSliderProgressColor" format="color"/>
+  <attr name="volumeSliderProgressMediumColor" format="color"/>
+  <attr name="volumeSliderProgressHighColor" format="color"/>
+  <attr name="volumeSliderBackgroundColor" format="color"/>
+  <attr name="volumeSliderBorderColor" format="color"/>
+  
+  <attr name="statusBackground" format="color"/>
+</resources>

@@ -6,7 +6,7 @@
   android:layout_height="wrap_content"
   android:orientation="vertical"
   android:visibility="gone"
-  android:background="@color/secondary_background"
+  android:background="?secondaryBackground"
 >
 
 <RelativeLayout
@@ -16,13 +16,13 @@
   <View
     android:layout_width="2dp"
     android:layout_height="match_parent"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentLeft="true"
   />
   <View
     android:layout_width="2dp"
     android:layout_height="match_parent"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentRight="true"
   />
   
@@ -32,8 +32,8 @@
     android:layout_height="match_parent"
     android:layout_marginLeft="2dp"
     android:src="@drawable/round_shuffle_black_24"
-    android:tint="@color/list_item_button_tint_color"
-    android:background="@drawable/toggle_button_background"
+    android:tint="?secondaryTextColor"
+    android:background="@color/toggle_button_background"
     android:layout_alignParentLeft="true"
   />
   
@@ -42,8 +42,8 @@
     android:layout_width="60dp"
     android:layout_height="match_parent"
     android:src="@drawable/audio_trim_24dp"
-    android:tint="@color/list_item_button_tint_color"
-    android:background="@drawable/panel_toggle_button_background"
+    android:tint="?secondaryTextColor"
+    android:background="@color/panel_toggle_button_background"
     android:layout_toRightOf="@+id/bShuffle"
   />
   
@@ -53,20 +53,21 @@
     android:layout_height="match_parent"
     android:layout_marginRight="2dp"
     android:src="@drawable/round_repeat_black_24"
-    android:tint="@color/list_item_button_tint_color"
-    android:background="@drawable/toggle_button_background"
+    android:tint="?secondaryTextColor"
+    android:background="@color/toggle_button_background"
     android:layout_alignParentRight="true"
   />
   
   <View
     android:layout_width="match_parent"
     android:layout_height="2dp"
-    android:background="#aaa"
+    android:background="?separatorColor"
     android:layout_alignParentBottom="true"
   />
 </RelativeLayout>
 
 <include layout="@layout/main_trim_audio_panel"/>
+
 </LinearLayout>
 
 </merge>

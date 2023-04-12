@@ -2,13 +2,15 @@ package org.mortalis.homeplayer.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.core.content.ContextCompat;
+
+import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.R;
 
@@ -29,14 +31,14 @@ public class SimplePaintView extends AppCompatImageView {
   
   public SimplePaintView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
-    init(context);
+    init();
   }
   
   
-  private void init(Context context) {
+  private void init() {
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
-    this.canvasPaint.setColor(ContextCompat.getColor(context, R.color.favorive_mark_color));
+    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.favoriveMarkColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.itemWidth = Math.round(getResources().getDimension(R.dimen.favorite_mark_width));

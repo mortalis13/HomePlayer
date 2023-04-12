@@ -3,7 +3,7 @@ package org.mortalis.homeplayer.components;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import androidx.core.content.ContextCompat;
+import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.R;
 import org.mortalis.homeplayer.fastscroll.FastScrollDelegate;
@@ -30,7 +30,8 @@ public class BrowserRecyclerView extends FastScrollRecyclerView {
     var w = getResources().getDimension(R.dimen.scrollbar_width);
     var h = getResources().getDimension(R.dimen.scrollbar_height);
     builder.width(w).height(h);
-    builder.thumbPressedColor(ContextCompat.getColor(context, R.color.scrollbar_pressed_color));
+    builder.thumbNormalColor(MaterialColors.getColor(this, R.attr.scrollbarDefaultBackground));
+    builder.thumbPressedColor(MaterialColors.getColor(this, R.attr.scrollbarPressedBackground));
     return builder.build();
   }
   

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -39,6 +40,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.components.ProgressSliderView;
 import org.mortalis.homeplayer.components.VolumeSliderView;
@@ -282,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
     audioManager = context.getSystemService(AudioManager.class);
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
     
-    trimmedProgressColor = ContextCompat.getColor(context, R.color.trim_slider_progress_color);
+    trimmedProgressColor = MaterialColors.getColor(context, R.attr.trimSliderProgressColor, Color.TRANSPARENT);
     
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
