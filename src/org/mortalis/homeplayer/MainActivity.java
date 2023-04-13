@@ -489,6 +489,10 @@ public class MainActivity extends AppCompatActivity {
     bFastRewind.setOnClickListener(v -> fastRewindAction());
     bFastForward.setOnClickListener(v -> fastForwardAction());
     
+    // Prevent click through the panels
+    extraInfoPanel.setOnClickListener(null);
+    extraControlPanel.setOnClickListener(null);
+    
     mainInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
         if (currentExtraInfo != null) {
