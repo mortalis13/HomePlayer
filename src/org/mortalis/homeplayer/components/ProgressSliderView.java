@@ -117,11 +117,13 @@ public class ProgressSliderView extends View {
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = (float) this.borderWidth / 2;
-    float top    = (float) this.borderWidth / 2;
-    float right  = this.canvasWidth  - (float) this.borderWidth / 2;
-    float bottom = this.canvasHeight - (float) this.borderWidth / 2;
-    this.borderRect.set(left, top, right, bottom);
+    if (this.borderWidth != 0) {
+      float left   = (float) this.borderWidth / 2;
+      float top    = (float) this.borderWidth / 2;
+      float right  = this.canvasWidth  - (float) this.borderWidth / 2;
+      float bottom = this.canvasHeight - (float) this.borderWidth / 2;
+      this.borderRect.set(left, top, right, bottom);
+    }
     
     if (this.maxValue == 0) setMax(this.workingWidth);
     if (this.maxValue == 0) return;
