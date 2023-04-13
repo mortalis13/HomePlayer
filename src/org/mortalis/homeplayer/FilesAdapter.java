@@ -314,16 +314,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
     
     private void showItemMenu() {
+      if (itemMenuPanel == null || itemMenuPanel.getVisibility() == View.VISIBLE) return;
+
       resetRemoveState();
+      itemMenuPanel.setVisibility(View.VISIBLE);
       
-      if (itemMenuPanel == null) return;
-      if (itemMenuPanel.getVisibility() != View.VISIBLE) {
-        itemMenuPanel.setVisibility(View.VISIBLE);
-        
-        TranslateAnimation animation = new TranslateAnimation(itemMenuWidth, 0, 0, 0);
-        animation.setDuration(150);
-        itemMenuPanel.startAnimation(animation);
-      }
+      TranslateAnimation animation = new TranslateAnimation(itemMenuWidth, 0, 0, 0);
+      animation.setDuration(150);
+      itemMenuPanel.startAnimation(animation);
     }
     
     public void hideItemMenu() {
