@@ -24,6 +24,7 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.view.MotionEvent;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -199,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
     System.loadLibrary("decoder");
   }
   
-
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     logd("MainActivity.onCreate()");
@@ -253,6 +254,23 @@ public class MainActivity extends AppCompatActivity {
   @Override
   public void onBackPressed() {
     changeToParentDir();
+  }
+  
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+      int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume - 1, 0);
+      return true;
+    }
+    
+    if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+      int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume + 1, 0);
+      return true;
+    }
+    
+    return super.onKeyDown(keyCode, event);
   }
   
   
