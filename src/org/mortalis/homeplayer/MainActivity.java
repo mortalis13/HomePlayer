@@ -510,6 +510,8 @@ public class MainActivity extends AppCompatActivity {
         hideExtraInfoPanel(true);
       }
       public void onSwipeDown() {
+        loadAudioImage();
+        fillAudioInfo();
         showAudioImagePanel();
       }
       public void processDoubleTap(MotionEvent e) {
@@ -523,12 +525,14 @@ public class MainActivity extends AppCompatActivity {
       public void onSwipeLeft() {
         if (currentExtraInfo != null) {
           loadExtraAudioInfo(Fun.getNextFilePath(currentExtraInfo.file));
+          loadAudioImage();
           fillAudioInfo();
         }
       }
       public void onSwipeRight() {
         if (currentExtraInfo != null) {
           loadExtraAudioInfo(Fun.getPrevFilePath(currentExtraInfo.file));
+          loadAudioImage();
           fillAudioInfo();
         }
       }
@@ -564,6 +568,8 @@ public class MainActivity extends AppCompatActivity {
         }
       }
       public void onSwipeUp() {
+        loadAudioImage();
+        fillAudioInfo();
         showAudioImagePanel();
       }
       public void onSwipeDown() {
@@ -1309,16 +1315,6 @@ public class MainActivity extends AppCompatActivity {
       info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
       info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
       
-      try {
-        byte[] pictureData = metadata.getEmbeddedPicture();
-        if (pictureData != null) {
-          info.image = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
-        }
-      }
-      catch (Exception e) {
-        logw("The file doesn't contain image: " + e);
-      }
-      
       MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
       
@@ -1330,6 +1326,26 @@ public class MainActivity extends AppCompatActivity {
     }
     
     currentExtraInfo = info;
+  }
+  
+  private void loadAudioImage() {
+    if (currentExtraInfo == null || currentExtraInfo.file == null) {
+      loge("Current audio info is null");
+      return;
+    }
+    
+    try {
+      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
+      metadata.setDataSource(currentExtraInfo.file.getPath());
+      
+      byte[] pictureData = metadata.getEmbeddedPicture();
+      if (pictureData != null) {
+        currentExtraInfo.image = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
+      }
+    }
+    catch (Exception e) {
+      logw("The file doesn't contain image: " + e);
+    }
   }
   
   private void loadAudioLyrics() {
