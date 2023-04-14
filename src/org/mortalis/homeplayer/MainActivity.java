@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.BitmapFactory;
@@ -176,8 +177,10 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraPath;
   
   private TextView textImageFileName;
-  private TextView textLyricsFileName;
+  private TextView textImageInfo;
   private ImageView audioImage;
+  
+  private TextView textLyricsFileName;
   private TextView textExtraLyrics;
   private TextView textLyricsPlaceholder;
   
@@ -373,8 +376,10 @@ public class MainActivity extends AppCompatActivity {
     textExtraPath = findViewById(R.id.textExtraPath);
     
     textImageFileName = findViewById(R.id.textImageFileName);
-    textLyricsFileName = findViewById(R.id.textLyricsFileName);
+    textImageInfo = findViewById(R.id.textImageInfo);
     audioImage = findViewById(R.id.audioImage);
+    
+    textLyricsFileName = findViewById(R.id.textLyricsFileName);
     textExtraLyrics = findViewById(R.id.textExtraLyrics);
     textLyricsPlaceholder = findViewById(R.id.textLyricsPlaceholder);
     
@@ -1340,7 +1345,17 @@ public class MainActivity extends AppCompatActivity {
       
       byte[] pictureData = metadata.getEmbeddedPicture();
       if (pictureData != null) {
-        currentExtraInfo.image = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
+        Bitmap image = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
+        currentExtraInfo.image = image;
+        
+        if (image != null) {
+          currentExtraInfo.imageWidth = image.getWidth();
+          currentExtraInfo.imageHeight = image.getHeight();
+        }
+        
+        if (pictureData != null) {
+          currentExtraInfo.imageSize = pictureData.length;
+        }
       }
     }
     catch (Exception e) {
@@ -1391,6 +1406,9 @@ public class MainActivity extends AppCompatActivity {
     textExtraChannels.setText(String.valueOf(info.channels));
     
     textImageFileName.setText(info.file.getName());
+    String imageInfo = String.format("%d x %d, %s", info.imageWidth, info.imageHeight, Fun.formatSize(info.imageSize));
+    textImageInfo.setText(imageInfo);
+    textImageInfo.setVisibility((info.image != null) ? View.VISIBLE: View.GONE);
     audioImage.setImageBitmap(info.image);
     
     textLyricsFileName.setText(info.file.getName());

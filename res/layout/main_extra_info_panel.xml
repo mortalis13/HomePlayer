@@ -298,9 +298,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingTop="2dp"
-    android:paddingBottom="2dp"
+    android:paddingBottom="0dp"
+    android:lineSpacingMultiplier="1"
+    android:lineSpacingExtra="0dp"
     android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
+    android:gravity="center"
+  />
+  
+  <TextView
+    android:id="@+id/textImageInfo"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:includeFontPadding="false"
+    android:lineSpacingMultiplier="1"
+    android:lineSpacingExtra="0dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="2dp"
+    android:textSize="@dimen/extra_info_font_size"
+    android:textColor="?tertiaryTextColor"
     android:gravity="center"
   />
   
@@ -315,7 +331,7 @@
     android:paddingBottom="20dp"
     android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
-    android:gravity="center|center_vertical"
+    android:gravity="center"
     android:text="Cover"
   />
   <ImageView
@@ -367,7 +383,7 @@
     android:paddingBottom="20dp"
     android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
-    android:gravity="center|center_vertical"
+    android:gravity="center"
     android:text="Lyrics"
   />
   <TextView

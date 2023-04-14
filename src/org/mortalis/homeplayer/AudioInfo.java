@@ -15,5 +15,8 @@ public class AudioInfo {
   int channels;
   int time;
   Bitmap image;
+  int imageWidth;
+  int imageHeight;
+  long imageSize;
   String lyrics;
 }
