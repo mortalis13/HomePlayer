@@ -13,7 +13,7 @@
   <RelativeLayout
     android:id="@+id/panelTitle"
     android:layout_width="match_parent"
-    android:layout_height="54dp"
+    android:layout_height="@dimen/title_height"
     android:focusable="true"
     android:gravity="center_vertical"
     android:background="?titleBackground"
@@ -48,6 +48,12 @@
   
   
   <!-- =========== Progress =========== -->
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="0.5dp"
+    android:background="?separatorColor"
+  />
+  
   <LinearLayout
     android:id="@+id/panelProgress"
     android:layout_width="match_parent"
@@ -62,6 +68,12 @@
     />
   </LinearLayout>
   
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="0.5dp"
+    android:background="?separatorColor"
+  />
+  
   
   <!-- =========== Current Info =========== -->
   <include layout="@layout/main_playing_info_panel"/>
@@ -69,7 +81,7 @@
   
   
   <!-- =========== Controls =========== -->
-  <include layout="@layout/main_play_controls"/>
+  <include layout="@layout/main_playing_controls"/>
   <include layout="@layout/divider_horizontal_include"/>
   <include layout="@layout/divider_horizontal_include"/>
   

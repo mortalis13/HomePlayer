@@ -34,7 +34,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?primaryTextColor"
     android:text="File:"
@@ -43,7 +43,7 @@
     android:id="@+id/textExtraFileName"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </LinearLayout>
@@ -57,7 +57,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?primaryTextColor"
     android:text="Title:"
@@ -66,7 +66,7 @@
     android:id="@+id/textExtraTitle"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </LinearLayout>
@@ -80,7 +80,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?primaryTextColor"
     android:text="Artist:"
@@ -89,7 +89,7 @@
     android:id="@+id/textExtraArtist"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </LinearLayout>
@@ -103,7 +103,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?primaryTextColor"
     android:text="Album:"
@@ -112,7 +112,7 @@
     android:id="@+id/textExtraAlbum"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </LinearLayout>
@@ -126,7 +126,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?primaryTextColor"
     android:text="Year:"
@@ -135,7 +135,7 @@
     android:id="@+id/textExtraYear"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </LinearLayout>
@@ -151,7 +151,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Length:"
@@ -160,7 +160,7 @@
     android:id="@+id/textExtraLength"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -174,7 +174,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Bitrate:"
@@ -183,7 +183,7 @@
     android:id="@+id/textExtraBitrate"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -197,7 +197,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Frequency:"
@@ -206,7 +206,7 @@
     android:id="@+id/textExtraFrequency"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -220,7 +220,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Channels:"
@@ -229,7 +229,7 @@
     android:id="@+id/textExtraChannels"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -243,7 +243,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Size:"
@@ -252,7 +252,7 @@
     android:id="@+id/textExtraSize"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -267,7 +267,7 @@
   <TextView
     android:layout_width="@dimen/extra_info_caption_width"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
     android:text="Path:"
@@ -276,7 +276,7 @@
     android:id="@+id/textExtraPath"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
   />
   </LinearLayout>
@@ -299,7 +299,7 @@
     android:layout_height="wrap_content"
     android:paddingTop="2dp"
     android:paddingBottom="2dp"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
     android:gravity="center"
   />
@@ -313,7 +313,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="20dp"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
     android:gravity="center|center_vertical"
     android:text="Cover"
@@ -350,7 +350,7 @@
     android:layout_height="wrap_content"
     android:paddingTop="2dp"
     android:paddingBottom="2dp"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
     android:gravity="center"
   />
@@ -365,7 +365,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="20dp"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?tertiaryTextColor"
     android:gravity="center|center_vertical"
     android:text="Lyrics"
@@ -377,7 +377,7 @@
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     android:paddingBottom="10dp"
-    android:textSize="@dimen/extra_info_font"
+    android:textSize="@dimen/extra_info_font_size"
     android:textColor="?primaryTextColor"
   />
   </FrameLayout>
