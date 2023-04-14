@@ -537,8 +537,14 @@ public class MainActivity extends AppCompatActivity {
       }
       public void onSwipeDown() {
         loadAudioLyrics();
-        fillAudioInfo();
-        showLyricsPanel();
+        
+        if (audioHasLyrics()) {
+          fillAudioInfo();
+          showLyricsPanel();
+        }
+        else {
+          hideExtraInfoPanel();
+        }
       }
     });
     
@@ -1340,6 +1346,10 @@ public class MainActivity extends AppCompatActivity {
     catch (Exception e) {
       loge("Error retrieving lyrics: " + e);
     }
+  }
+  
+  private boolean audioHasLyrics() {
+    return currentExtraInfo != null && currentExtraInfo.lyrics != null && !currentExtraInfo.lyrics.isEmpty();
   }
   
   private void fillAudioInfo() {
