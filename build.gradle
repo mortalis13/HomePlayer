@@ -112,6 +112,7 @@ dependencies {
 }
 
 def appStart() {
+  // install allowing version downgrade: adb install -d debug.apk
   return "adb shell am start -n ${android.namespace}/.MainActivity".split()
 }
 

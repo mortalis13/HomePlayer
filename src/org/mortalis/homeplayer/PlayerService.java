@@ -497,7 +497,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
   public void onPrepared(MediaPlayer player) {
     logd("MediaPlayer.onPrepared()");
     
-    if (audioTime > 0) {
+    if (audioTime > 0 && audioTime != getTotalTime()) {
       log("Seeking to time: " + audioTime);
       changePlayPosition(audioTime);
     }

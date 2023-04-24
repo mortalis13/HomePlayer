@@ -723,7 +723,8 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
-    logd("playAudio() \"" + filePath + "\"");
+    logd(String.format("playAudio(), time: %d, \"%s\"", time, filePath));
+    
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
       return;
@@ -1207,6 +1208,7 @@ public class MainActivity extends AppCompatActivity {
       
       if (isDirectoryChanged) {
         log("Directory changed");
+        
         Fun.saveSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + currentAudioParent, lastAudioTime);
         log(String.format("Saved %d to TIME_%s", lastAudioTime, currentAudioParent));
         
