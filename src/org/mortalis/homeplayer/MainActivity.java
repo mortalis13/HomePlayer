@@ -957,10 +957,7 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
-    if (extraInfoPanel.getVisibility() == View.VISIBLE) {
-      showExtraAudioInfo();
-    }
-    
+
     if (progressSlider.atMaxProgress()) {
       progressSlider.disable();
     }
