@@ -1182,7 +1182,7 @@ public class MainActivity extends AppCompatActivity {
       else {
         int time = 0;
         if (item.isLastPlayed) {
-          if (playerService != null && !playerService.getAudioPath().equals(item.path)) {
+          if (playerService != null && (!playerService.hasAudio() || !playerService.getAudioPath().equals(item.path)) ) {
             int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + clickedFile.getParent());
             if (lastTime != -1) time = lastTime;
             if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
