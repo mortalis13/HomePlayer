@@ -814,7 +814,7 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Navigation ------------------------------
-  private void changeDir(File path) {
+  private void changeDir(File path, boolean scrollTop) {
     logd("changeDir(): " + path);
     if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.cancel(true);
     
@@ -851,7 +851,9 @@ public class MainActivity extends AppCompatActivity {
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     
     updateListOverscroll();
-    listLayoutManager.scrollToPositionWithOffset(0, 0);
+    if (scrollTop) {
+      listLayoutManager.scrollToPositionWithOffset(0, 0);
+    }
     
     lastFolder = path.getPath();
     Fun.saveSharedPref(context, "PREF_LAST_FOLDER", lastFolder);
@@ -862,6 +864,10 @@ public class MainActivity extends AppCompatActivity {
     markLastPlayedFile(currentPath);
     markFavorites();
     updateFavoritesStats();
+  }
+  
+  private void changeDir(File path) {
+    changeDir(path, true);
   }
   
   private void changeToParentDir() {
@@ -880,11 +886,21 @@ public class MainActivity extends AppCompatActivity {
     hideExtraPanels();
   }
   
+  private void refreshCurrentDir() {
+    logd("refreshCurrentDir()");
+    changeDir(currentPath);
+  }
+  
   private void validateCurrentDir() {
     if (currentPath == null || !currentPath.exists()) {
       logw("The last visited directory doesn't exist (" + currentPath + "), changing to its parent");
       File parent = Fun.getNearestExistingParent(currentPath);
       changeDir(parent);
+      return;
+    }
+    
+    if (!belongsToCurrentDir(getPlayingFile())) {
+      refreshCurrentDir();
     }
   }
   
@@ -1008,7 +1024,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void onItemRemoved(String filePath) {
     log("File removed: " + filePath);
-    changeDir(currentPath);
+    refreshCurrentDir();
     
     // Check if the removed file was in the current playlist
     File playingFile = getPlayingFile();
