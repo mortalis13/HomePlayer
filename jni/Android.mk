@@ -4,6 +4,7 @@ LOCAL_PATH := $(call my-dir)
 $(info __MAKEFILE: ANDROID_NDK: $(ANDROID_NDK))
 $(info __MAKEFILE: NDK_TOOLCHAIN_VERSION: $(NDK_TOOLCHAIN_VERSION))
 
+# ffmpeg-5.1
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libavutil
