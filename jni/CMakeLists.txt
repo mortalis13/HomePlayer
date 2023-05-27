@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.4.1)
 project(home-player LANGUAGES CXX)
 
+find_package(oboe REQUIRED CONFIG)
+
 set (APP_SOURCES
   DecoderNative.cpp
+  AudioDecoder.cpp
+  AudioFilter.cpp
+  FilePlayer.cpp
+  EngineNative.cpp
 )
 
 message("CMAKE_VERSION => \"${CMAKE_VERSION}\"")
@@ -31,6 +37,6 @@ set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${FFMPEG_DIR}/lib/
 # end ffmpeg
 
 
-target_link_libraries(decoder android log avformat avutil avcodec swresample)
+target_link_libraries(decoder oboe::oboe android log avformat avutil avcodec swresample)
 
 target_compile_options(decoder PRIVATE -std=c++17 -frtti -fexceptions -Wall)
