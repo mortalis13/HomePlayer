@@ -46,6 +46,10 @@ android {
     }
   }
   
+  buildFeatures {
+      prefab true
+  }
+  
   externalNativeBuild {
     cmake {
       path 'jni/CMakeLists.txt'
@@ -114,6 +118,8 @@ dependencies {
   
   // https://bitbucket.org/ijabz/jaudiotagger
   implementation 'net.jthink:jaudiotagger:3.0.1'
+
+  implementation "com.google.oboe:oboe:1.7.0"
 }
 
 def appStart() {
