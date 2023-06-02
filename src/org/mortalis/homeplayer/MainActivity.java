@@ -1016,7 +1016,6 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
-    // log(String.format("time changed: %d / %d", playingTime, totalTime));
     updatePlayingTime(playingTime, totalTime);
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
@@ -1324,13 +1323,29 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingTime);
     lastAudioTime = playingTime;
     
-    playingTime /= 1000;
-    totalTime  /= 1000;
-    String timePlaying = Fun.formatTime(playingTime, false);
-    String timeTotal   = Fun.formatTime(totalTime, false);
-    int timeDiff = totalTime - playingTime;
-    if (timeDiff < 0) timeDiff = 0;
-    String timeLeft    = "-" + Fun.formatTime(timeDiff, false);
+    String timePlaying;
+    String timeLeft;
+    String timeTotal;
+    
+    if (Vars.SHOW_TIME_IN_MS) {
+      int timeDiff = totalTime - playingTime;
+      if (timeDiff < 0) timeDiff = 0;
+      
+      timePlaying = String.format("%03d.%03d", playingTime/1000, playingTime%1000);
+      timeLeft = String.format("-%03d.%03d", timeDiff/1000, timeDiff%1000);
+      timeTotal = String.format("%03d.%03d", totalTime/1000,+ totalTime%1000);
+    }
+    else {
+      playingTime /= 1000;
+      totalTime   /= 1000;
+      
+      int timeDiff = totalTime - playingTime;
+      if (timeDiff < 0) timeDiff = 0;
+      
+      timePlaying = Fun.formatTime(playingTime, false);
+      timeLeft = "-" + Fun.formatTime(timeDiff, false);
+      timeTotal = Fun.formatTime(totalTime, false);
+    }
     
     textTimePlaying.setText(timePlaying);
     textTimeLeft.setText(timeLeft);
