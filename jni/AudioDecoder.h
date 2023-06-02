@@ -80,9 +80,5 @@ private:
   
   future<void> runThread;
   
-  ofstream dumpfile;
-  string dumppath = "/storage/emulated/0/_temp/_dump.wav";
-  bool dumpOutput = false;
-  
 };
 #endif //AUDIO_DECODER_H

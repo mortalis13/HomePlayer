@@ -11,7 +11,6 @@
 void AudioDecoder::start() {
   LOGD("AudioDecoder::start()");
   this->playing = true;
-  if (dumpOutput) {LOGI("Opening dump file '%s'", dumppath.c_str()); dumpfile.open(dumppath, ios::binary);}
   
   // this->seekTo(0);
   // this->currentPTS = 0;
@@ -32,7 +31,6 @@ void AudioDecoder::stop() {
     LOGI("--after wait");
   }
   
-  if (dumpOutput) dumpfile.close();
   LOGI("Decoder stopped");
 }
 
@@ -137,8 +135,6 @@ void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesT
     
     float sample;
     memcpy(&sample, (uint8_t*) buffer + pushedBytes, sizeof(float));
-    
-    if (dumpOutput) dumpfile.write((char*) &sample, sizeof(float));
     
     bool pushed = this->dataQ->push(sample);
     if (!pushed) continue;
@@ -265,7 +261,7 @@ double AudioDecoder::getCurrentTime() {
 }
 
 int AudioDecoder::getDuration() {
-  int64_t duration_ms = formatContext->duration * 1000 / AV_TIME_BASE;
+  int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
   LOGI("Context duration: %ld, duration: %ld ms", formatContext->duration, duration_ms);
   return duration_ms;
 }
