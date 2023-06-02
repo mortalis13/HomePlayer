@@ -242,7 +242,7 @@ int AudioDecoder::loadFile(string filePath) {
 
 
 void AudioDecoder::seekTo(int time_ms) {
-  int64_t timestamp = av_rescale((double) time_ms / 1000, audioStream->time_base.den, audioStream->time_base.num);
+  int64_t timestamp = (double) time_ms / 1000 * audioStream->time_base.den / audioStream->time_base.num;
   LOGI("Seeking to %ds, timestamp: %d", time_ms, (int) timestamp);
   
   int result = av_seek_frame(formatContext, audioStream->index, timestamp, AVSEEK_FLAG_FRAME);
@@ -253,16 +253,17 @@ void AudioDecoder::seekTo(int time_ms) {
   currentPTS = timestamp;
 }
 
-double AudioDecoder::getCurrentTime() {
+int AudioDecoder::getCurrentTime() {
   double currentFrameTime = (double) 1000 * this->currentPTS * audioStream->time_base.num / audioStream->time_base.den;
   double cachedFramesTime = (double) 1000 * this->dataQ->size() / this->channelCount / this->sampleRate;
-  double currentTime_ms = max<double>(0, currentFrameTime - cachedFramesTime);
+  int currentTime_ms = (int) (currentFrameTime - cachedFramesTime);
+  if (currentTime_ms < 0) currentTime_ms = 0;
   return currentTime_ms;
 }
 
 int AudioDecoder::getDuration() {
   int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
-  LOGI("Context duration: %ld, duration: %ld ms", formatContext->duration, duration_ms);
+  LOGI("Context duration: %d, duration: %d ms", (int) formatContext->duration, (int) duration_ms);
   return duration_ms;
 }
 

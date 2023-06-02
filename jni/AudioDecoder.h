@@ -47,7 +47,7 @@ public:
   }
   
   void seekTo(int time_ms);
-  double getCurrentTime();
+  int getCurrentTime();
   int getDuration();
 
 
