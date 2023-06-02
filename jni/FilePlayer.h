@@ -23,41 +23,45 @@ public:
   
   ~FilePlayer() {
     if (decoder != NULL) delete decoder;
-    if (audioFilter != NULL) delete audioFilter;
   }
   
-  bool open();
-  bool start();
-  oboe::Result stop();
-  oboe::Result close();
-  
   bool init();
-  bool play(string audioPath);
+  bool destroy();
   
-  void enableFilter();
-  void disableFilter();
+  bool openStream();
+  bool startStream();
+  bool stopStream();
+  bool closeStream();
   
-  void addFilterFrequency(float hz);
-  void addFilterGain(float db);
-
+  bool loadAudio(string audioPath);
+  bool startAudio();
+  void pause();
+  void resume();
+  
+  int getDuration();
+  int getCurrentPosition();
+  void seekTo(int time_ms);
+  
+  
+  bool isPlaying() {
+    return playing;
+  }
 
 private:
   bool loadFile(string audioPath);
   void writeAudio(float* stream, int32_t numFrames);
 
+  void initDecoder();
   void emptyQueue();
-
 
 private:
   static constexpr int kChannelCount = 2;
+  
+  bool playing = false;
 
   AudioDecoder* decoder = NULL;
   SharedQueue dataQ;
   
-  bool isPlaying = false;
-  
-  PeakingFilter* audioFilter = NULL;
-  bool isFilterEnabled = false;
   
   shared_ptr<AudioStream> mStream;
   shared_ptr<MyDataCallback> mDataCallback;
@@ -66,22 +70,21 @@ private:
 
 class MyDataCallback : public AudioStreamDataCallback {
 public:
-    MyDataCallback(FilePlayer *parent) : mParent(parent) {}
-    DataCallbackResult onAudioReady(AudioStream *audioStream, void *audioData, int32_t numFrames) override;
+    MyDataCallback(FilePlayer* parent) : mParent(parent) {}
+    DataCallbackResult onAudioReady(AudioStream* audioStream, void* audioData, int32_t numFrames) override;
 private:
-    FilePlayer *mParent;
+    FilePlayer* mParent;
 };
 
 
 class MyErrorCallback : public AudioStreamErrorCallback {
 public:
-    MyErrorCallback(FilePlayer *parent) : mParent(parent) {}
+    MyErrorCallback(FilePlayer* parent) : mParent(parent) {}
     virtual ~MyErrorCallback() {}
-    void onErrorAfterClose(AudioStream *oboeStream, oboe::Result error) override;
+    void onErrorAfterClose(AudioStream* oboeStream, oboe::Result error) override;
 private:
-    FilePlayer *mParent;
+    FilePlayer* mParent;
 };
 
 };
-
 #endif //FILE_PLAYER_H

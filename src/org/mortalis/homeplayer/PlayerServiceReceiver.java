@@ -19,13 +19,13 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
     if (receiverListener == null) return;
     
     String action = intent.getAction();
-    if (action.equals(PlayerService.ACTION_PLAY)) {
+    if (action.equals(PlayerServiceOld.ACTION_PLAY)) {
       receiverListener.onMsgPlay();
     }
-    else if (action.equals(PlayerService.ACTION_PAUSE)) {
+    else if (action.equals(PlayerServiceOld.ACTION_PAUSE)) {
       receiverListener.onMsgPause();
     }
-    else if (action.equals(PlayerService.ACTION_EXIT)) {
+    else if (action.equals(PlayerServiceOld.ACTION_EXIT)) {
       receiverListener.onMsgExit();
     }
   }

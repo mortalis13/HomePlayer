@@ -10,31 +10,24 @@ extern "C" {
 
 #include <string>
 #include <future>
+#include <fstream>
 
 #include "defs.h"
 
 using namespace std;
 
 
-const int MODE_STATIC_BUFFER = 0;
-const int MODE_BUFFER_QUEUE = 1;
-
-
 class AudioDecoder {
 
 public:
-  AudioDecoder(uint8_t* targetData) {
-    this->decodeMode = MODE_STATIC_BUFFER;
-    this->targetData = targetData;
-    this->enabled = true;
-    this->playing = true;
-  }
-  
   AudioDecoder(SharedQueue* dataQ) {
-    this->decodeMode = MODE_BUFFER_QUEUE;
     this->dataQ = dataQ;
     this->enabled = false;
     this->playing = false;
+  }
+  
+  ~AudioDecoder() {
+    this->cleanup();
   }
   
   int loadFile(string filePath);
@@ -53,7 +46,9 @@ public:
     return dataChannels;
   }
   
-  int64_t decodeStatic(string filePath);
+  void seekTo(int time_ms);
+  double getCurrentTime();
+  int getDuration();
 
 
 private:
@@ -68,11 +63,11 @@ private:
   bool enabled;
   bool playing;
   
-  int decodeMode;
-  
   int32_t channelCount = 0;
   int32_t sampleRate = 0;
   int32_t dataChannels = 0;
+  
+  int64_t currentPTS = 0;
   
   AVFormatContext* formatContext = NULL;
   AVCodecContext* codecContext = NULL;
@@ -82,11 +77,12 @@ private:
   const AVCodec* audioCodec = NULL;
   
   SharedQueue* dataQ = NULL;
-  uint8_t* targetData = NULL;
   
-  // thread runThread;
   future<void> runThread;
   
+  ofstream dumpfile;
+  string dumppath = "/storage/emulated/0/_temp/_dump.wav";
+  bool dumpOutput = false;
+  
 };
-
 #endif //AUDIO_DECODER_H

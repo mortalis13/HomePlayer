@@ -50,6 +50,7 @@ import org.mortalis.homeplayer.components.VolumeSliderView;
 import org.mortalis.homeplayer.components.TrimSliderView;
 import org.mortalis.homeplayer.decoder.DecoderNative;
 import org.mortalis.homeplayer.decoder.DecoderResult;
+import org.mortalis.homeplayer.jni.EngineNative;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -213,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.createNotificationChannel(context);
     
     init();
+    initEngine();
     configUI();
     restoreState();
     
@@ -342,6 +344,13 @@ public class MainActivity extends AppCompatActivity {
     };
     
     bindPlayerService();
+  }
+  
+  private void initEngine() {
+    new Thread(() -> {
+      EngineNative.startEngine();
+      log("Audio engine started");
+    }).start();
   }
   
   private void configUI() {
@@ -1007,6 +1016,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
+    // log(String.format("time changed: %d / %d", playingTime, totalTime));
     updatePlayingTime(playingTime, totalTime);
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
@@ -1605,6 +1615,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateWaveform(String audioPath) {
+    if (true) return;
+
     if (currentWaveformFile != null && currentWaveformFile.equals(audioPath)) {
       log(String.format("The waveform is already built for the audio %s", audioPath));
       return;

@@ -1,39 +1,28 @@
-#define LOG_MODULE_NAME "FilePlayer_"
-
 #include "FilePlayer.h"
+#define LOG_MODULE_NAME "FilePlayer_"
 
 #include "utils/logging.h"
 
 
 bool FilePlayer::init() {
-  isPlaying = false;
+  this->playing = false;
   
-  if (!this->open()) return false;
-  if (!this->start()) return false;
-  
-  if (this->decoder != NULL) {
-    this->decoder->stop();
-    delete this->decoder;
-  }
-  this->decoder = new AudioDecoder(&dataQ);
-  this->decoder->setChannelCount(mStream->getChannelCount());
-  this->decoder->setSampleRate(mStream->getSampleRate());
-  
-  this->audioFilter = new PeakingFilter();
-  this->audioFilter->setSampleRate(mStream->getSampleRate());
-  this->audioFilter->setQFactor(1.0);
-  this->audioFilter->setFrequency(100.0);
-  this->audioFilter->setGainDb(-10.0);
-  
-  LOGI("Filter is set up for %.2f Hz, %.2f dB, %.2f Q",
-    this->audioFilter->getFrequency(),
-    this->audioFilter->getGainDb(),
-    this->audioFilter->getQFactor());
+  if (!this->openStream()) return false;
+  if (!this->startStream()) return false;
   
   return true;
 }
 
-bool FilePlayer::open() {
+bool FilePlayer::destroy() {
+  this->playing = false;
+  this->decoder->stop();
+  
+  this->stopStream();
+  this->closeStream();
+  return true;
+}
+
+bool FilePlayer::openStream() {
   mDataCallback = make_shared<MyDataCallback>(this);
   mErrorCallback = make_shared<MyErrorCallback>(this);
 
@@ -46,7 +35,7 @@ bool FilePlayer::open() {
   builder.setChannelCount(kChannelCount);
   builder.setDataCallback(mDataCallback);
   builder.setErrorCallback(mErrorCallback);
-  builder.setSampleRate(48000);
+  builder.setSampleRate(44100);
   builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
   auto result = builder.openStream(mStream);
@@ -57,7 +46,7 @@ bool FilePlayer::open() {
   return true;
 }
 
-bool FilePlayer::start() {
+bool FilePlayer::startStream() {
   auto result = mStream->requestStart();
   if (result != Result::OK) {
     LOGE("Failed to start stream. Error: %s", convertToText(result));
@@ -66,51 +55,74 @@ bool FilePlayer::start() {
   return true;
 }
 
-oboe::Result FilePlayer::stop() {
-  this->isPlaying = false;
-  this->decoder->stop();
-  return mStream->requestStop();
+bool FilePlayer::stopStream() {
+  auto result = mStream->requestStop();
+  LOGI("Stop stream result: %s", convertToText(result));
+  return true;
 }
 
-oboe::Result FilePlayer::close() {
-  return mStream->close();
-}
-
-void FilePlayer::enableFilter() {
-  this->audioFilter->reset();
-  this->isFilterEnabled = true;
-}
-
-void FilePlayer::disableFilter() {
-  this->isFilterEnabled = false;
-}
-
-void FilePlayer::addFilterFrequency(float hz) {
-  double freq = this->audioFilter->getFrequency() + hz;
-  this->audioFilter->setFrequency(freq);
-}
-
-void FilePlayer::addFilterGain(float db) {
-  double gain = this->audioFilter->getGainDb() + db;
-  this->audioFilter->setGainDb(gain);
+bool FilePlayer::closeStream() {
+  auto result = mStream->close();
+  LOGI("Close stream result: %s", convertToText(result));
+  return true;
 }
 
 
-bool FilePlayer::play(string audioPath) {
-  this->isPlaying = false;
-  this->decoder->stop();
-  this->emptyQueue();
+void FilePlayer::initDecoder() {
+  if (this->decoder != NULL) {
+    this->decoder->stop();
+    delete this->decoder;
+  }
   
-  this->audioFilter->reset();
+  this->decoder = new AudioDecoder(&dataQ);
+  this->decoder->setChannelCount(mStream->getChannelCount());
+  this->decoder->setSampleRate(mStream->getSampleRate());
+}
+
+
+bool FilePlayer::loadAudio(string audioPath) {
+  this->playing = false;
+  this->initDecoder();
+  this->emptyQueue();
   
   bool result = loadFile(audioPath);
   if (!result) return result;
-  
-  this->isPlaying = true;
-  
-  this->decoder->start();
-  LOGI("Decoder started");
+  return true;
+}
 
+
+bool FilePlayer::startAudio() {
+  this->playing = true;
+  this->decoder->start();
+  return true;
+}
+
+void FilePlayer::pause() {
+  this->playing = false;
+  // this->decoder->stop();
+}
+
+void FilePlayer::resume() {
+  this->playing = true;
+  // this->decoder->start();
+}
+
+int FilePlayer::getDuration() {
+  return this->decoder->getDuration();
+}
+
+int FilePlayer::getCurrentPosition() {
+  return (int) this->decoder->getCurrentTime();
+}
+
+void FilePlayer::seekTo(int time_ms) {
+  this->decoder->seekTo(time_ms);
+}
+
+
+bool FilePlayer::loadFile(string audioPath) {
+  int result = this->decoder->loadFile(audioPath);
+  if (result < 0) return false;
   return true;
 }
 
@@ -122,24 +134,13 @@ void FilePlayer::emptyQueue() {
 }
 
 
-bool FilePlayer::loadFile(string audioPath) {
-  int result = this->decoder->loadFile(audioPath);
-  if (result < 0) return false;
-  return true;
-}
-
-
 void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
   // Audio thread
   for (int i = 0; i < numFrames; i++) {
     for (int ch = 0; ch < kChannelCount; ch++) {
       float sample = 0;
-      if (this->isPlaying) {
+      if (this->playing) {
         this->dataQ.pop(sample);
-      }
-      
-      if (this->isFilterEnabled && this->audioFilter) {
-        sample = this->audioFilter->processAudioSample(sample, ch);
       }
       
       *stream++ = sample;
@@ -149,17 +150,15 @@ void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
 
 
 DataCallbackResult FilePlayer::MyDataCallback::onAudioReady(AudioStream* audioStream, void* audioData, int32_t numFrames) {
-  if (!mParent->isPlaying) {
+  if (!mParent->playing) {
     memset(audioData, 0, numFrames * kChannelCount * sizeof(float));
     return DataCallbackResult::Continue;
   }
   
   float* stream = (float*) audioData;
   mParent->writeAudio(stream, numFrames);
-  
   return DataCallbackResult::Continue;
 }
-
 
 void FilePlayer::MyErrorCallback::onErrorAfterClose(AudioStream* oboeStream, oboe::Result error) {
   LOGE("%s() - error = %s", __func__, oboe::convertToText(error));
