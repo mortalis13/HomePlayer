@@ -112,7 +112,7 @@ int FilePlayer::getDuration() {
 }
 
 int FilePlayer::getCurrentPosition() {
-  return (int) this->decoder->getCurrentTime();
+  return this->decoder->getCurrentTime();
 }
 
 void FilePlayer::seekTo(int time_ms) {
