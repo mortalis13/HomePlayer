@@ -25,8 +25,6 @@ import org.mortalis.homeplayer.actions.Action;
 import org.mortalis.homeplayer.actions.DoubleAction;
 import org.mortalis.homeplayer.actions.SimpleAction;
 
-import org.mortalis.homeplayer.jni.EngineNative;
-
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
 import static org.mortalis.homeplayer.Fun.loge;
@@ -34,7 +32,7 @@ import static org.mortalis.homeplayer.Fun.loge;
 import java.io.File;
 
 
-public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
+public class PlayerServiceOld extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
   
   public static final String ACTION_PLAY = "org.mortalis.homeplayer.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayer.action.PAUSE";
@@ -47,6 +45,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public static final int MEDIA_ERROR_SYSTEM = -2147483648;
   
   private final IBinder binder = new PlayerBinder();
+  
+  private MediaPlayer mediaPlayer;
   
   private AudioManager audioManager;
   private AudioAttributes playbackAttributes;
@@ -65,8 +65,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
   private boolean startPlayback;
-  
-  private int totalTime;
   
   private Handler progressHandler = new Handler();
   private Runnable progressRunnable;
@@ -106,7 +104,14 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
       boolean repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 
-      // MP_INIT
+      if (mediaPlayer != null) mediaPlayer.release();
+      mediaPlayer = new MediaPlayer();
+      mediaPlayer.setAudioAttributes(playbackAttributes);
+      this.setRepeat(repeat);
+      
+      mediaPlayer.setOnPreparedListener(this);
+      mediaPlayer.setOnCompletionListener(this);
+      mediaPlayer.setOnErrorListener(this);
       
       progressHandler.removeCallbacks(progressRunnable);
       
@@ -127,7 +132,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     unregisterReceiver(playerServiceReceiver);
     unregisterReceiver(headphonesPlugReceiver);
     removeAudioFocus();
-    // if (mediaPlayer != null) mediaPlayer.release();
+    if (mediaPlayer != null) mediaPlayer.release();
   }
   
   @Override
@@ -178,6 +183,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       public void onMsgExit() {
         progressHandler.removeCallbacks(progressRunnable);
         exitAction.execute();
+        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
       }
     });
     
@@ -194,9 +200,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     notificationManager = NotificationManagerCompat.from(this);
     
-    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT);
     
     notifActions = new NotificationCompat.Action[] {
       new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
@@ -212,36 +218,26 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     sendInitProgress();
     sendUpdateProgress();
   }
-
+  
   private void play() {
     boolean audioFocusGranted = requestAudioFocus();
     if (!audioFocusGranted) {
       loge("Audio focus is not granted");
       return;
     }
-
-    EngineNative.playAudio();
-    log("Playback started");
-
+    
+    mediaPlayer.start();
     updateNotification(ACTION_PAUSE_ID);
+    log("Playback started");
   }
-
+  
   public void resume() {
     if (!progressHandler.hasCallbacks(progressRunnable)) {
       enableUpdateTime();
       startProgress();
     }
     
-    boolean audioFocusGranted = requestAudioFocus();
-    if (!audioFocusGranted) {
-      loge("Audio focus is not granted");
-      return;
-    }
-    
-    EngineNative.resumeAudio();
-    log("Playback resumed");
-    
-    updateNotification(ACTION_PAUSE_ID);
+    play();
     sendPlayerResumed();
   }
   
@@ -249,17 +245,15 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.removeCallbacks(progressRunnable);
     sendUpdateStoppedTime();
 
-    // mediaPlayer.stop();
-    // mediaPlayer.reset();
-    
+    mediaPlayer.stop();
+    mediaPlayer.reset();
     updateNotification(ACTION_PLAY_ID);
     log("Playback stopped");
   }
   
   public void pause() {
     if (this.isPlaying()) {
-      EngineNative.pauseAudio();
-      // mediaPlayer.pause();
+      mediaPlayer.pause();
     }
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
@@ -267,19 +261,19 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public void fastRewind(int s) {
-    // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
+    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
   
   public void fastForward(int s) {
-    // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
+    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
   
   public void setRepeat(boolean repeat) {
-    // mediaPlayer.setLooping(repeat);
+    mediaPlayer.setLooping(repeat);
   }
   
   
@@ -288,35 +282,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     try {
       if (Fun.fileExists(audioPath)) {
-        // mediaPlayer.setDataSource(audioPath);
-        // mediaPlayer.prepareAsync();
-        
-        int result = EngineNative.loadAudio(audioPath);
-        if (result != 0) return;
-        
-        totalTime = EngineNative.getDuration();
-        
-        if (audioTime > 0 && audioTime != getTotalTime()) {
-          log("Seeking to time: " + audioTime);
-          changePlayPosition(audioTime);
-        }
-        
-        metadata.setDataSource(audioPath);
-        
-        preload();
-
-        if (startPlayback) {
-          enableUpdateTime();
-          startProgress();
-          play();
-          sendPlayerStarted();
-        }
-        else {
-          sendPlayerPreloaded();
-        }
-        
+        mediaPlayer.setDataSource(audioPath);
+        mediaPlayer.prepareAsync();
         playerLoaded = true;
-        startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
       }
     }
     catch (Exception e) {
@@ -330,7 +298,21 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     progressRunnable = new Runnable() {
       public void run() {
-        if (updateTimeEnabled && isPlaying()) {
+        if (mediaPlayer == null) {
+          loge("mediaPlayer is null, cannot start progress");
+          return;
+        }
+
+        boolean isPlaying_ = false;
+        try {
+          isPlaying_ = mediaPlayer.isPlaying();
+        }
+        catch (IllegalStateException e) {
+          loge("mediaPlayer in invalid state, cannot start progress");
+          return;
+        }
+        
+        if (updateTimeEnabled && isPlaying_) {
           sendUpdatePlayingTime();
           sendUpdateProgress();
         }
@@ -371,7 +353,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     String text = audioArtist;
     
     Intent intent = new Intent(this, MainActivity.class);
-    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     
     // ----------
     notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
@@ -411,23 +393,20 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   // ----- External calls
   private void sendInitProgress() {
-    progressSetupAction.execute(getTotalTime());
-    // progressSetupAction.execute(mediaPlayer.getDuration());
+    progressSetupAction.execute(mediaPlayer.getDuration());
   }
 
   private void sendUpdateStoppedTime() {
-    // timeUpdateAction.execute(mediaPlayer.getDuration(), mediaPlayer.getDuration());
-    // progressUpdateAction.execute(mediaPlayer.getDuration());
+    timeUpdateAction.execute(mediaPlayer.getDuration(), mediaPlayer.getDuration());
+    progressUpdateAction.execute(mediaPlayer.getDuration());
   }
   
   private void sendUpdatePlayingTime() {
-    timeUpdateAction.execute(getPlayingTime(), getTotalTime());
-    // timeUpdateAction.execute(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+    timeUpdateAction.execute(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
   }
   
   private void sendUpdateProgress() {
-    progressUpdateAction.execute(getPlayingTime());
-    // progressUpdateAction.execute(mediaPlayer.getCurrentPosition());
+    progressUpdateAction.execute(mediaPlayer.getCurrentPosition());
   }
   
   private void sendPlayerPreloaded() {
@@ -464,30 +443,31 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public void changePlayPosition(int time) {
-    EngineNative.seekTo(time);
-    // mediaPlayer.seekTo(time);
+    mediaPlayer.seekTo(time);
   }
   
   public void seekToEnd() {
-    // mediaPlayer.seekTo(mediaPlayer.getDuration());
+    mediaPlayer.seekTo(mediaPlayer.getDuration());
   }
   
   public int getTotalTime() {
-    // ms
-    return totalTime;
-    // return EngineNative.getDuration();
-    // return mediaPlayer.getDuration();
+    if (mediaPlayer == null) return -1;
+    return mediaPlayer.getDuration();
   }
   
   public int getPlayingTime() {
-    // ms
-    return EngineNative.getCurrentPosition();
-    // return mediaPlayer.getCurrentPosition();
+    if (mediaPlayer == null) return -1;
+    return mediaPlayer.getCurrentPosition();
   }
   
   public boolean isPlaying() {
-    return EngineNative.isPlaying();
-    // return mediaPlayer != null && mediaPlayer.isPlaying();
+    try {
+      return mediaPlayer != null && mediaPlayer.isPlaying();
+    }
+    catch (IllegalStateException e) {
+      loge("isPlaying() -> mediaPlayer has thrown IllegalStateException");
+      return false;
+    }
   }
   
   public boolean hasAudio() {
@@ -499,8 +479,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public boolean hasProgress() {
-    return false;
-    // return mediaPlayer != null && mediaPlayer.getCurrentPosition() != 0;
+    return mediaPlayer != null && mediaPlayer.getCurrentPosition() != 0;
   }
   
   public String getAudioPath() {
@@ -510,6 +489,64 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public void resetService() {
     log("resetService()");
     playerLoaded = false;
+  }
+  
+  
+  // --> MediaPlayer.OnPreparedListener
+  @Override
+  public void onPrepared(MediaPlayer player) {
+    logd("MediaPlayer.onPrepared()");
+    
+    if (audioTime > 0 && audioTime != getTotalTime()) {
+      log("Seeking to time: " + audioTime);
+      changePlayPosition(audioTime);
+    }
+    
+    metadata.setDataSource(audioPath);
+    
+    preload();
+
+    if (startPlayback) {
+      enableUpdateTime();
+      startProgress();
+      play();
+      sendPlayerStarted();
+    }
+    else {
+      sendPlayerPreloaded();
+    }
+    
+    startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
+  }
+  
+  // --> MediaPlayer.OnCompletionListener
+  @Override
+  public void onCompletion(MediaPlayer player) {
+    logd("MediaPlayer.onCompletion()");
+    stop();
+    playerLoaded = false;
+    stopSelf();
+    sendPlayerStopped();
+  }
+  
+  
+  // --> MediaPlayer.OnErrorListener
+  @Override
+  public boolean onError(MediaPlayer player, int what, int extra) {
+    loge("MediaPlayer.onError(): " + what + "; " + extra);
+    
+    if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == MEDIA_ERROR_SYSTEM) {
+      // Detected when trying to play unsupported file
+      if (mediaPlayer != null) mediaPlayer.release();
+      mediaPlayer = null;
+      
+      playerLoaded = false;
+      stopForeground(true);
+      stopSelf();
+      sendPlayerError();
+    }
+    
+    return true;
   }
   
   
@@ -542,8 +579,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   
   public class PlayerBinder extends Binder {
-    PlayerService getService() {
-      return PlayerService.this;
+    PlayerServiceOld getService() {
+      return PlayerServiceOld.this;
     }
   }
   

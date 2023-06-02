@@ -141,18 +141,16 @@ public:
       readCounter = writeCounter = 0;
     }
 
-private:
-
     bool isEmpty() const { return readCounter == writeCounter; }
 
     bool isFull() const { return size() == CAPACITY; }
+
+private:
 
     INDEX_TYPE mask(INDEX_TYPE n) const { return static_cast<INDEX_TYPE>(n & (CAPACITY - 1)); }
 
     T buffer[CAPACITY];
     std::atomic<INDEX_TYPE> writeCounter { 0 };
     std::atomic<INDEX_TYPE> readCounter { 0 };
-
 };
-
 #endif //RHYTHMGAME_LOCKFREEQUEUE_H

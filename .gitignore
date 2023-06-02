@@ -39,3 +39,5 @@ build
 
 #NDK
 obj/
+
+.cxx

@@ -1,0 +1,17 @@
+package org.mortalis.homeplayer.jni;
+
+public class EngineNative {
+  public static native int startEngine();
+  public static native int stopEngine();
+
+  public static native int loadAudio(String audioPath);
+  public static native int playAudio();
+  public static native int pauseAudio();
+  public static native int resumeAudio();
+  
+  public static native int getDuration();
+  public static native int getCurrentPosition();
+  public static native void seekTo(int time);
+  
+  public static native boolean isPlaying();
+}
