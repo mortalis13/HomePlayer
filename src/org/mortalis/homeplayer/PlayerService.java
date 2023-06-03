@@ -330,6 +330,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     progressRunnable = new Runnable() {
       public void run() {
+        if (isStopped()) {
+          onCompleted();
+          return;
+        }
+        
         if (updateTimeEnabled && isPlaying()) {
           sendUpdatePlayingTime();
           sendUpdateProgress();
@@ -339,6 +344,16 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     };
     
     progressHandler.postDelayed(progressRunnable, 100);
+  }
+  
+  
+  private void onCompleted() {
+    sendUpdateStoppedTime();
+    updateNotification(ACTION_PLAY_ID);
+    
+    playerLoaded = false;
+    stopSelf();
+    sendPlayerStopped();
   }
   
   
@@ -416,6 +431,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   private void sendUpdateStoppedTime() {
+    timeUpdateAction.execute(getTotalTime(), getTotalTime());
+    progressUpdateAction.execute(getTotalTime());
     // timeUpdateAction.execute(mediaPlayer.getDuration(), mediaPlayer.getDuration());
     // progressUpdateAction.execute(mediaPlayer.getDuration());
   }
@@ -488,6 +505,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public boolean isPlaying() {
     return EngineNative.isPlaying();
     // return mediaPlayer != null && mediaPlayer.isPlaying();
+  }
+  
+  public boolean isStopped() {
+    return EngineNative.isStopped();
   }
   
   public boolean hasAudio() {

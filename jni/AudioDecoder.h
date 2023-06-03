@@ -22,8 +22,6 @@ class AudioDecoder {
 public:
   AudioDecoder(SharedQueue* dataQ) {
     this->dataQ = dataQ;
-    this->enabled = false;
-    this->playing = false;
   }
   
   ~AudioDecoder() {
@@ -50,6 +48,10 @@ public:
     return playing;
   }
   
+  bool isEnded() {
+    return ended;
+  }
+  
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
@@ -61,11 +63,11 @@ private:
   
   void run();
   void cleanup();
-  int64_t decodeFrames();
+  int decodeFrames();
   void saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesToWrite);
   
-  bool enabled;
-  bool playing;
+  bool playing = false;
+  bool ended = false;
   
   int32_t channelCount = 0;
   int32_t sampleRate = 0;

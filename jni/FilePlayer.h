@@ -42,9 +42,12 @@ public:
   int getCurrentPosition();
   void seekTo(int time_ms);
   
-  
   bool isPlaying() {
     return playing;
+  }
+
+  bool isStopped() {
+    return ended;
   }
 
 private:
@@ -58,6 +61,7 @@ private:
   static constexpr int kChannelCount = 2;
   
   bool playing = false;
+  bool ended = false;
 
   AudioDecoder* decoder = NULL;
   SharedQueue dataQ;
