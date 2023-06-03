@@ -14,4 +14,5 @@ public class EngineNative {
   public static native void seekTo(int time);
   
   public static native boolean isPlaying();
+  public static native boolean isStopped();
 }

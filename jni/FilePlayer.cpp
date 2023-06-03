@@ -10,7 +10,6 @@ bool FilePlayer::init() {
   if (!this->openStream()) return false;
   if (!this->startStream()) return false;
   
-  LOGI("player inited");
   return true;
 }
 
@@ -24,7 +23,7 @@ bool FilePlayer::destroy() {
 }
 
 bool FilePlayer::openStream() {
-  LOGI("openStream()");
+  LOGD("openStream()");
   mDataCallback = make_shared<MyDataCallback>(this);
   mErrorCallback = make_shared<MyErrorCallback>(this);
 
@@ -49,7 +48,7 @@ bool FilePlayer::openStream() {
 }
 
 bool FilePlayer::startStream() {
-  LOGI("startStream()");
+  LOGD("startStream()");
   auto result = mStream->requestStart();
   if (result != Result::OK) {
     LOGE("Failed to start stream. Error: %s", convertToText(result));
@@ -59,14 +58,14 @@ bool FilePlayer::startStream() {
 }
 
 bool FilePlayer::stopStream() {
-  LOGI("stopStream()");
+  LOGD("stopStream()");
   auto result = mStream->requestStop();
   LOGI("Stop stream result: %s", convertToText(result));
   return true;
 }
 
 bool FilePlayer::closeStream() {
-  LOGI("closeStream()");
+  LOGD("closeStream()");
   auto result = mStream->close();
   LOGI("Close stream result: %s", convertToText(result));
   return true;
@@ -74,7 +73,7 @@ bool FilePlayer::closeStream() {
 
 
 void FilePlayer::initDecoder() {
-  LOGI("initDecoder()");
+  LOGD("initDecoder()");
   if (this->decoder != NULL) {
     this->decoder->stop();
     delete this->decoder;
@@ -87,8 +86,10 @@ void FilePlayer::initDecoder() {
 
 
 bool FilePlayer::loadAudio(string audioPath) {
-  LOGI("loadAudio()");
+  LOGD("loadAudio()");
   this->playing = false;
+  this->ended = false;
+  
   this->initDecoder();
   this->emptyQueue();
   
@@ -99,20 +100,20 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 
 bool FilePlayer::startAudio() {
-  LOGI("startAudio()");
+  LOGD("startAudio()");
   this->playing = true;
   this->decoder->start();
   return true;
 }
 
 void FilePlayer::pause() {
-  LOGI("pause()");
+  LOGD("pause()");
   this->playing = false;
   // this->decoder->stop();
 }
 
 void FilePlayer::resume() {
-  LOGI("resume()");
+  LOGD("resume()");
   this->playing = true;
   if (!this->decoder->isPlaying()) {
     this->decoder->start();
@@ -147,12 +148,17 @@ void FilePlayer::emptyQueue() {
 
 
 void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
-  // Audio thread
+  // --> Audio thread
   for (int i = 0; i < numFrames; i++) {
     for (int ch = 0; ch < kChannelCount; ch++) {
       float sample = 0;
       if (this->playing) {
-        this->dataQ.pop(sample);
+        bool result = this->dataQ.pop(sample);
+        if (!result && this->decoder->isEnded()) {
+          this->playing = false;
+          this->ended = true;
+          LOGI("File ended");
+        }
       }
       
       *stream++ = sample;

@@ -1,5 +1,5 @@
 #include "AudioDecoder.h"
-#define LOG_MODULE_NAME "AudioDecoder_"
+#define LOG_MODULE_NAME "_AudioDecoder"
 
 #include <thread>
 #include <chrono>
@@ -9,8 +9,9 @@
 
 
 void AudioDecoder::start() {
-  LOGD("AudioDecoder::start()");
+  LOGD("start()");
   this->playing = true;
+  this->ended = false;
   
   runThread = std::async(&AudioDecoder::run, this);
   LOGI("Decoder thread stated");
@@ -18,8 +19,7 @@ void AudioDecoder::start() {
 
 
 void AudioDecoder::stop() {
-  LOGD("AudioDecoder::stop()");
-  
+  LOGD("stop()");
   this->playing = false;
   
   if (runThread.valid()) {
@@ -33,14 +33,21 @@ void AudioDecoder::stop() {
 
 
 void AudioDecoder::run() {
-  // Decoder thread
-  LOGD("AudioDecoder::run()");
-  this->decodeFrames();
+  // --> Decoder thread
+  LOGD("run()");
+  int result = this->decodeFrames();
+  this->playing = false;
+  
+  if (result == 0) {
+    this->ended = true;
+    LOGI("File decoding completed after EOF");
+  }
   LOGI("Decoder thread ended");
 }
 
 
-int64_t AudioDecoder::decodeFrames() {
+int AudioDecoder::decodeFrames() {
+  // --> Decoder thread
   int result = -1;
   int bytesWritten = 0;
   
@@ -65,6 +72,7 @@ int64_t AudioDecoder::decodeFrames() {
     result = av_read_frame(formatContext, audioPacket);
     if (result != 0) {
       LOGI("av_read_frame result: %s", av_err2str(result));
+      // End of file
       break;
     }
     
@@ -108,11 +116,9 @@ int64_t AudioDecoder::decodeFrames() {
     av_packet_unref(audioPacket);
   }
   
-  result = bytesWritten;
+  result = 0;
   
   end:
-  this->playing = false;
-  
   av_frame_free(&audioFrame);
   av_packet_free(&audioPacket);
   
@@ -121,6 +127,7 @@ int64_t AudioDecoder::decodeFrames() {
 
 
 void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesToWrite) {
+  // --> Decoder thread
   int pushedBytes = 0;
   
   while (pushedBytes < bytesToWrite) {
@@ -266,7 +273,7 @@ int AudioDecoder::getDuration() {
 
 
 void AudioDecoder::cleanup() {
-  LOGD("AudioDecoder::cleanup()");
+  LOGD("cleanup()");
   avformat_close_input(&formatContext);
   avcodec_free_context(&codecContext);
   swr_free(&swrContext);
