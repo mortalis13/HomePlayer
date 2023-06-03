@@ -12,9 +12,6 @@ void AudioDecoder::start() {
   LOGD("AudioDecoder::start()");
   this->playing = true;
   
-  // this->seekTo(0);
-  // this->currentPTS = 0;
-  
   runThread = std::async(&AudioDecoder::run, this);
   LOGI("Decoder thread stated");
 }
