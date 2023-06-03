@@ -29,15 +29,15 @@ bool FilePlayer::openStream() {
 
   AudioStreamBuilder builder;
 
-  builder.setSharingMode(SharingMode::Exclusive);
-  builder.setPerformanceMode(PerformanceMode::LowLatency);
+  // builder.setSharingMode(SharingMode::Exclusive);
+  // builder.setPerformanceMode(PerformanceMode::LowLatency);
   builder.setFormat(AudioFormat::Float);
-  builder.setFormatConversionAllowed(true);
+  // builder.setFormatConversionAllowed(true);
   builder.setChannelCount(kChannelCount);
   builder.setDataCallback(mDataCallback);
   builder.setErrorCallback(mErrorCallback);
   builder.setSampleRate(44100);
-  builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
+  // builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
   auto result = builder.openStream(mStream);
   if (result != Result::OK) {
@@ -129,7 +129,20 @@ int FilePlayer::getCurrentPosition() {
 }
 
 void FilePlayer::seekTo(int time_ms) {
+  LOGD("seekTo() %d ms", time_ms);
+  // Stop - Clear queue - Seek - Start
+  bool restorePlaying = this->playing;
+  
+  this->playing = false;
+  this->decoder->stop();
+  this->emptyQueue();
+  
   this->decoder->seekTo(time_ms);
+  
+  this->decoder->start();
+  if (restorePlaying) {
+    this->playing = true;
+  }
 }
 
 

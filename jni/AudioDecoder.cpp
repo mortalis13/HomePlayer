@@ -14,7 +14,7 @@ void AudioDecoder::start() {
   this->ended = false;
   
   runThread = std::async(&AudioDecoder::run, this);
-  LOGI("Decoder thread stated");
+  LOGI("Decoder thread started");
 }
 
 
@@ -96,6 +96,7 @@ int AudioDecoder::decodeFrames() {
       }
 
       currentPTS = audioFrame->pts;
+      // LOGI("audioFrame->pts: %ld", audioFrame->pts);
 
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
@@ -104,11 +105,11 @@ int AudioDecoder::decodeFrames() {
       short* buffer;
       av_samples_alloc((uint8_t**) &buffer, nullptr, this->channelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
-
       int64_t bytesToWrite = frame_count * this->channelCount * sizeof(float);
+      
       saveFrame(buffer, bytesWritten, bytesToWrite);
+      
       bytesWritten += bytesToWrite;
-
       av_freep(&buffer);
       av_frame_unref(audioFrame);
     }
@@ -116,7 +117,8 @@ int AudioDecoder::decodeFrames() {
     av_packet_unref(audioPacket);
   }
   
-  result = 0;
+  result = 0;  // stream ended
+  if (!this->playing) result = 1;  // decoder forced to stop
   
   end:
   av_frame_free(&audioFrame);
@@ -132,6 +134,7 @@ void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesT
   
   while (pushedBytes < bytesToWrite) {
     if (!this->playing) break;
+    
     if (this->dataQ->isFull()) {
       this_thread::sleep_for(chrono::milliseconds(100));
       continue;
@@ -247,7 +250,7 @@ int AudioDecoder::loadFile(string filePath) {
 
 void AudioDecoder::seekTo(int time_ms) {
   int64_t timestamp = (double) time_ms / 1000 * audioStream->time_base.den / audioStream->time_base.num;
-  LOGI("Seeking to %ds, timestamp: %d", time_ms, (int) timestamp);
+  LOGI("Seeking to %d ms, timestamp: %ld", time_ms, timestamp);
   
   int result = av_seek_frame(formatContext, audioStream->index, timestamp, AVSEEK_FLAG_FRAME);
   if (result < 0) {
