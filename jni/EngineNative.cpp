@@ -1,4 +1,4 @@
-#define LOG_MODULE_NAME "EngineNative_"
+#define LOG_MODULE_NAME "_EngineNative"
 
 #include <jni.h>
 
@@ -18,7 +18,7 @@ static FilePlayer player;
 
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_startEngine(JNIEnv *env, jclass obj) {
-  LOGI(__func__);
+  LOGD(__func__);
   bool result = player.init();
   
   if (!result) {
@@ -29,13 +29,13 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_startEngine
 
 
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_stopEngine(JNIEnv *env, jclass obj) {
-  LOGI(__func__);
+  LOGD(__func__);
   player.destroy();
 }
 
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_loadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
-  LOGI(__func__);
+  LOGD(__func__);
   const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
   string audioPath(audioPathBytes);
   env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
@@ -50,21 +50,21 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_loadAudio(J
 
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
-  LOGI(__func__);
+  LOGD(__func__);
   bool result = player.startAudio();
   return result ? 0: -1;
 }
 
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_pauseAudio(JNIEnv *env, jclass obj) {
-  LOGI(__func__);
+  LOGD(__func__);
   player.pause();
   return 0;
 }
 
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_resumeAudio(JNIEnv *env, jclass obj) {
-  LOGI(__func__);
+  LOGD(__func__);
   player.resume();
   return 0;
 }

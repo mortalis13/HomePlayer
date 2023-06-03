@@ -499,7 +499,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public boolean hasProgress() {
-    return false;
+    return EngineNative.getCurrentPosition() != 0;
     // return mediaPlayer != null && mediaPlayer.getCurrentPosition() != 0;
   }
   

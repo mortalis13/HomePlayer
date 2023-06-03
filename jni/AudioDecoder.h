@@ -46,6 +46,10 @@ public:
     return dataChannels;
   }
   
+  bool isPlaying() {
+    return playing;
+  }
+  
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
