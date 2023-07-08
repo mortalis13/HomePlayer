@@ -472,6 +472,7 @@ public class MainActivity extends AppCompatActivity {
       }
       public void onChanged(int value) {
         if (!serviceBound) return;
+        audioTrimEnabled = false;
         playerService.changePlayPosition(value);
         playerService.enableUpdateTime();
       }
@@ -664,6 +665,7 @@ public class MainActivity extends AppCompatActivity {
     
     if (playerService.isPlaying()) {
       playerService.pause();
+      audioTrimEnabled = false;
     }
     else if (playerService.isPlayerLoaded()) {
       playerService.resume();
