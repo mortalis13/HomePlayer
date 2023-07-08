@@ -158,10 +158,7 @@ public class ProgressSliderView extends View {
       if (x > this.workingWidth - this.snapPosX) x = this.workingWidth;
       
       // Detect if vertical offset is greater than max and reset the position
-      int outerVerticalOffset = 0;
-      if (y < 0) outerVerticalOffset = Math.abs(y);
-      if (y > this.workingHeight) outerVerticalOffset = y - this.workingHeight;
-      
+      int outerVerticalOffset = (y < 0) ? Math.abs(y): y - this.canvasHeight;
       if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
         this.touchEnabled = false;
         cancelTouch();

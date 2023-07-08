@@ -20,6 +20,7 @@ import static org.mortalis.homeplayer.Fun.log;
 public class VolumeSliderView extends View {
   
   private final static int SLIDER_SENSITIVITY = 130;
+  private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   
   private Paint canvasPaint;
   private Paint borderPaint;
@@ -152,6 +153,13 @@ public class VolumeSliderView extends View {
     }
     
     if (action == MotionEvent.ACTION_MOVE) {
+      // Detect if vertical offset is greater than max and reset the position
+      int outerVerticalOffset = (y < 0) ? Math.abs(y): y - this.canvasHeight;
+      if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
+        cancelTouch();
+        return true;
+      }
+      
       int moveOffsetX = x - this.moveStartX;
       
       float steps = moveOffsetX / (this.progressStep * 100 / SLIDER_SENSITIVITY);
@@ -195,6 +203,12 @@ public class VolumeSliderView extends View {
   }
   
 
+  private void cancelTouch() {
+    if (this.progressChangeListener != null) {
+      this.progressChangeListener.onCancelled();
+    }
+  }
+  
   private void sendPosition(int position) {
     if (this.progressChangeListener != null) {
       this.progressChangeListener.onChanging(position);
@@ -222,6 +236,7 @@ public class VolumeSliderView extends View {
   // ------------------ Classes ------------------
   
   public interface ProgressChangeListener {
+    public void onCancelled();
     public void onChanging(int value);
   }
   

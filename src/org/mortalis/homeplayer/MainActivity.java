@@ -600,8 +600,11 @@ public class MainActivity extends AppCompatActivity {
       }
     });
     
-    volumeSlider.setProgressChangeListener(value -> {
-      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+    volumeSlider.setProgressChangeListener(new VolumeSliderView.ProgressChangeListener() {
+      public void onChanging(int value) {
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+      }
+      public void onCancelled() {}
     });
     
     volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
@@ -614,14 +617,11 @@ public class MainActivity extends AppCompatActivity {
     trimAudioSlider.setProgress(0);
     trimAudioSlider.enable();
     
-    trimAudioSlider.setProgressChangeListener(new TrimSliderView.ProgressChangeListener() {
-      public void onChanging(int value) {
-        onAudioTrimChanged(value);
-        
-        audioTrimSeconds = value;
-        // Reset the trimming configuration until new playback is started
-        audioTrimEnabled = false;
-      }
+    trimAudioSlider.setProgressChangeListener(value -> {
+      onAudioTrimChanged(value);
+      audioTrimSeconds = value;
+      // Reset the trimming configuration until new playback is started
+      audioTrimEnabled = false;
     });
   }
   
