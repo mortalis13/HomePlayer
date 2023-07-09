@@ -165,8 +165,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (!item.isFile) continue;
-      
+
       if (item.path.equals(filePath)) {
         item.isFavorite = true;
         notifyItemChanged(i);
@@ -348,7 +347,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       this.item = item;
       if (item == null) return;
       
-      iconContainer.setClickable(item.isFile);
+      iconContainer.setClickable(true);
       itemIndicator.setVisibility(item.isFavorite ? View.VISIBLE: View.GONE);
       
       itemText.setText(item.text);
