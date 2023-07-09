@@ -852,7 +852,6 @@ public class MainActivity extends AppCompatActivity {
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     
-    updateListOverscroll();
     if (scrollTop) {
       listLayoutManager.scrollToPositionWithOffset(0, 0);
     }
@@ -1584,14 +1583,6 @@ public class MainActivity extends AppCompatActivity {
   
   private void hideExtraInfoPanel() {
     hideExtraInfoPanel(false);
-  }
-  
-  private void updateListOverscroll() {
-    listItems.post(() -> {
-      int lastPos = listLayoutManager.findLastCompletelyVisibleItemPosition();
-      int mode = (lastPos == filesAdapter.getItemCount() - 1) ? View.OVER_SCROLL_NEVER: View.OVER_SCROLL_IF_CONTENT_SCROLLS;
-      listItems.setOverScrollMode(mode);
-    });
   }
   
   private void resetCurrentDirTime() {

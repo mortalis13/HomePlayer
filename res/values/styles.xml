@@ -9,8 +9,6 @@
   
   
   <style name="AppTheme.Main" parent="AppTheme">
-    <item name="android:colorEdgeEffect">@color/overscroll_edge_color</item>
-    
     <item name="mainBackground">@color/main_background</item>
     <item name="secondaryBackground">@color/secondary_background</item>
     
@@ -72,8 +70,6 @@
   
   
   <style name="AppTheme.Dark" parent="AppTheme.Main">
-    <item name="android:colorEdgeEffect">@color/overscroll_edge_color_dark</item>
-    
     <item name="mainBackground">@color/main_background_dark</item>
     <item name="secondaryBackground">@color/secondary_background_dark</item>
     
