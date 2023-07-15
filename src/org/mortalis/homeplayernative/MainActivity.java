@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -45,17 +45,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayer.components.ProgressSliderView;
-import org.mortalis.homeplayer.components.VolumeSliderView;
-import org.mortalis.homeplayer.components.TrimSliderView;
-import org.mortalis.homeplayer.decoder.DecoderNative;
-import org.mortalis.homeplayer.decoder.DecoderResult;
-import org.mortalis.homeplayer.jni.EngineNative;
+import org.mortalis.homeplayernative.components.ProgressSliderView;
+import org.mortalis.homeplayernative.components.VolumeSliderView;
+import org.mortalis.homeplayernative.components.TrimSliderView;
+import org.mortalis.homeplayernative.decoder.DecoderNative;
+import org.mortalis.homeplayernative.decoder.DecoderResult;
+import org.mortalis.homeplayernative.jni.EngineNative;
 
-import static org.mortalis.homeplayer.Fun.log;
-import static org.mortalis.homeplayer.Fun.logd;
-import static org.mortalis.homeplayer.Fun.loge;
-import static org.mortalis.homeplayer.Fun.logw;
+import static org.mortalis.homeplayernative.Fun.log;
+import static org.mortalis.homeplayernative.Fun.logd;
+import static org.mortalis.homeplayernative.Fun.loge;
+import static org.mortalis.homeplayernative.Fun.logw;
 
 import java.io.File;
 import java.util.ArrayDeque;

@@ -17,7 +17,7 @@ using namespace std;
 static FilePlayer player;
 
 
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_startEngine(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_startEngine(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.init();
   
@@ -27,14 +27,13 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_startEngine
   return result ? 0: -1;
 }
 
-
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_stopEngine(JNIEnv *env, jclass obj) {
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_stopEngine(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   player.destroy();
 }
 
 
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_loadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_loadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
   LOGD(__func__);
   const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
   string audioPath(audioPathBytes);
@@ -48,45 +47,42 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_loadAudio(J
   return result ? 0: -1;
 }
 
-
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.startAudio();
   return result ? 0: -1;
 }
 
-
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_pauseAudio(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_pauseAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   player.pause();
   return 0;
 }
 
-
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_resumeAudio(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_resumeAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   player.resume();
   return 0;
 }
 
 
-JNIEXPORT bool JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
+JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
   return player.isPlaying();
 }
 
-JNIEXPORT bool JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_isStopped(JNIEnv *env, jclass obj) {
+JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isStopped(JNIEnv *env, jclass obj) {
   return player.isStopped();
 }
 
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_getDuration(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getDuration(JNIEnv *env, jclass obj) {
   return player.getDuration();
 }
 
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_getCurrentPosition(JNIEnv *env, jclass obj) {
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getCurrentPosition(JNIEnv *env, jclass obj) {
   return player.getCurrentPosition();
 }
 
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_seekTo(JNIEnv *env, jclass obj, jint time) {
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_seekTo(JNIEnv *env, jclass obj, jint time) {
   player.seekTo(time);
 }
 

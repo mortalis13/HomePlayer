@@ -1,13 +1,13 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 public class Vars {
   
   public enum LogLevel {VERBOSE, DEBUG, INFO, WARN, ERROR};
   public static final LogLevel APP_LOG_LEVEL = LogLevel.DEBUG;
   
-  public static final String APP_LOG_TAG = "home_player";
-  public static final String NOTIFICATION_TITLE = "HomePlayer";
-  public static final String PLAYER_NOTIFICATION_TITLE = "HomePlayer";
+  public static final String APP_LOG_TAG = "home_player_native";
+  public static final String NOTIFICATION_TITLE = "HomePlayerNative";
+  public static final String PLAYER_NOTIFICATION_TITLE = "HomePlayerNative";
   public static final int NOTIFICATION_ID = 111;
   public static final String NOTIFICATIONS_CHANNEL_ID = "homeplayer_channel_id";
   

@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.components;
+package org.mortalis.homeplayernative.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,16 +12,15 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayer.Fun;
-import org.mortalis.homeplayer.R;
-import static org.mortalis.homeplayer.Fun.log;
+import org.mortalis.homeplayernative.Fun;
+import org.mortalis.homeplayernative.R;
+import static org.mortalis.homeplayernative.Fun.log;
 
 
-public class TrimSliderView extends View {
+public class VolumeSliderView extends View {
   
-  private final static int SLIDER_SENSITIVITY = 100;
-  
-  private boolean sliderEnabled;
+  private final static int SLIDER_SENSITIVITY = 130;
+  private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   
   private Paint canvasPaint;
   private Paint borderPaint;
@@ -34,10 +33,9 @@ public class TrimSliderView extends View {
   private int canvasWidth;
   private int canvasHeight;
   
-  private int workingWidth;
-  private int workingHeight;
-  
-  private int borderWidth;
+  private float borderWidth;
+  private float leftOffset;
+  private float topOffset;
   
   private int mediumLevel;
   private int highLevel;
@@ -50,39 +48,47 @@ public class TrimSliderView extends View {
   private int progress;
   private float progressStep;
   
-  private boolean hasMoved;
   private int moveStartX;
   private int stepsDone;
   
   private ProgressChangeListener progressChangeListener;
   
   
-  public TrimSliderView(Context context) {
+  public VolumeSliderView(Context context) {
     this(context, null);
   }
   
-  public TrimSliderView(Context context, AttributeSet attrs) {
+  public VolumeSliderView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
     init(context);
   }
   
   
   private void init(Context context) {
-    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.trim_slider_border_width));
+    this.borderWidth = (float) Math.ceil(getResources().getDimension(R.dimen.volume_slider_border_width));
+    this.mediumLevel = getResources().getInteger(R.integer.volume_slider_medium_level);
+    this.highLevel = getResources().getInteger(R.integer.volume_slider_high_level);
+    
+    this.normalColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressColor);
+    this.mediumColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressMediumColor);
+    this.highColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressHighColor);
+    
+    this.leftOffset = this.borderWidth;
+    this.topOffset = this.borderWidth;
     
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
-    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBackgroundColor));
+    this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.volumeSliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
     this.progressPaint = new Paint();
     this.progressPaint.setAntiAlias(true);
-    this.progressPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderProgressColor));
+    this.progressPaint.setColor(this.normalColor);
     this.progressPaint.setStyle(Paint.Style.FILL);
     
     this.borderPaint = new Paint();
     this.borderPaint.setAntiAlias(true);
-    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBorderColor));
+    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.volumeSliderBorderColor));
     this.borderPaint.setStrokeWidth(this.borderWidth);
     this.borderPaint.setStyle(Paint.Style.STROKE);
     
@@ -99,47 +105,47 @@ public class TrimSliderView extends View {
   public void setProgress(int value) {
     if (value > this.maxValue) value = this.maxValue;
     if (value < 0) value = 0;
-
+    
+    float valuePercent = (float) value / this.maxValue * 100;
+    int color = this.normalColor;
+    if (valuePercent > this.mediumLevel) color = this.mediumColor;
+    if (valuePercent > this.highLevel) color = this.highColor;
+    this.progressPaint.setColor(color);
+    
     this.progress = value;
-    rebuildProgess();
-    invalidate();
+    rebuildUI();
   }
   
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = (float) this.borderWidth / 2;
-    float top    = (float) this.borderWidth / 2;
-    float right  = this.canvasWidth  - (float) this.borderWidth / 2;
-    float bottom = this.canvasHeight - (float) this.borderWidth / 2;
+    float left   = this.borderWidth / 2;
+    float top    = this.borderWidth / 2;
+    float right  = this.canvasWidth  - this.borderWidth / 2;
+    float bottom = this.canvasHeight - this.borderWidth / 2;
     this.borderRect.set(left, top, right, bottom);
     
-    if (this.maxValue == 0) setMax(this.workingWidth);
+    if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
-    rebuildProgess();
-    invalidate();
-  }
-
-  private void rebuildProgess() {
-    this.progressStep = (float) this.workingWidth / this.maxValue;
+    this.progressStep = (float) this.canvasWidth / this.maxValue;
     float progressPx = this.progress * this.progressStep;
     
-    float left   = this.borderWidth;
-    float top    = this.borderWidth;
-    float right  = left + progressPx;
-    float bottom = this.canvasHeight - this.borderWidth;
+    left   = this.leftOffset;
+    top    = this.topOffset;
+    right  = left + progressPx;
+    bottom = this.canvasHeight - this.borderWidth;
     this.progressRect.set(left, top, right, bottom);
+    
+    invalidate();
   }
   
   
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    if (!this.sliderEnabled) return true;
-    
     int action = event.getAction();
-    int x = (int) event.getX() - this.borderWidth;
-    int y = (int) event.getY() - this.borderWidth;
+    int x = (int) event.getX();
+    int y = (int) event.getY();
     
     if (action == MotionEvent.ACTION_DOWN) {
       this.moveStartX = x;
@@ -147,7 +153,13 @@ public class TrimSliderView extends View {
     }
     
     if (action == MotionEvent.ACTION_MOVE) {
-      this.hasMoved = true;
+      // Detect if vertical offset is greater than max and reset the position
+      int outerVerticalOffset = (y < 0) ? Math.abs(y): y - this.canvasHeight;
+      if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
+        cancelTouch();
+        return true;
+      }
+      
       int moveOffsetX = x - this.moveStartX;
       
       float steps = moveOffsetX / (this.progressStep * 100 / SLIDER_SENSITIVITY);
@@ -164,14 +176,7 @@ public class TrimSliderView extends View {
     }
     
     if (action == MotionEvent.ACTION_UP) {
-      if (!this.hasMoved) {
-        int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
-        setProgress(_progress);
-        sendPosition(this.progress);
-      }
-      
       this.moveStartX = 0;
-      this.hasMoved = false;
     }
     
     return true;
@@ -182,8 +187,6 @@ public class TrimSliderView extends View {
     if (w == 0 || h == 0) return;
     this.canvasWidth = w;
     this.canvasHeight = h;
-    this.workingWidth = this.canvasWidth - this.borderWidth * 2;
-    this.workingHeight = this.canvasHeight - this.borderWidth * 2;
     rebuildUI();
   }
   
@@ -199,13 +202,11 @@ public class TrimSliderView extends View {
     setMeasuredDimension(measureWidth(widthMeasureSpec), measureHeight(heightMeasureSpec));
   }
   
-  
-  public void enable() {
-    this.sliderEnabled = true;
-  }
-  
-  public void disable() {
-    this.sliderEnabled = false;
+
+  private void cancelTouch() {
+    if (this.progressChangeListener != null) {
+      this.progressChangeListener.onCancelled();
+    }
   }
   
   private void sendPosition(int position) {
@@ -235,6 +236,7 @@ public class TrimSliderView extends View {
   // ------------------ Classes ------------------
   
   public interface ProgressChangeListener {
+    public void onCancelled();
     public void onChanging(int value);
   }
   

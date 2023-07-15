@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.actions;
+package org.mortalis.homeplayernative.actions;
 
 @FunctionalInterface
 public interface DoubleAction<T> {

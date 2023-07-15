@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.components;
+package org.mortalis.homeplayernative.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,7 +12,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayer.R;
+import org.mortalis.homeplayernative.R;
 
 
 public class SimplePaintView extends AppCompatImageView {

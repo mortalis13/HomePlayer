@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 import android.content.Intent;
 import android.content.Context;

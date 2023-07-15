@@ -15,7 +15,7 @@
     android:layout_height="wrap_content"
   >
   
-  <org.mortalis.homeplayer.components.VolumeSliderView
+  <org.mortalis.homeplayernative.components.VolumeSliderView
     android:id="@+id/volumeSlider"
     android:layout_width="match_parent"
     android:layout_height="30dp"

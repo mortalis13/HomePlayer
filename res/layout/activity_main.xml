@@ -18,7 +18,7 @@
     android:gravity="center_vertical"
     android:background="?titleBackground"
   >
-    <org.mortalis.homeplayer.components.TitleScrollView
+    <org.mortalis.homeplayernative.components.TitleScrollView
       android:id="@+id/titleScroller"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
@@ -43,7 +43,7 @@
         android:textSize="20dp"
         android:textColor="?primaryTextColor"
       />
-    </org.mortalis.homeplayer.components.TitleScrollView>
+    </org.mortalis.homeplayernative.components.TitleScrollView>
   </RelativeLayout>
   
   
@@ -61,7 +61,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
   >
-    <org.mortalis.homeplayer.components.ProgressSliderView
+    <org.mortalis.homeplayernative.components.ProgressSliderView
       android:id="@+id/progressSlider"
       android:layout_width="match_parent"
       android:layout_height="@dimen/slider_height"
@@ -97,7 +97,7 @@
       android:layout_alignParentTop="true"
     >
     <!-- =========== File browser =========== -->
-    <org.mortalis.homeplayer.components.BrowserRecyclerView
+    <org.mortalis.homeplayernative.components.BrowserRecyclerView
       android:id="@+id/listItems"
       android:scrollbars="vertical"
       android:layout_width="match_parent"

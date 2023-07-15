@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 import java.io.File;
 import android.graphics.Bitmap;

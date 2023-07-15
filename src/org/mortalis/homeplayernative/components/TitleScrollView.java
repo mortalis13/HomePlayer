@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.components;
+package org.mortalis.homeplayernative.components;
 
 import android.content.Context;
 import android.util.AttributeSet;

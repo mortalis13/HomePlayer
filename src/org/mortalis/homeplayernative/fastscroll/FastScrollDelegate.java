@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.fastscroll;
+package org.mortalis.homeplayernative.fastscroll;
 
 import android.content.Context;
 import android.graphics.Canvas;

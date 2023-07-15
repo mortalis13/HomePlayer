@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 import java.io.File;
 import java.util.List;
@@ -21,9 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayer.actions.Action;
-import org.mortalis.homeplayer.components.SimplePaintView;
-import static org.mortalis.homeplayer.Fun.log;
+import org.mortalis.homeplayernative.actions.Action;
+import org.mortalis.homeplayernative.components.SimplePaintView;
+import static org.mortalis.homeplayernative.Fun.log;
 
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
