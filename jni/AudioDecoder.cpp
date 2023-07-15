@@ -36,8 +36,8 @@ void AudioDecoder::run() {
   // --> Decoder thread
   LOGD("run()");
   int result = this->decodeFrames();
+
   this->playing = false;
-  
   if (result == 0) {
     this->ended = true;
     LOGI("File decoding completed after EOF");
@@ -50,6 +50,9 @@ int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
   int bytesWritten = 0;
+
+  this->seekPending = false;
+  this->is_eof = false;
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -66,37 +69,58 @@ int AudioDecoder::decodeFrames() {
     goto end;
   }
 
-  LOGD("DECODE START");
+  LOGD("Decode start");
   
   while (this->playing) {
-    result = av_read_frame(formatContext, audioPacket);
-    if (result != 0) {
-      LOGI("av_read_frame result: %s", av_err2str(result));
-      // End of file
-      break;
+    if (this->seekPending) {
+      this->seekPending = false;
+
+      int seek_result = av_seek_frame(formatContext, -1, this->seekTimestamp, 0);
+      if (seek_result >= 0) {
+        avcodec_flush_buffers(codecContext);
+      }
+      else {
+        LOGE("Error when seeking to %ld", this->seekTimestamp);
+      }
     }
     
-    if (audioPacket->stream_index == audioStream->index && audioPacket->size > 0) {
-      result = avcodec_send_packet(codecContext, audioPacket);
-      if (result != 0) {
-        LOGE("avcodec_send_packet error: %s", av_err2str(result));
-        goto end;
+    result = av_read_frame(formatContext, audioPacket);
+    if (result < 0) {
+      LOGI("av_read_frame error: %s", av_err2str(result));
+      if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
+        this->is_eof = true;
       }
+    }
+    
+    if (audioPacket->stream_index != audioStream->index) {
+      av_packet_unref(audioPacket);
+      continue;
+    }
 
+    result = avcodec_send_packet(codecContext, audioPacket);
+    if (result != 0) {
+      LOGE("avcodec_send_packet error: %s", av_err2str(result));
+      goto end;
+    }
+    av_packet_unref(audioPacket);
+    
+    if (this->is_eof) break;
+    
+    while (result >= 0) {
       result = avcodec_receive_frame(codecContext, audioFrame);
-      if (result == AVERROR(EAGAIN)) {
-        // The codec needs more data before it can decode
-        LOGI("avcodec_receive_frame returned EAGAIN");
-        av_packet_unref(audioPacket);
+      
+      if (result == AVERROR_EOF) {
+        LOGI("avcodec_receive_frame EOF");
+        avcodec_flush_buffers(codecContext);
         continue;
       }
-      else if (result != 0) {
+      else if (result == AVERROR(EAGAIN)) continue;
+      else if (result < 0) {
         LOGE("avcodec_receive_frame error: %s", av_err2str(result));
-        goto end;
+        continue;
       }
-
-      currentPTS = audioFrame->pts;
-      // LOGI("audioFrame->pts: %ld", audioFrame->pts);
+      
+      this->currentPTS = audioFrame->pts;
 
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
@@ -107,20 +131,19 @@ int AudioDecoder::decodeFrames() {
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       int64_t bytesToWrite = frame_count * this->channelCount * sizeof(float);
       
+      // Write
       saveFrame(buffer, bytesWritten, bytesToWrite);
-      
       bytesWritten += bytesToWrite;
+      
       av_freep(&buffer);
       av_frame_unref(audioFrame);
     }
-    
-    av_packet_unref(audioPacket);
   }
   
   result = 0;  // stream ended
   if (!this->playing) result = 1;  // decoder forced to stop
   
-  end:
+end:
   av_frame_free(&audioFrame);
   av_packet_free(&audioPacket);
   
@@ -133,10 +156,10 @@ void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesT
   int pushedBytes = 0;
   
   while (pushedBytes < bytesToWrite) {
-    if (!this->playing) break;
+    if (!this->playing || this->seekPending) break;
     
     if (this->dataQ->isFull()) {
-      this_thread::sleep_for(chrono::milliseconds(100));
+      this_thread::sleep_for(chrono::milliseconds(10));
       continue;
     }
     
@@ -153,8 +176,9 @@ void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesT
 
 int AudioDecoder::loadFile(string filePath) {
   LOGI("loadFile => %s", filePath.c_str());
-  this->currentPTS = 0;
+  
   int result = -1;
+  this->currentPTS = 0;
   
   result = avformat_open_input(&formatContext, filePath.c_str(), NULL, NULL);
   if (result < 0) {
@@ -238,7 +262,7 @@ int AudioDecoder::loadFile(string filePath) {
   av_opt_set_int(swrContext, "force_resampling", 1, 0);
 
   result = swr_init(swrContext);
-  if (result < 0){
+  if (result < 0) {
     LOGE("Failed to initialize the resampling context. Error: %s", av_err2str(result));
     this->cleanup();
     return result;
@@ -249,22 +273,19 @@ int AudioDecoder::loadFile(string filePath) {
 
 
 void AudioDecoder::seekTo(int time_ms) {
-  int64_t timestamp = (double) time_ms / 1000 * audioStream->time_base.den / audioStream->time_base.num;
-  LOGI("Seeking to %d ms, timestamp: %ld", time_ms, timestamp);
-  
-  int result = av_seek_frame(formatContext, audioStream->index, timestamp, AVSEEK_FLAG_FRAME);
-  if (result < 0) {
-    LOGE("Error when seeking to %d", time_ms);
-  }
-  
-  currentPTS = timestamp;
+  LOGI("Seeking to %d ms", time_ms);
+  if (time_ms < 0) time_ms = 0;
+  this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
+  this->seekPending = true;
 }
 
 int AudioDecoder::getCurrentTime() {
   double currentFrameTime = (double) 1000 * this->currentPTS * audioStream->time_base.num / audioStream->time_base.den;
   double cachedFramesTime = (double) 1000 * this->dataQ->size() / this->channelCount / this->sampleRate;
+  
   int currentTime_ms = (int) (currentFrameTime - cachedFramesTime);
   if (currentTime_ms < 0) currentTime_ms = 0;
+  
   return currentTime_ms;
 }
 
