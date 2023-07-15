@@ -226,13 +226,13 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
 
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_stopDecoding(JNIEnv* env) {
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_decoder_DecoderNative_stopDecoding(JNIEnv* env) {
   decoderUnloaded = true;
 }
 
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
+JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayernative_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
   int ret = 0;
   clock_t start_time = clock();
   __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode Start");

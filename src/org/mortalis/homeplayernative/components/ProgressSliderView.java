@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.components;
+package org.mortalis.homeplayernative.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -13,9 +13,9 @@ import android.view.View;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayer.Fun;
-import org.mortalis.homeplayer.R;
-import static org.mortalis.homeplayer.Fun.log;
+import org.mortalis.homeplayernative.Fun;
+import org.mortalis.homeplayernative.R;
+import static org.mortalis.homeplayernative.Fun.log;
 
 
 public class ProgressSliderView extends View {

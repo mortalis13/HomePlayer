@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.jni;
+package org.mortalis.homeplayernative.jni;
 
 public class EngineNative {
   public static native int startEngine();

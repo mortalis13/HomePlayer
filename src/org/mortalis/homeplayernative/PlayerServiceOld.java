@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayernative;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -21,22 +21,22 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 
-import org.mortalis.homeplayer.actions.Action;
-import org.mortalis.homeplayer.actions.DoubleAction;
-import org.mortalis.homeplayer.actions.SimpleAction;
+import org.mortalis.homeplayernative.actions.Action;
+import org.mortalis.homeplayernative.actions.DoubleAction;
+import org.mortalis.homeplayernative.actions.SimpleAction;
 
-import static org.mortalis.homeplayer.Fun.log;
-import static org.mortalis.homeplayer.Fun.logd;
-import static org.mortalis.homeplayer.Fun.loge;
+import static org.mortalis.homeplayernative.Fun.log;
+import static org.mortalis.homeplayernative.Fun.logd;
+import static org.mortalis.homeplayernative.Fun.loge;
 
 import java.io.File;
 
 
 public class PlayerServiceOld extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
   
-  public static final String ACTION_PLAY = "org.mortalis.homeplayer.action.PLAY";
-  public static final String ACTION_PAUSE = "org.mortalis.homeplayer.action.PAUSE";
-  public static final String ACTION_EXIT = "org.mortalis.homeplayer.action.EXIT";
+  public static final String ACTION_PLAY = "org.mortalis.homeplayernative.action.PLAY";
+  public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
+  public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
   
   public static final int ACTION_PLAY_ID = 0;
   public static final int ACTION_PAUSE_ID = 1;

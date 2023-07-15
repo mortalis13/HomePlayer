@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.fastscroll;
+package org.mortalis.homeplayernative.fastscroll;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

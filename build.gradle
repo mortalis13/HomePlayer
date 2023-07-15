@@ -28,7 +28,7 @@ android {
   compileSdkVersion 33
   
   defaultConfig {
-    namespace "org.mortalis.homeplayer"
+    namespace "org.mortalis.homeplayernative"
     vectorDrawables.useSupportLibrary = true
     
     versionCode 35

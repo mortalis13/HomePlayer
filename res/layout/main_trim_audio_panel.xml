@@ -52,7 +52,7 @@
     android:layout_above="@+id/trimAudioSlider"
   />
   
-  <org.mortalis.homeplayer.components.TrimSliderView
+  <org.mortalis.homeplayernative.components.TrimSliderView
     android:id="@+id/trimAudioSlider"
     android:layout_width="match_parent"
     android:layout_height="26dp"
