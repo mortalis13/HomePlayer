@@ -37,6 +37,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -207,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
     logd("MainActivity.onCreate()");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+    
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     
     context = this;
     
