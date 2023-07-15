@@ -6,6 +6,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
+#include <libavutil/time.h>
 }
 
 #include <string>
@@ -66,8 +67,11 @@ private:
   int decodeFrames();
   void saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesToWrite);
   
+
+private:
   bool playing = false;
   bool ended = false;
+  bool is_eof = false;
   
   int32_t channelCount = 0;
   int32_t sampleRate = 0;
@@ -85,6 +89,9 @@ private:
   SharedQueue* dataQ = NULL;
   
   future<void> runThread;
+  
+  bool seekPending = false;
+  int64_t seekTimestamp = 0;
   
 };
 #endif //AUDIO_DECODER_H

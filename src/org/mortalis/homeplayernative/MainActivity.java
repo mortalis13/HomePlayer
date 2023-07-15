@@ -700,12 +700,12 @@ public class MainActivity extends AppCompatActivity {
   
   private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    playerService.fastRewind(5);
+    playerService.fastRewind(10);
   }
   
   private void fastForwardAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    playerService.fastForward(5);
+    playerService.fastForward(10);
   }
   
   private void playbackShuffleAction() {

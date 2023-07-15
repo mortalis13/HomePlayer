@@ -268,12 +268,14 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   public void fastRewind(int s) {
     // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
+    EngineNative.seekTo(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
   
   public void fastForward(int s) {
     // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
+    EngineNative.seekTo(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
