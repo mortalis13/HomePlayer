@@ -66,9 +66,6 @@ private:
   AudioDecoder* decoder = NULL;
   SharedQueue dataQ;
   
-  int64_t currentSamples = 0;
-  
-  
   shared_ptr<AudioStream> mStream;
   shared_ptr<MyDataCallback> mDataCallback;
   shared_ptr<MyErrorCallback> mErrorCallback;

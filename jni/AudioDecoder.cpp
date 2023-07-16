@@ -49,10 +49,10 @@ void AudioDecoder::run() {
 int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
-  int bytesWritten = 0;
 
   this->seekPending = false;
   this->is_eof = false;
+  this->delayedSamples = 0;
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -74,21 +74,32 @@ int AudioDecoder::decodeFrames() {
   while (this->playing) {
     if (this->seekPending) {
       this->seekPending = false;
+      this->is_eof = false;
 
-      int seek_result = av_seek_frame(formatContext, -1, this->seekTimestamp, 0);
+      int seek_result = avformat_seek_file(formatContext, -1, 0, this->seekTimestamp, INT64_MAX, 0);
       if (seek_result >= 0) {
         avcodec_flush_buffers(codecContext);
+        LOGI("after seek, queue size: %d", dataQ->size());
       }
       else {
         LOGE("Error when seeking to %ld", this->seekTimestamp);
       }
     }
     
+    if (this->is_eof) {
+      if (this->dataQ->isEmpty()) break;
+      this_thread::sleep_for(chrono::milliseconds(10));
+      continue;
+    }
+    
     result = av_read_frame(formatContext, audioPacket);
     if (result < 0) {
-      LOGI("av_read_frame error: %s", av_err2str(result));
+      LOGW("av_read_frame error: %s", av_err2str(result));
       if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
         this->is_eof = true;
+        avcodec_send_packet(codecContext, audioPacket);
+        av_packet_unref(audioPacket);
+        continue;
       }
     }
     
@@ -104,13 +115,11 @@ int AudioDecoder::decodeFrames() {
     }
     av_packet_unref(audioPacket);
     
-    if (this->is_eof) break;
-    
     while (result >= 0) {
       result = avcodec_receive_frame(codecContext, audioFrame);
       
       if (result == AVERROR_EOF) {
-        LOGI("avcodec_receive_frame EOF");
+        LOGW("avcodec_receive_frame EOF");
         avcodec_flush_buffers(codecContext);
         continue;
       }
@@ -120,8 +129,14 @@ int AudioDecoder::decodeFrames() {
         continue;
       }
       
-      this->currentPTS = audioFrame->pts;
-
+      AVRational audio_time_base = (AVRational){1, audioFrame->sample_rate * this->channelCount};
+      audioFrame->pts = av_rescale_q(audioFrame->pts, audioStream->time_base, audio_time_base);
+      this->currentPTS = audioFrame->pts - this->delayedSamples * this->channelCount;
+      
+      if (codecContext->frame_size != 0 && audioFrame->pts == 0 && audioFrame->nb_samples < codecContext->frame_size) {
+        this->delayedSamples = codecContext->frame_size - audioFrame->nb_samples;
+      }
+      
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
       int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->sampleRate, audioFrame->sample_rate, AV_ROUND_UP);
@@ -132,8 +147,7 @@ int AudioDecoder::decodeFrames() {
       int64_t bytesToWrite = frame_count * this->channelCount * sizeof(float);
       
       // Write
-      saveFrame(buffer, bytesWritten, bytesToWrite);
-      bytesWritten += bytesToWrite;
+      saveFrame(buffer, bytesToWrite);
       
       av_freep(&buffer);
       av_frame_unref(audioFrame);
@@ -151,10 +165,10 @@ end:
 }
 
 
-void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesToWrite) {
+void AudioDecoder::saveFrame(short* buffer, int64_t bytesToWrite) {
   // --> Decoder thread
   int pushedBytes = 0;
-  
+
   while (pushedBytes < bytesToWrite) {
     if (!this->playing || this->seekPending) break;
     
@@ -168,6 +182,7 @@ void AudioDecoder::saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesT
     
     bool pushed = this->dataQ->push(sample);
     if (!pushed) continue;
+    this->currentPTS++;
     
     pushedBytes += sizeof(float);
   }
@@ -277,15 +292,13 @@ void AudioDecoder::seekTo(int time_ms) {
   if (time_ms < 0) time_ms = 0;
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
   this->seekPending = true;
+  this->currentPTS = (double) time_ms / 1000.0 * this->channelCount * this->sampleRate;
 }
 
 int AudioDecoder::getCurrentTime() {
-  double currentFrameTime = (double) 1000 * this->currentPTS * audioStream->time_base.num / audioStream->time_base.den;
-  double cachedFramesTime = (double) 1000 * this->dataQ->size() / this->channelCount / this->sampleRate;
-  
-  int currentTime_ms = (int) (currentFrameTime - cachedFramesTime);
+  double time_s = (double) (this->currentPTS - this->dataQ->size()) / this->channelCount / this->sampleRate;
+  int currentTime_ms = (int) (time_s * 1000);
   if (currentTime_ms < 0) currentTime_ms = 0;
-  
   return currentTime_ms;
 }
 
