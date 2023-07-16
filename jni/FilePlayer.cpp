@@ -89,7 +89,6 @@ bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio()");
   this->playing = false;
   this->ended = false;
-  currentSamples = 0;
   
   this->initDecoder();
   this->emptyQueue();
@@ -126,18 +125,16 @@ int FilePlayer::getDuration() {
 }
 
 int FilePlayer::getCurrentPosition() {
-  return (int) (1000.0 * currentSamples / mStream->getChannelCount() / mStream->getSampleRate());
+  return this->decoder->getCurrentTime();
 }
 
 void FilePlayer::seekTo(int time_ms) {
-  LOGD("seekTo() %d ms", time_ms);
   this->playing = false;
   
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
-  emptyQueue();
-  
-  currentSamples = (double) time_ms / 1000.0 * mStream->getSampleRate() * mStream->getChannelCount();
+
+  this->emptyQueue();
   this->playing = true;
 }
 
@@ -162,7 +159,6 @@ void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
       float sample = 0;
       if (this->playing) {
         bool result = this->dataQ.pop(sample);
-        currentSamples++;
         
         if (!result && this->decoder->isEnded()) {
           this->playing = false;

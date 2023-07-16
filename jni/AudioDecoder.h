@@ -65,7 +65,7 @@ private:
   void run();
   void cleanup();
   int decodeFrames();
-  void saveFrame(short* buffer, int64_t bytesWritten, int64_t bytesToWrite);
+  void saveFrame(short* buffer, int64_t bytesToWrite);
   
 
 private:
@@ -78,6 +78,7 @@ private:
   int32_t dataChannels = 0;
   
   int64_t currentPTS = 0;
+  int delayedSamples;
   
   AVFormatContext* formatContext = NULL;
   AVCodecContext* codecContext = NULL;

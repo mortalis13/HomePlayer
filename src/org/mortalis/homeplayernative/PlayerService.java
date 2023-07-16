@@ -346,7 +346,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       }
     };
     
-    progressHandler.postDelayed(progressRunnable, 100);
+    progressHandler.post(progressRunnable);
   }
   
   
