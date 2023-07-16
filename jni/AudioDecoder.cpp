@@ -287,14 +287,6 @@ int AudioDecoder::loadFile(string filePath) {
 }
 
 
-void AudioDecoder::seekTo(int time_ms) {
-  LOGI("Seeking to %d ms", time_ms);
-  if (time_ms < 0) time_ms = 0;
-  this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
-  this->seekPending = true;
-  this->currentPTS = (double) time_ms / 1000.0 * this->channelCount * this->sampleRate;
-}
-
 int AudioDecoder::getCurrentTime() {
   double time_s = (double) (this->currentPTS - this->dataQ->size()) / this->channelCount / this->sampleRate;
   int currentTime_ms = (int) (time_s * 1000);
@@ -306,6 +298,14 @@ int AudioDecoder::getDuration() {
   int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
   LOGI("Context duration: %d, duration: %d ms", (int) formatContext->duration, (int) duration_ms);
   return duration_ms;
+}
+
+void AudioDecoder::seekTo(int time_ms) {
+  LOGI("Seeking to %d ms", time_ms);
+  if (time_ms < 0) time_ms = 0;
+  this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
+  this->seekPending = true;
+  this->currentPTS = (double) time_ms / 1000.0 * this->channelCount * this->sampleRate;
 }
 
 

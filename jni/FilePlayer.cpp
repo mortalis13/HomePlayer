@@ -22,6 +22,8 @@ bool FilePlayer::destroy() {
   return true;
 }
 
+
+// ==> Audio stream
 bool FilePlayer::openStream() {
   LOGD("openStream()");
   mDataCallback = make_shared<MyDataCallback>(this);
@@ -72,6 +74,7 @@ bool FilePlayer::closeStream() {
 }
 
 
+// ==> Decoder
 void FilePlayer::initDecoder() {
   LOGD("initDecoder()");
   if (this->decoder != NULL) {
@@ -84,7 +87,6 @@ void FilePlayer::initDecoder() {
   this->decoder->setSampleRate(mStream->getSampleRate());
 }
 
-
 bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio()");
   this->playing = false;
@@ -93,11 +95,10 @@ bool FilePlayer::loadAudio(string audioPath) {
   this->initDecoder();
   this->emptyQueue();
   
-  bool result = loadFile(audioPath);
-  if (!result) return result;
+  int result = this->decoder->loadFile(audioPath);
+  if (result < 0) return false;
   return true;
 }
-
 
 bool FilePlayer::startAudio() {
   LOGD("startAudio()");
@@ -120,29 +121,22 @@ void FilePlayer::resume() {
   }
 }
 
-int FilePlayer::getDuration() {
-  return this->decoder->getDuration();
-}
-
 int FilePlayer::getCurrentPosition() {
   return this->decoder->getCurrentTime();
 }
 
+int FilePlayer::getDuration() {
+  return this->decoder->getDuration();
+}
+
 void FilePlayer::seekTo(int time_ms) {
-  this->playing = false;
+  this->seeking = true;
   
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
 
   this->emptyQueue();
-  this->playing = true;
-}
-
-
-bool FilePlayer::loadFile(string audioPath) {
-  int result = this->decoder->loadFile(audioPath);
-  if (result < 0) return false;
-  return true;
+  this->seeking = false;
 }
 
 
@@ -151,13 +145,13 @@ void FilePlayer::emptyQueue() {
   LOGI("Queue emptied");
 }
 
-
 void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
   // --> Audio thread
   for (int i = 0; i < numFrames; i++) {
     for (int ch = 0; ch < kChannelCount; ch++) {
       float sample = 0;
-      if (this->playing) {
+      
+      if (this->playing && !this->seeking) {
         bool result = this->dataQ.pop(sample);
         
         if (!result && this->decoder->isEnded()) {
@@ -171,7 +165,6 @@ void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
     }
   }
 }
-
 
 DataCallbackResult FilePlayer::MyDataCallback::onAudioReady(AudioStream* audioStream, void* audioData, int32_t numFrames) {
   if (!mParent->playing) {

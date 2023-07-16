@@ -61,6 +61,7 @@ private:
   static constexpr int kChannelCount = 2;
   
   bool playing = false;
+  bool seeking = false;
   bool ended = false;
 
   AudioDecoder* decoder = NULL;
