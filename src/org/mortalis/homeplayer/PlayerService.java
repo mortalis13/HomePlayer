@@ -183,7 +183,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
       public void onMsgExit() {
         progressHandler.removeCallbacks(progressRunnable);
         exitAction.execute();
-        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
       }
     });
     
