@@ -168,24 +168,29 @@ end:
 void AudioDecoder::saveFrame(short* buffer, int64_t bytesToWrite) {
   // --> Decoder thread
   int pushedBytes = 0;
+  int samplesWritten = 0;
+  
+  Frame* frame = new Frame();
+  frame->samples = new float[bytesToWrite];
+  frame->pts = this->currentPTS;
 
   while (pushedBytes < bytesToWrite) {
     if (!this->playing || this->seekPending) break;
     
-    if (this->dataQ->isFull()) {
-      this_thread::sleep_for(chrono::milliseconds(10));
-      continue;
-    }
-    
     float sample;
     memcpy(&sample, (uint8_t*) buffer + pushedBytes, sizeof(float));
-    
-    bool pushed = this->dataQ->push(sample);
-    if (!pushed) continue;
-    this->currentPTS++;
+    frame->samples[samplesWritten++] = sample;
     
     pushedBytes += sizeof(float);
   }
+  
+  while (this->dataQ->isFull()) {
+    if (!this->playing || this->seekPending) return;
+    this_thread::sleep_for(chrono::milliseconds(10));
+  }
+  
+  frame->size = samplesWritten;
+  bool pushed = this->dataQ->push(frame);
 }
 
 
@@ -286,13 +291,6 @@ int AudioDecoder::loadFile(string filePath) {
   return 0;
 }
 
-
-int AudioDecoder::getCurrentTime() {
-  double time_s = (double) (this->currentPTS - this->dataQ->size()) / this->channelCount / this->sampleRate;
-  int currentTime_ms = (int) (time_s * 1000);
-  if (currentTime_ms < 0) currentTime_ms = 0;
-  return currentTime_ms;
-}
 
 int AudioDecoder::getDuration() {
   int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
