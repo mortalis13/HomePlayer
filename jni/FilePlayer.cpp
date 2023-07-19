@@ -31,7 +31,7 @@ bool FilePlayer::openStream() {
   builder.setChannelCount(STREAM_CHANNELS);
   builder.setSampleRate(STREAM_SAMPLE_RATE);
 
-  auto result = builder.openStream(mStream);
+  auto result = builder.openStream(audioStream);
   if (result != Result::OK) {
     LOGE("Failed to open stream. Error: %s", convertToText(result));
     return false;
@@ -41,7 +41,7 @@ bool FilePlayer::openStream() {
 
 bool FilePlayer::startStream() {
   LOGD("startStream()");
-  auto result = mStream->requestStart();
+  auto result = audioStream->requestStart();
   if (result != Result::OK) {
     LOGE("Failed to start stream. Error: %s", convertToText(result));
     return false;
@@ -51,14 +51,14 @@ bool FilePlayer::startStream() {
 
 bool FilePlayer::stopStream() {
   LOGD("stopStream()");
-  auto result = mStream->requestStop();
+  auto result = audioStream->requestStop();
   LOGI("Stop stream result: %s", convertToText(result));
   return true;
 }
 
 bool FilePlayer::closeStream() {
   LOGD("closeStream()");
-  auto result = mStream->close();
+  auto result = audioStream->close();
   LOGI("Close stream result: %s", convertToText(result));
   return true;
 }
@@ -73,8 +73,8 @@ void FilePlayer::initDecoder() {
   }
   
   this->decoder = new AudioDecoder(this);
-  this->decoder->setChannelCount(mStream->getChannelCount());
-  this->decoder->setSampleRate(mStream->getSampleRate());
+  this->decoder->setChannelCount(audioStream->getChannelCount());
+  this->decoder->setSampleRate(audioStream->getSampleRate());
 }
 
 bool FilePlayer::loadAudio(string audioPath) {
@@ -133,5 +133,5 @@ void FilePlayer::seekTo(int time_ms) {
 
 
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
-  mStream->write(stream, numFrames, 100);
+  audioStream->write(stream, numFrames, 100);
 }
