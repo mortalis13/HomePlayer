@@ -6,7 +6,6 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
-#include <libavutil/time.h>
 }
 
 #include <string>
@@ -21,8 +20,8 @@ using namespace std;
 class AudioDecoder {
 
 public:
-  AudioDecoder(SharedQueue* dataQ) {
-    this->dataQ = dataQ;
+  AudioDecoder(AudioStreamWriter* streamWriter) {
+    this->streamWriter = streamWriter;
   }
   
   ~AudioDecoder() {
@@ -32,6 +31,8 @@ public:
   int loadFile(string filePath);
   void start();
   void stop();
+  void pause();
+  void resume();
   
   void setChannelCount(int32_t channelCount) {
     this->channelCount = channelCount;
@@ -43,6 +44,10 @@ public:
   
   int32_t getDataChannels() {
     return dataChannels;
+  }
+  
+  bool isStopped() {
+    return stopped;
   }
   
   bool isPlaying() {
@@ -65,10 +70,11 @@ private:
   void run();
   void cleanup();
   int decodeFrames();
-  void saveFrame(short* buffer, int64_t bytesToWrite);
+  void writeFrame(uint8_t* buffer, int32_t numFrames);
   
 
 private:
+  bool stopped = true;
   bool playing = false;
   bool ended = false;
   bool is_eof = false;
@@ -78,21 +84,20 @@ private:
   int32_t dataChannels = 0;
   
   int64_t currentPTS = 0;
-  int delayedSamples;
+  int delayedSamples = 0;
   
   AVFormatContext* formatContext = NULL;
   AVCodecContext* codecContext = NULL;
   SwrContext* swrContext = NULL;
   
-  AVStream* audioStream = NULL;
-  const AVCodec* audioCodec = NULL;
-  
-  SharedQueue* dataQ = NULL;
+  int audioStreamIndex = -1;
   
   future<void> runThread;
   
   bool seekPending = false;
   int64_t seekTimestamp = 0;
+  
+  AudioStreamWriter* streamWriter = NULL;
   
 };
 #endif //AUDIO_DECODER_H

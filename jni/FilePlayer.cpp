@@ -26,20 +26,10 @@ bool FilePlayer::destroy() {
 // ==> Audio stream
 bool FilePlayer::openStream() {
   LOGD("openStream()");
-  mDataCallback = make_shared<MyDataCallback>(this);
-  mErrorCallback = make_shared<MyErrorCallback>(this);
-
   AudioStreamBuilder builder;
-
-  // builder.setSharingMode(SharingMode::Exclusive);
-  // builder.setPerformanceMode(PerformanceMode::LowLatency);
   builder.setFormat(AudioFormat::Float);
-  // builder.setFormatConversionAllowed(true);
   builder.setChannelCount(kChannelCount);
-  builder.setDataCallback(mDataCallback);
-  builder.setErrorCallback(mErrorCallback);
   builder.setSampleRate(44100);
-  // builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
   auto result = builder.openStream(mStream);
   if (result != Result::OK) {
@@ -82,7 +72,7 @@ void FilePlayer::initDecoder() {
     delete this->decoder;
   }
   
-  this->decoder = new AudioDecoder(&dataQ);
+  this->decoder = new AudioDecoder(this);
   this->decoder->setChannelCount(mStream->getChannelCount());
   this->decoder->setSampleRate(mStream->getSampleRate());
 }
@@ -93,7 +83,6 @@ bool FilePlayer::loadAudio(string audioPath) {
   this->ended = false;
   
   this->initDecoder();
-  this->emptyQueue();
   
   int result = this->decoder->loadFile(audioPath);
   if (result < 0) return false;
@@ -110,16 +99,24 @@ bool FilePlayer::startAudio() {
 void FilePlayer::pause() {
   LOGD("pause()");
   this->playing = false;
-  // this->decoder->stop();
+  this->decoder->pause();
 }
 
 void FilePlayer::resume() {
   LOGD("resume()");
   this->playing = true;
-  if (!this->decoder->isPlaying()) {
+  if (this->decoder->isStopped()) {
     this->decoder->start();
   }
+  else if (!this->decoder->isPlaying()) {
+    this->decoder->resume();
+  }
 }
+
+bool FilePlayer::isStopped() {
+  return this->decoder->isEnded();
+}
+
 
 int FilePlayer::getCurrentPosition() {
   return this->decoder->getCurrentTime();
@@ -130,54 +127,11 @@ int FilePlayer::getDuration() {
 }
 
 void FilePlayer::seekTo(int time_ms) {
-  this->seeking = true;
-  
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
-
-  this->emptyQueue();
-  this->seeking = false;
 }
 
 
-void FilePlayer::emptyQueue() {
-  this->dataQ.reset();
-  LOGI("Queue emptied");
-}
-
-void FilePlayer::writeAudio(float* stream, int32_t numFrames) {
-  // --> Audio thread
-  for (int i = 0; i < numFrames; i++) {
-    for (int ch = 0; ch < kChannelCount; ch++) {
-      float sample = 0;
-      
-      if (this->playing && !this->seeking) {
-        bool result = this->dataQ.pop(sample);
-        
-        if (!result && this->decoder->isEnded()) {
-          this->playing = false;
-          this->ended = true;
-          LOGI("Audio stream: playback ended");
-        }
-      }
-      
-      *stream++ = sample;
-    }
-  }
-}
-
-DataCallbackResult FilePlayer::MyDataCallback::onAudioReady(AudioStream* audioStream, void* audioData, int32_t numFrames) {
-  if (!mParent->playing) {
-    memset(audioData, 0, numFrames * kChannelCount * sizeof(float));
-    return DataCallbackResult::Continue;
-  }
-  
-  float* stream = (float*) audioData;
-  mParent->writeAudio(stream, numFrames);
-  return DataCallbackResult::Continue;
-}
-
-void FilePlayer::MyErrorCallback::onErrorAfterClose(AudioStream* oboeStream, oboe::Result error) {
-  LOGE("%s() - error = %s", __func__, oboe::convertToText(error));
-  mParent->init();
+void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
+  mStream->write(stream, numFrames, 100);
 }

@@ -13,10 +13,7 @@ using namespace std;
 using namespace oboe;
 
 
-class FilePlayer {
-
-class MyDataCallback;
-class MyErrorCallback;
+class FilePlayer : public AudioStreamWriter {
 
 public:
   FilePlayer() {}
@@ -46,13 +43,12 @@ public:
     return playing;
   }
 
-  bool isStopped() {
-    return ended;
-  }
+  bool isStopped();
 
+  virtual void writeAudio(uint8_t* stream, int32_t numFrames);
+  
 private:
   bool loadFile(string audioPath);
-  void writeAudio(float* stream, int32_t numFrames);
 
   void initDecoder();
   void emptyQueue();
@@ -65,30 +61,8 @@ private:
   bool ended = false;
 
   AudioDecoder* decoder = NULL;
-  SharedQueue dataQ;
   
   shared_ptr<AudioStream> mStream;
-  shared_ptr<MyDataCallback> mDataCallback;
-  shared_ptr<MyErrorCallback> mErrorCallback;
-
-
-class MyDataCallback : public AudioStreamDataCallback {
-public:
-    MyDataCallback(FilePlayer* parent) : mParent(parent) {}
-    DataCallbackResult onAudioReady(AudioStream* audioStream, void* audioData, int32_t numFrames) override;
-private:
-    FilePlayer* mParent;
-};
-
-
-class MyErrorCallback : public AudioStreamErrorCallback {
-public:
-    MyErrorCallback(FilePlayer* parent) : mParent(parent) {}
-    virtual ~MyErrorCallback() {}
-    void onErrorAfterClose(AudioStream* oboeStream, oboe::Result error) override;
-private:
-    FilePlayer* mParent;
-};
 
 };
 #endif //FILE_PLAYER_H

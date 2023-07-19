@@ -11,6 +11,7 @@
 void AudioDecoder::start() {
   LOGD("start()");
   this->playing = true;
+  this->stopped = false;
   this->ended = false;
   
   runThread = std::async(&AudioDecoder::run, this);
@@ -21,6 +22,7 @@ void AudioDecoder::start() {
 void AudioDecoder::stop() {
   LOGD("stop()");
   this->playing = false;
+  this->stopped = true;
   
   if (runThread.valid()) {
     LOGI("--wating for thread");
@@ -31,6 +33,16 @@ void AudioDecoder::stop() {
   LOGI("Decoder stopped");
 }
 
+void AudioDecoder::pause() {
+  LOGD("pause()");
+  this->playing = false;
+}
+
+void AudioDecoder::resume() {
+  LOGD("pause()");
+  this->playing = true;
+}
+
 
 void AudioDecoder::run() {
   // --> Decoder thread
@@ -38,6 +50,8 @@ void AudioDecoder::run() {
   int result = this->decodeFrames();
 
   this->playing = false;
+  this->stopped = true;
+  
   if (result == 0) {
     this->ended = true;
     LOGI("File decoding completed after EOF");
@@ -71,7 +85,7 @@ int AudioDecoder::decodeFrames() {
 
   LOGD("Decode start");
   
-  while (this->playing) {
+  while (!this->stopped) {
     if (this->seekPending) {
       this->seekPending = false;
       this->is_eof = false;
@@ -79,15 +93,13 @@ int AudioDecoder::decodeFrames() {
       int seek_result = avformat_seek_file(formatContext, -1, 0, this->seekTimestamp, INT64_MAX, 0);
       if (seek_result >= 0) {
         avcodec_flush_buffers(codecContext);
-        LOGI("after seek, queue size: %d", dataQ->size());
       }
       else {
         LOGE("Error when seeking to %ld", this->seekTimestamp);
       }
     }
     
-    if (this->is_eof) {
-      if (this->dataQ->isEmpty()) break;
+    if (!this->playing) {
       this_thread::sleep_for(chrono::milliseconds(10));
       continue;
     }
@@ -99,11 +111,11 @@ int AudioDecoder::decodeFrames() {
         this->is_eof = true;
         avcodec_send_packet(codecContext, audioPacket);
         av_packet_unref(audioPacket);
-        continue;
+        break;
       }
     }
     
-    if (audioPacket->stream_index != audioStream->index) {
+    if (audioPacket->stream_index != this->audioStreamIndex) {
       av_packet_unref(audioPacket);
       continue;
     }
@@ -116,6 +128,7 @@ int AudioDecoder::decodeFrames() {
     av_packet_unref(audioPacket);
     
     while (result >= 0) {
+      if (this->seekPending || this->stopped) break;
       result = avcodec_receive_frame(codecContext, audioFrame);
       
       if (result == AVERROR_EOF) {
@@ -130,7 +143,7 @@ int AudioDecoder::decodeFrames() {
       }
       
       AVRational audio_time_base = (AVRational){1, audioFrame->sample_rate * this->channelCount};
-      audioFrame->pts = av_rescale_q(audioFrame->pts, audioStream->time_base, audio_time_base);
+      audioFrame->pts = av_rescale_q(audioFrame->pts, codecContext->pkt_timebase, audio_time_base);
       this->currentPTS = audioFrame->pts - this->delayedSamples * this->channelCount;
       
       if (codecContext->frame_size != 0 && audioFrame->pts == 0 && audioFrame->nb_samples < codecContext->frame_size) {
@@ -141,21 +154,20 @@ int AudioDecoder::decodeFrames() {
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
       int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->sampleRate, audioFrame->sample_rate, AV_ROUND_UP);
       
-      short* buffer;
+      uint8_t* buffer;
       av_samples_alloc((uint8_t**) &buffer, nullptr, this->channelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
-      int64_t bytesToWrite = frame_count * this->channelCount * sizeof(float);
       
       // Write
-      saveFrame(buffer, bytesToWrite);
-      
+      writeFrame(buffer, frame_count);
+
       av_freep(&buffer);
       av_frame_unref(audioFrame);
     }
   }
   
   result = 0;  // stream ended
-  if (!this->playing) result = 1;  // decoder forced to stop
+  if (this->stopped) result = 1;  // decoder forced to stop
   
 end:
   av_frame_free(&audioFrame);
@@ -164,27 +176,10 @@ end:
   return result;
 }
 
-
-void AudioDecoder::saveFrame(short* buffer, int64_t bytesToWrite) {
+void AudioDecoder::writeFrame(uint8_t* buffer, int32_t numFrames) {
   // --> Decoder thread
-  int pushedBytes = 0;
-
-  while (pushedBytes < bytesToWrite) {
-    if (!this->playing || this->seekPending) break;
-    
-    if (this->dataQ->isFull()) {
-      this_thread::sleep_for(chrono::milliseconds(10));
-      continue;
-    }
-    
-    float sample;
-    memcpy(&sample, (uint8_t*) buffer + pushedBytes, sizeof(float));
-    
-    bool pushed = this->dataQ->push(sample);
-    if (!pushed) continue;
-    this->currentPTS++;
-    
-    pushedBytes += sizeof(float);
+  if (this->streamWriter) {
+    streamWriter->writeAudio(buffer, numFrames);
   }
 }
 
@@ -209,10 +204,10 @@ int AudioDecoder::loadFile(string filePath) {
     return result;
   }
   
-  int streamIndex = av_find_best_stream(formatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-  audioStream = nullptr;
-  if (streamIndex >= 0) {
-    audioStream = formatContext->streams[streamIndex];
+  AVStream* audioStream = nullptr;
+  this->audioStreamIndex = av_find_best_stream(formatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+  if (audioStreamIndex >= 0) {
+    audioStream = formatContext->streams[audioStreamIndex];
   }
   
   if (audioStream == nullptr || audioStream->codecpar == nullptr) {
@@ -223,8 +218,8 @@ int AudioDecoder::loadFile(string filePath) {
 
   printCodecParameters(audioStream->codecpar);
   this->dataChannels = audioStream->codecpar->ch_layout.nb_channels;
-
-  audioCodec = avcodec_find_decoder(audioStream->codecpar->codec_id);
+  
+  const AVCodec* audioCodec = avcodec_find_decoder(audioStream->codecpar->codec_id);
   if (!audioCodec){
     LOGE("Could not find codec with ID: %d", audioStream->codecpar->codec_id);
     this->cleanup();
@@ -238,6 +233,8 @@ int AudioDecoder::loadFile(string filePath) {
     return -1;
   }
 
+  codecContext->pkt_timebase = audioStream->time_base;
+  
   result = avcodec_parameters_to_context(codecContext, audioStream->codecpar);
   if (result < 0) {
     LOGE("Failed to copy codec parameters to codec context");
@@ -288,7 +285,7 @@ int AudioDecoder::loadFile(string filePath) {
 
 
 int AudioDecoder::getCurrentTime() {
-  double time_s = (double) (this->currentPTS - this->dataQ->size()) / this->channelCount / this->sampleRate;
+  double time_s = (double) this->currentPTS / this->channelCount / this->sampleRate;
   int currentTime_ms = (int) (time_s * 1000);
   if (currentTime_ms < 0) currentTime_ms = 0;
   return currentTime_ms;
@@ -323,6 +320,7 @@ void AudioDecoder::printResamplerParameters(AVStream* audioStream, AVChannelLayo
   LOGD("Sample rate: %d => %d", audioStream->codecpar->sample_rate, outSampleRate);
   LOGD("Sample format: %s => %s", av_get_sample_fmt_name((AVSampleFormat) audioStream->codecpar->format), av_get_sample_fmt_name(outSampleFormat));
   LOGD("===END Resampler params===");
+  LOGD("");
 }
 
 void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
@@ -332,6 +330,8 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Sample rate: %d", codecParams->sample_rate);
   LOGD("Frame size: %d", codecParams->frame_size);
   LOGD("Format: %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format));
+  LOGD("Is planar: %d", av_sample_fmt_is_planar((AVSampleFormat) codecParams->format));
   LOGD("Bytes per sample %d\n", av_get_bytes_per_sample((AVSampleFormat) codecParams->format));
   LOGD("===END Codec params===");
+  LOGD("");
 }
