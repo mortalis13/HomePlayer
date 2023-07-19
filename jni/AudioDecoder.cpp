@@ -150,18 +150,82 @@ int AudioDecoder::decodeFrames() {
         this->delayedSamples = codecContext->frame_size - audioFrame->nb_samples;
       }
       
-      // Resample
-      int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
-      int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->sampleRate, audioFrame->sample_rate, AV_ROUND_UP);
+      // // Resample
+      // int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
+      // int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->sampleRate, audioFrame->sample_rate, AV_ROUND_UP);
       
-      uint8_t* buffer;
-      av_samples_alloc((uint8_t**) &buffer, nullptr, this->channelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
-      int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
+      // uint8_t* buffer;
+      // av_samples_alloc((uint8_t**) &buffer, nullptr, this->channelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
+      // int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
+      
+      int frame_count = audioFrame->nb_samples;
+      int audioChannels = audioFrame->ch_layout.nb_channels;
+      
+      int64_t bytesToWrite = audioFrame->nb_samples * this->channelCount * sizeof(float);
+      uint8_t* buffer = new uint8_t[bytesToWrite];
+      
+      if (!av_sample_fmt_is_planar(codecContext->sample_fmt)) {
+        // If not planar format, for stereo only
+        memcpy(buffer, (uint8_t*) audioFrame->data[0], bytesToWrite);
+      }
+      else {
+        // If planar format
+        // v1
+        for (int i = 0; i < audioFrame->nb_samples * sizeof(float); ++i) {
+          int buf_block_num = i / sizeof(float);
+          int i1 = buf_block_num * this->channelCount * sizeof(float) + i % sizeof(float);
+          int i2 = buf_block_num * this->channelCount * sizeof(float) + sizeof(float) + i % sizeof(float);
+          
+          buffer[i1] = audioFrame->extended_data[0][i];
+          buffer[i2] = buffer[i1];
+          if (audioChannels > 1) buffer[i2] = audioFrame->extended_data[1][i];
+        }
+        
+        // v2
+        // for (int i = 0; i < audioFrame->nb_samples; ++i) {
+        //   int data_id = i * sizeof(float);
+        //   int i1 = 2*i * sizeof(float);
+        //   int i2 = (2*i + 1) * sizeof(float);
+          
+        //   buffer[i1]   = audioFrame->extended_data[0][data_id];
+        //   buffer[i1+1] = audioFrame->extended_data[0][data_id+1];
+        //   buffer[i1+2] = audioFrame->extended_data[0][data_id+2];
+        //   buffer[i1+3] = audioFrame->extended_data[0][data_id+3];
+        //   if (audioChannels > 1) {
+        //     buffer[i2]   = audioFrame->extended_data[1][data_id];
+        //     buffer[i2+1] = audioFrame->extended_data[1][data_id+1];
+        //     buffer[i2+2] = audioFrame->extended_data[1][data_id+2];
+        //     buffer[i2+3] = audioFrame->extended_data[1][data_id+3];
+        //   }
+        //   else {
+        //     buffer[i2]   = buffer[i1];
+        //     buffer[i2+1] = buffer[i1+1];
+        //     buffer[i2+2] = buffer[i1+2];
+        //     buffer[i2+3] = buffer[i1+3];
+        //   }
+          
+        //   // for (int j = 0; j < sizeof(float); ++j) {
+        //   //   buffer[i1+j] = audioFrame->extended_data[0][data_id+j];
+        //   //   buffer[i2+j] = buffer[i1+j];
+        //   //   if (audioChannels > 1) buffer[i2+j] = audioFrame->extended_data[1][data_id+j];
+        //   // }
+          
+        //   // memcpy(buffer+i1, (uint8_t*) audioFrame->extended_data[0] + data_id, sizeof(float));
+        //   // memcpy(buffer+i2, (uint8_t*) buffer+i1, sizeof(float));
+        //   // if (audioChannels > 1) memcpy(buffer+i2, (uint8_t*) audioFrame->extended_data[1] + data_id, sizeof(float));
+          
+        //   // float sample1 = reinterpret_cast<float*>(audioFrame->extended_data[0])[i];
+        //   // float sample2 = sample1;
+        //   // if (audioChannels > 1) sample2 = reinterpret_cast<float*>(audioFrame->extended_data[1])[i];
+        //   // memcpy(buffer+i1, (uint8_t*) &sample1, sizeof(float));
+        //   // memcpy(buffer+i2, (uint8_t*) &sample2, sizeof(float));
+        // }
+      }
       
       // Write
       writeFrame(buffer, frame_count);
 
-      av_freep(&buffer);
+      delete[] buffer;
       av_frame_unref(audioFrame);
     }
   }
