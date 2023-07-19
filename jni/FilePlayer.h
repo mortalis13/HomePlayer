@@ -21,10 +21,7 @@ static const int STREAM_SAMPLE_RATE = 44100;
 
 public:
   FilePlayer() {}
-  
-  ~FilePlayer() {
-    if (decoder != NULL) delete decoder;
-  }
+  ~FilePlayer() {}
   
   bool init();
   bool destroy();
@@ -63,7 +60,7 @@ private:
   bool seeking = false;
   bool ended = false;
 
-  AudioDecoder* decoder = NULL;
+  shared_ptr<AudioDecoder> decoder;
   
   shared_ptr<AudioStream> audioStream;
 
