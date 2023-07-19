@@ -69,10 +69,9 @@ void FilePlayer::initDecoder() {
   LOGD("initDecoder()");
   if (this->decoder != NULL) {
     this->decoder->stop();
-    delete this->decoder;
   }
   
-  this->decoder = new AudioDecoder(this);
+  this->decoder = make_shared<AudioDecoder>(this);
   this->decoder->setChannelCount(audioStream->getChannelCount());
   this->decoder->setSampleRate(audioStream->getSampleRate());
 }
