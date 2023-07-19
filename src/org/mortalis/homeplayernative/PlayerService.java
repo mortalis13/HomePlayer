@@ -350,6 +350,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   
   private void onCompleted() {
+    logd("onCompleted()");
     sendUpdateStoppedTime();
     updateNotification(ACTION_PLAY_ID);
     

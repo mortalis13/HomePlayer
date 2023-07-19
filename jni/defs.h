@@ -1,3 +1,9 @@
-#include "utils/LockFreeQueue.h"
+#ifndef DEFS_H
+#define DEFS_H
 
-typedef LockFreeQueue<float, 1 << 20> SharedQueue;
+class AudioStreamWriter {
+public:
+  virtual void writeAudio(uint8_t* stream, int32_t numFrames) = 0;
+};
+
+#endif //DEFS_H
