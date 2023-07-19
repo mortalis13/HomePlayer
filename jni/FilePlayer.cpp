@@ -27,9 +27,9 @@ bool FilePlayer::destroy() {
 bool FilePlayer::openStream() {
   LOGD("openStream()");
   AudioStreamBuilder builder;
-  builder.setFormat(AudioFormat::Float);
-  builder.setChannelCount(kChannelCount);
-  builder.setSampleRate(44100);
+  builder.setFormat(STREAM_SAMPLE_FORMAT);
+  builder.setChannelCount(STREAM_CHANNELS);
+  builder.setSampleRate(STREAM_SAMPLE_RATE);
 
   auto result = builder.openStream(mStream);
   if (result != Result::OK) {

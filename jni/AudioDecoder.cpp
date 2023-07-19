@@ -258,9 +258,8 @@ int AudioDecoder::loadFile(string filePath) {
   
   AVChannelLayout outChannelLayout;
   av_channel_layout_default(&outChannelLayout, this->outChannelCount);
-  AVSampleFormat outSampleFormat = AV_SAMPLE_FMT_FLT;
   
-  printResamplerParameters(audioStream, outChannelLayout, outSampleRate, outSampleFormat);
+  printResamplerParameters(audioStream, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
   
   av_opt_set_chlayout(swrContext, "in_chlayout", &audioStream->codecpar->ch_layout, 0);
   av_opt_set_int(swrContext, "in_sample_rate", audioStream->codecpar->sample_rate, 0);
@@ -268,7 +267,7 @@ int AudioDecoder::loadFile(string filePath) {
   
   av_opt_set_chlayout(swrContext, "out_chlayout", &outChannelLayout, 0);
   av_opt_set_int(swrContext, "out_sample_rate", outSampleRate, 0);
-  av_opt_set_sample_fmt(swrContext, "out_sample_fmt", outSampleFormat, 0);
+  av_opt_set_sample_fmt(swrContext, "out_sample_fmt", OUTPUT_SAMPLE_FORMAT, 0);
 
   av_opt_set_int(swrContext, "force_resampling", 1, 0);
 

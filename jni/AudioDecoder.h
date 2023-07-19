@@ -19,6 +19,8 @@ using namespace std;
 
 class AudioDecoder {
 
+static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
+
 public:
   AudioDecoder(AudioStreamWriter* streamWriter) {
     this->streamWriter = streamWriter;
