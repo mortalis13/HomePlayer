@@ -65,7 +65,7 @@ private:
 
   AudioDecoder* decoder = NULL;
   
-  shared_ptr<AudioStream> mStream;
+  shared_ptr<AudioStream> audioStream;
 
 };
 #endif //FILE_PLAYER_H
