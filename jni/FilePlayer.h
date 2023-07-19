@@ -15,6 +15,10 @@ using namespace oboe;
 
 class FilePlayer : public AudioStreamWriter {
 
+static const AudioFormat STREAM_SAMPLE_FORMAT = AudioFormat::Float;
+static const int STREAM_CHANNELS = 2;
+static const int STREAM_SAMPLE_RATE = 44100;
+
 public:
   FilePlayer() {}
   
@@ -54,7 +58,6 @@ private:
   void emptyQueue();
 
 private:
-  static constexpr int kChannelCount = 2;
   
   bool playing = false;
   bool seeking = false;
