@@ -34,12 +34,12 @@ public:
   void pause();
   void resume();
   
-  void setChannelCount(int32_t channelCount) {
-    this->channelCount = channelCount;
+  void setChannelCount(int32_t outChannelCount) {
+    this->outChannelCount = outChannelCount;
   }
   
-  void setSampleRate(int32_t sampleRate) {
-    this->sampleRate = sampleRate;
+  void setSampleRate(int32_t outSampleRate) {
+    this->outSampleRate = outSampleRate;
   }
   
   int32_t getDataChannels() {
@@ -79,11 +79,11 @@ private:
   bool ended = false;
   bool is_eof = false;
   
-  int32_t channelCount = 0;
-  int32_t sampleRate = 0;
+  int32_t outChannelCount = 0;
+  int32_t outSampleRate = 0;
   int32_t dataChannels = 0;
   
-  int64_t currentPTS = 0;
+  int64_t currentPTS = 0;  // in samples
   int delayedSamples = 0;
   
   AVFormatContext* formatContext = NULL;

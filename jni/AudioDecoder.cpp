@@ -142,9 +142,9 @@ int AudioDecoder::decodeFrames() {
         continue;
       }
       
-      AVRational audio_time_base = (AVRational){1, audioFrame->sample_rate * this->channelCount};
+      AVRational audio_time_base = (AVRational){1, audioFrame->sample_rate * this->outChannelCount};
       audioFrame->pts = av_rescale_q(audioFrame->pts, codecContext->pkt_timebase, audio_time_base);
-      this->currentPTS = audioFrame->pts - this->delayedSamples * this->channelCount;
+      this->currentPTS = audioFrame->pts - this->delayedSamples * this->outChannelCount;
       
       if (codecContext->frame_size != 0 && audioFrame->pts == 0 && audioFrame->nb_samples < codecContext->frame_size) {
         this->delayedSamples = codecContext->frame_size - audioFrame->nb_samples;
@@ -152,10 +152,10 @@ int AudioDecoder::decodeFrames() {
       
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
-      int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->sampleRate, audioFrame->sample_rate, AV_ROUND_UP);
+      int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->outSampleRate, audioFrame->sample_rate, AV_ROUND_UP);
       
       uint8_t* buffer;
-      av_samples_alloc((uint8_t**) &buffer, nullptr, this->channelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
+      av_samples_alloc((uint8_t**) &buffer, nullptr, this->outChannelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       
       // Write
@@ -257,8 +257,7 @@ int AudioDecoder::loadFile(string filePath) {
   }
   
   AVChannelLayout outChannelLayout;
-  av_channel_layout_default(&outChannelLayout, this->channelCount);
-  int32_t outSampleRate = this->sampleRate;
+  av_channel_layout_default(&outChannelLayout, this->outChannelCount);
   AVSampleFormat outSampleFormat = AV_SAMPLE_FMT_FLT;
   
   printResamplerParameters(audioStream, outChannelLayout, outSampleRate, outSampleFormat);
@@ -285,7 +284,7 @@ int AudioDecoder::loadFile(string filePath) {
 
 
 int AudioDecoder::getCurrentTime() {
-  double time_s = (double) this->currentPTS / this->channelCount / this->sampleRate;
+  double time_s = (double) this->currentPTS / this->outChannelCount / this->outSampleRate;
   int currentTime_ms = (int) (time_s * 1000);
   if (currentTime_ms < 0) currentTime_ms = 0;
   return currentTime_ms;
@@ -302,7 +301,7 @@ void AudioDecoder::seekTo(int time_ms) {
   if (time_ms < 0) time_ms = 0;
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
   this->seekPending = true;
-  this->currentPTS = (double) time_ms / 1000.0 * this->channelCount * this->sampleRate;
+  this->currentPTS = (double) time_ms / 1000.0 * this->outChannelCount * this->outSampleRate;
 }
 
 
