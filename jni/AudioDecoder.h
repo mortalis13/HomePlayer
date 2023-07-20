@@ -31,6 +31,7 @@ public:
   }
   
   int loadFile(string filePath);
+  
   void start();
   void stop();
   void pause();
@@ -73,6 +74,8 @@ private:
   void cleanup();
   int decodeFrames();
   void writeFrame(uint8_t* buffer, int32_t numFrames);
+  
+  int findDelayedSamples();
   
 
 private:

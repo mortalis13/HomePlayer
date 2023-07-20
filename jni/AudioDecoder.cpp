@@ -125,7 +125,7 @@ int AudioDecoder::decodeFrames() {
       goto end;
     }
     av_packet_unref(audioPacket);
-    
+
     while (result >= 0) {
       if (this->seekPending || this->stopped) break;
       result = avcodec_receive_frame(codecContext, audioFrame);
@@ -145,10 +145,6 @@ int AudioDecoder::decodeFrames() {
       audioFrame->pts = av_rescale_q(audioFrame->pts, codecContext->pkt_timebase, audio_time_base);
       this->currentPTS = audioFrame->pts - this->delayedSamples * this->outChannelCount;
       
-      if (codecContext->frame_size != 0 && audioFrame->pts == 0 && audioFrame->nb_samples < codecContext->frame_size) {
-        this->delayedSamples = codecContext->frame_size - audioFrame->nb_samples;
-      }
-      
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
       int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->outSampleRate, audioFrame->sample_rate, AV_ROUND_UP);
@@ -163,7 +159,7 @@ int AudioDecoder::decodeFrames() {
       av_freep(&buffer);
       av_frame_unref(audioFrame);
     }
-  }
+  } // while not stopped
   
   result = 0;  // stream ended
   if (this->stopped) result = 1;  // decoder forced to stop
@@ -277,7 +273,42 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  
+  findDelayedSamples();
 
+  return 0;
+}
+
+
+int AudioDecoder::findDelayedSamples() {
+  AVPacket* audioPacket;
+  AVFrame* audioFrame;
+  
+  if (!(audioPacket = av_packet_alloc())) return -1;
+  if (!(audioFrame = av_frame_alloc())) {av_packet_free(&audioPacket); return -1;}
+  
+  do {
+    if (av_read_frame(formatContext, audioPacket) < 0) {av_packet_free(&audioPacket); av_frame_free(&audioFrame); return -1;}
+  }
+  while (audioPacket->stream_index != this->audioStreamIndex);
+
+  if (avcodec_send_packet(codecContext, audioPacket) != 0) {av_packet_free(&audioPacket); av_frame_free(&audioFrame); return -1;}
+  av_packet_unref(audioPacket);
+
+  if (avcodec_receive_frame(codecContext, audioFrame) < 0) {av_packet_free(&audioPacket); av_frame_free(&audioFrame); return -1;}
+  
+  if (audioFrame->nb_samples < codecContext->frame_size) {
+    // Get compensation samples number from the first frame, in mp3 for example it's ~1105 samples
+    this->delayedSamples = codecContext->frame_size - audioFrame->nb_samples;
+    LOGI("Initial delayed compensation samples: %d", this->delayedSamples);
+  }
+  
+  avformat_seek_file(formatContext, -1, 0, 0, INT64_MAX, 0);
+  avcodec_flush_buffers(codecContext);
+  
+  av_frame_unref(audioFrame);
+  av_packet_free(&audioPacket);
+  av_frame_free(&audioFrame);
   return 0;
 }
 
