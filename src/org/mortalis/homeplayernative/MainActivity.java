@@ -1506,7 +1506,6 @@ public class MainActivity extends AppCompatActivity {
   
   private void exitApp() {
     logd("exitApp()");
-    EngineNative.stopEngine();
     finishAndRemoveTask();
   }
   
