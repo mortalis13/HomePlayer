@@ -64,7 +64,6 @@ int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
 
-  this->seekPending = false;
   this->is_eof = false;
   this->delayedSamples = 0;
   
@@ -189,6 +188,7 @@ int AudioDecoder::loadFile(string filePath) {
   
   int result = -1;
   this->currentPTS = 0;
+  this->seekPending = false;
   
   result = avformat_open_input(&formatContext, filePath.c_str(), NULL, NULL);
   if (result < 0) {
