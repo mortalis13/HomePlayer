@@ -88,16 +88,16 @@ private:
   int64_t currentPTS = 0;  // in samples
   int delayedSamples = 0;
   
+  bool seekPending = false;
+  int64_t seekTimestamp = 0;
+  
+  int audioStreamIndex = -1;
+  
   AVFormatContext* formatContext = NULL;
   AVCodecContext* codecContext = NULL;
   SwrContext* swrContext = NULL;
   
-  int audioStreamIndex = -1;
-  
   future<void> runThread;
-  
-  bool seekPending = false;
-  int64_t seekTimestamp = 0;
   
   AudioStreamWriter* streamWriter = NULL;
   
