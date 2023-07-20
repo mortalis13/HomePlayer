@@ -11,7 +11,6 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -44,12 +43,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public static final int ACTION_PAUSE_ID = 1;
   public static final int ACTION_EXIT_ID = 2;
   
-  public static final int MEDIA_ERROR_SYSTEM = -2147483648;
-  
   private final IBinder binder = new PlayerBinder();
   
   private AudioManager audioManager;
-  private AudioAttributes playbackAttributes;
   private AudioFocusRequest focusRequest;
   private HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();
   
@@ -87,7 +83,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public void onCreate() {
     logd("PlayerService.onCreate()");
     super.onCreate();
-    
     init();
   }
   
@@ -106,8 +101,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
       boolean repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 
-      // MP_INIT
-      
       progressHandler.removeCallbacks(progressRunnable);
       
       startAudio(audioPath);
@@ -127,7 +120,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     unregisterReceiver(playerServiceReceiver);
     unregisterReceiver(headphonesPlugReceiver);
     removeAudioFocus();
-    // if (mediaPlayer != null) mediaPlayer.release();
+    EngineNative.stopEngine();
   }
   
   @Override
@@ -153,7 +146,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private void init() {
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
     
-    playbackAttributes = new AudioAttributes.Builder()
+    AudioAttributes playbackAttributes = new AudioAttributes.Builder()
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .setUsage(AudioAttributes.USAGE_GAME)
     .build();
@@ -249,8 +242,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.removeCallbacks(progressRunnable);
     sendUpdateStoppedTime();
 
-    // mediaPlayer.stop();
-    // mediaPlayer.reset();
+    EngineNative.stopEngine();
     
     updateNotification(ACTION_PLAY_ID);
     log("Playback stopped");
@@ -259,7 +251,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public void pause() {
     if (this.isPlaying()) {
       EngineNative.pauseAudio();
-      // mediaPlayer.pause();
     }
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
@@ -267,14 +258,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public void fastRewind(int s) {
-    // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - s * 1000);
     EngineNative.seekTo(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
   
   public void fastForward(int s) {
-    // mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + s * 1000);
     EngineNative.seekTo(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
@@ -290,9 +279,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     try {
       if (Fun.fileExists(audioPath)) {
-        // mediaPlayer.setDataSource(audioPath);
-        // mediaPlayer.prepareAsync();
-        
         int result = EngineNative.loadAudio(audioPath);
         if (result != 0) return;
         
@@ -348,7 +334,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.post(progressRunnable);
   }
   
-  
   private void onCompleted() {
     logd("onCompleted()");
     sendUpdateStoppedTime();
@@ -357,6 +342,16 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     playerLoaded = false;
     stopSelf();
     sendPlayerStopped();
+  }
+  
+  private void onError() {
+    logd("onError()");
+    EngineNative.stopEngine();
+    
+    playerLoaded = false;
+    stopForeground(true);
+    stopSelf();
+    sendPlayerError();
   }
   
   
@@ -430,24 +425,19 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   // ----- External calls
   private void sendInitProgress() {
     progressSetupAction.execute(getTotalTime());
-    // progressSetupAction.execute(mediaPlayer.getDuration());
   }
 
   private void sendUpdateStoppedTime() {
     timeUpdateAction.execute(getTotalTime(), getTotalTime());
     progressUpdateAction.execute(getTotalTime());
-    // timeUpdateAction.execute(mediaPlayer.getDuration(), mediaPlayer.getDuration());
-    // progressUpdateAction.execute(mediaPlayer.getDuration());
   }
   
   private void sendUpdatePlayingTime() {
     timeUpdateAction.execute(getPlayingTime(), getTotalTime());
-    // timeUpdateAction.execute(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
   }
   
   private void sendUpdateProgress() {
     progressUpdateAction.execute(getPlayingTime());
-    // progressUpdateAction.execute(mediaPlayer.getCurrentPosition());
   }
   
   private void sendPlayerPreloaded() {
@@ -485,29 +475,22 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   public void changePlayPosition(int time) {
     EngineNative.seekTo(time);
-    // mediaPlayer.seekTo(time);
   }
   
   public void seekToEnd() {
-    // mediaPlayer.seekTo(mediaPlayer.getDuration());
+    EngineNative.seekTo(totalTime);
   }
   
-  public int getTotalTime() {
-    // ms
+  public int getTotalTime() {  // ms
     return totalTime;
-    // return EngineNative.getDuration();
-    // return mediaPlayer.getDuration();
   }
   
-  public int getPlayingTime() {
-    // ms
+  public int getPlayingTime() {  // ms
     return EngineNative.getCurrentPosition();
-    // return mediaPlayer.getCurrentPosition();
   }
   
   public boolean isPlaying() {
     return EngineNative.isPlaying();
-    // return mediaPlayer != null && mediaPlayer.isPlaying();
   }
   
   public boolean isStopped() {
@@ -524,7 +507,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   public boolean hasProgress() {
     return EngineNative.getCurrentPosition() != 0;
-    // return mediaPlayer != null && mediaPlayer.getCurrentPosition() != 0;
   }
   
   public String getAudioPath() {
