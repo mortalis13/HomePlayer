@@ -280,30 +280,34 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     try {
       if (Fun.fileExists(audioPath)) {
         int result = EngineNative.loadAudio(audioPath);
-        if (result != 0) return;
-        
-        totalTime = EngineNative.getDuration();
-        
-        if (audioTime > 0 && audioTime != getTotalTime()) {
-          log("Seeking to time: " + audioTime);
-          changePlayPosition(audioTime);
-        }
-        
-        metadata.setDataSource(audioPath);
-        
-        preload();
-
-        if (startPlayback) {
-          enableUpdateTime();
-          startProgress();
-          play();
-          sendPlayerStarted();
+        if (result != 0) {
+          onLoadError();
         }
         else {
-          sendPlayerPreloaded();
+          totalTime = EngineNative.getDuration();
+          
+          if (audioTime > 0 && audioTime != getTotalTime()) {
+            log("Seeking to time: " + audioTime);
+            changePlayPosition(audioTime);
+          }
+          
+          metadata.setDataSource(audioPath);
+          
+          preload();
+
+          if (startPlayback) {
+            enableUpdateTime();
+            startProgress();
+            play();
+            sendPlayerStarted();
+          }
+          else {
+            sendPlayerPreloaded();
+          }
+          
+          playerLoaded = true;
         }
         
-        playerLoaded = true;
         startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
       }
     }
@@ -344,13 +348,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     sendPlayerStopped();
   }
   
-  private void onError() {
-    logd("onError()");
-    EngineNative.stopEngine();
-    
-    playerLoaded = false;
-    stopForeground(true);
-    stopSelf();
+  private void onLoadError() {
+    logd("onLoadError()");
+    updateNotification(ACTION_PLAY_ID);
     sendPlayerError();
   }
   
