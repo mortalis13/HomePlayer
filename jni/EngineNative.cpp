@@ -74,6 +74,10 @@ JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isSto
   return player.isStopped();
 }
 
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRepeat(JNIEnv *env, jclass obj, jboolean repeat) {
+  player.setRepeat(repeat);
+}
+
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getDuration(JNIEnv *env, jclass obj) {
   return player.getDuration();
 }

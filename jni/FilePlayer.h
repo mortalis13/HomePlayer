@@ -45,6 +45,9 @@ public:
   }
 
   bool isStopped();
+  
+  void setRepeat(bool repeat);
+  bool isRepeat();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
   

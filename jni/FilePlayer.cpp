@@ -135,6 +135,16 @@ bool FilePlayer::isStopped() {
   return decoderEnded;
 }
 
+void FilePlayer::setRepeat(bool repeat) {
+  if (this->decoder == NULL) return;
+  this->decoder->setRepeat(repeat);
+}
+
+bool FilePlayer::isRepeat() {
+  if (this->decoder == NULL) return false;
+  return this->decoder->isRepeat();
+}
+
 
 int FilePlayer::getCurrentPosition() {
   if (this->decoder == NULL) return -1;
