@@ -192,6 +192,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  LOGD("AV: input opened");
   
   result = avformat_find_stream_info(formatContext, NULL);
   if (result < 0) {
@@ -199,6 +200,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  LOGD("AV: stream info found");
   
   AVStream* audioStream = nullptr;
   this->audioStreamIndex = av_find_best_stream(formatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
@@ -211,6 +213,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return -1;
   }
+  LOGD("AV: audio stream found");
 
   printCodecParameters(audioStream->codecpar);
   this->dataChannels = audioStream->codecpar->ch_layout.nb_channels;
@@ -221,6 +224,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return -1;
   }
+  LOGD("AV: codec found");
   
   codecContext = avcodec_alloc_context3(audioCodec);
   if (!codecContext){
@@ -228,6 +232,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return -1;
   }
+  LOGD("AV: codec context allocated");
 
   codecContext->pkt_timebase = audioStream->time_base;
   
@@ -237,6 +242,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  LOGD("AV: codec parameters copied");
 
   result = avcodec_open2(codecContext, audioCodec, nullptr);
   if (result < 0) {
@@ -244,6 +250,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  LOGD("AV: codec opened");
   
   swrContext = swr_alloc();
   if (!swrContext) {
@@ -251,6 +258,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return -1;
   }
+  LOGD("AV: resampler context allocated");
   
   AVChannelLayout outChannelLayout;
   av_channel_layout_default(&outChannelLayout, this->outChannelCount);
@@ -273,6 +281,7 @@ int AudioDecoder::loadFile(string filePath) {
     this->cleanup();
     return result;
   }
+  LOGD("AV: resampler initialized");
   
   findDelayedSamples();
 

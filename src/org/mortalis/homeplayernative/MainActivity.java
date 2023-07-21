@@ -753,7 +753,7 @@ public class MainActivity extends AppCompatActivity {
     this.audioTrimEnabled = (audioTrimSeconds > 0 && time == 0);
     
     progressSlider.reset();
-    updateWaveform(filePath);
+    // updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
     updateShuffleList(playingFile);
@@ -1633,8 +1633,6 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateWaveform(String audioPath) {
-    if (true) return;
-
     if (currentWaveformFile != null && currentWaveformFile.equals(audioPath)) {
       log(String.format("The waveform is already built for the audio %s", audioPath));
       return;

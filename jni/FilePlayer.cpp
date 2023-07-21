@@ -96,7 +96,6 @@ bool FilePlayer::startAudio() {
 }
 
 void FilePlayer::pause() {
-  LOGD("pause()");
   this->playing = false;
   this->decoder->pause();
 }
