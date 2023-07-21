@@ -15,4 +15,5 @@ public class EngineNative {
   
   public static native boolean isPlaying();
   public static native boolean isStopped();
+  public static native void setRepeat(boolean repeat);
 }

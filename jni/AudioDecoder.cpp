@@ -43,6 +43,15 @@ void AudioDecoder::resume() {
   this->playing = true;
 }
 
+void AudioDecoder::setRepeat(bool repeat) {
+  LOGD("repeat => %d", repeat);
+  this->repeat = repeat;
+}
+
+bool AudioDecoder::isRepeat() {
+  return repeat;
+}
+
 
 void AudioDecoder::run() {
   // --> Decoder thread
@@ -110,6 +119,11 @@ int AudioDecoder::decodeFrames() {
         this->is_eof = true;
         avcodec_send_packet(codecContext, audioPacket);
         av_packet_unref(audioPacket);
+        
+        if (this->repeat) {
+          this->seekTo(0);
+          continue;
+        }
         break;
       }
     }

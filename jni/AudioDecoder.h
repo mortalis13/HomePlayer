@@ -65,6 +65,9 @@ public:
     return ended;
   }
   
+  void setRepeat(bool repeat);
+  bool isRepeat();
+  
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
@@ -88,6 +91,8 @@ private:
   bool playing = false;
   bool ended = false;
   bool is_eof = false;
+  
+  bool repeat = false;
   
   int32_t outChannelCount = 0;
   int32_t outSampleRate = 0;
