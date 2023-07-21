@@ -181,8 +181,9 @@ void AudioDecoder::writeFrame(uint8_t* buffer, int32_t numFrames) {
 
 int AudioDecoder::loadFile(string filePath) {
   LOGI("loadFile => %s", filePath.c_str());
-  
   int result = -1;
+  
+  this->loaded = false;
   this->currentPTS = 0;
   this->seekPending = false;
   
@@ -284,7 +285,8 @@ int AudioDecoder::loadFile(string filePath) {
   LOGD("AV: resampler initialized");
   
   findDelayedSamples();
-
+  
+  this->loaded = true;
   return 0;
 }
 

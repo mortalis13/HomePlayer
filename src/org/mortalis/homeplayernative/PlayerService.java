@@ -217,21 +217,27 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     updateNotification(ACTION_PAUSE_ID);
   }
 
-  public void resume() {
+  public boolean resume() {
+    boolean audioFocusGranted = requestAudioFocus();
+    if (!audioFocusGranted) {
+      loge("Audio focus is not granted");
+      return false;
+    }
+    
+    int result = EngineNative.resumeAudio();
+    if (result != 0) {
+      loge("Could not resume audio");
+      return false;
+    }
+    
     if (!progressHandler.hasCallbacks(progressRunnable)) {
       enableUpdateTime();
       startProgress();
     }
     
-    boolean audioFocusGranted = requestAudioFocus();
-    if (!audioFocusGranted) {
-      loge("Audio focus is not granted");
-      return;
-    }
-    
-    EngineNative.resumeAudio();
     updateNotification(ACTION_PAUSE_ID);
     sendPlayerResumed();
+    return true;
   }
   
   public void stop() {
@@ -343,6 +349,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   private void onLoadError() {
     logd("onLoadError()");
+    playerLoaded = false;
     updateNotification(ACTION_PLAY_ID);
     sendPlayerError();
   }
