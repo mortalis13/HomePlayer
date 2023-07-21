@@ -307,7 +307,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           playerLoaded = true;
         }
         
-        startForeground(Vars.NOTIFICATION_ID, buildPlayerNotification());
+        var notification = buildPlayerNotification();
+        if (notification == null) return;
+        startForeground(Vars.NOTIFICATION_ID, notification);
       }
     }
     catch (Exception e) {
@@ -378,34 +380,40 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private Notification buildPlayerNotification() {
     logd("buildPlayerNotification()");
     
-    String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    try {
+      String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+      
+      String title = new File(audioPath).getName();
+      String text = audioArtist;
+      
+      Intent intent = new Intent(this, MainActivity.class);
+      PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+      
+      notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+      notifBuilder.setContentTitle(title);
+      notifBuilder.setContentText(text);
+      
+      notifBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+      notifBuilder.setOngoing(true);
+      notifBuilder.setShowWhen(false);
+      
+      notifBuilder.setContentIntent(pendingIntent);
+      
+      int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
+      notifBuilder.addAction(notifActions[actionId]);
+      notifBuilder.addAction(notifActions[ACTION_EXIT_ID]);
+      
+      MediaStyle style = new MediaStyle();
+      style.setShowActionsInCompactView(0, 1);
+      notifBuilder.setStyle(style);
+      
+      return notifBuilder.build();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
     
-    String title = new File(audioPath).getName();
-    String text = audioArtist;
-    
-    Intent intent = new Intent(this, MainActivity.class);
-    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    
-    // ----------
-    notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
-    notifBuilder.setContentTitle(title);
-    notifBuilder.setContentText(text);
-    
-    notifBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    notifBuilder.setOngoing(true);
-    notifBuilder.setShowWhen(false);
-    
-    notifBuilder.setContentIntent(pendingIntent);
-    
-    int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
-    notifBuilder.addAction(notifActions[actionId]);
-    notifBuilder.addAction(notifActions[ACTION_EXIT_ID]);
-    
-    MediaStyle style = new MediaStyle();
-    style.setShowActionsInCompactView(0, 1);
-    notifBuilder.setStyle(style);
-    
-    return notifBuilder.build();
+    return null;
   }
   
   private void updateNotification(int action) {
@@ -418,6 +426,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       notification = notifBuilder.build();
     }
     
+    if (notification == null) return;
     notificationManager.notify(Vars.NOTIFICATION_ID, notification);
   }
   
@@ -559,11 +568,14 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
         log("Headphones unplugged");
         pause();
+        try {Thread.sleep(100);} catch (Exception e) {}
+        EngineNative.stopEngine();
       }
       else if (action.equals(AudioManager.ACTION_HEADSET_PLUG)) {
         int state = intent.getIntExtra("state", 0);
         if (state == 1) {
           log("Headphones plugged");
+          EngineNative.startEngine();
         }
         onHeadphonesPlugAction.execute(state);
       }

@@ -5,17 +5,17 @@
 
 
 bool FilePlayer::init() {
-  this->playing = false;
-  
   if (!this->openStream()) return false;
   if (!this->startStream()) return false;
-  
   return true;
 }
 
 bool FilePlayer::destroy() {
   this->playing = false;
-  this->decoder->stop();
+  
+  if (this->decoder != NULL) {
+    this->decoder->stop();
+  }
   
   this->stopStream();
   this->closeStream();
@@ -32,35 +32,43 @@ bool FilePlayer::openStream() {
   builder.setSampleRate(STREAM_SAMPLE_RATE);
 
   auto result = builder.openStream(audioStream);
-  if (result != Result::OK) {
-    LOGE("Failed to open stream. Error: %s", convertToText(result));
-    return false;
-  }
-  return true;
+  LOGI("Open stream result: %s", convertToText(result));
+  return result == Result::OK;
 }
 
 bool FilePlayer::startStream() {
   LOGD("startStream()");
   auto result = audioStream->requestStart();
-  if (result != Result::OK) {
-    LOGE("Failed to start stream. Error: %s", convertToText(result));
-    return false;
-  }
-  return true;
+  LOGI("Start stream result: %s", convertToText(result));
+  return result == Result::OK;
 }
 
 bool FilePlayer::stopStream() {
   LOGD("stopStream()");
   auto result = audioStream->requestStop();
   LOGI("Stop stream result: %s", convertToText(result));
-  return true;
+  return result == Result::OK;
 }
 
 bool FilePlayer::closeStream() {
   LOGD("closeStream()");
   auto result = audioStream->close();
   LOGI("Close stream result: %s", convertToText(result));
-  return true;
+  return result == Result::OK;
+}
+
+bool FilePlayer::restartStream() {
+  LOGD("restartStream()");
+  this->closeStream();
+  
+  if (this->init()) {
+    auto nextState = StreamState::Uninitialized;
+    int64_t ms = 100 * 1000000;  // value x nanos
+    audioStream->waitForStateChange(StreamState::Starting, &nextState, ms);
+    return true;
+  }
+  
+  return false;
 }
 
 
@@ -79,7 +87,6 @@ void FilePlayer::initDecoder() {
 bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio()");
   this->playing = false;
-  this->ended = false;
   
   this->initDecoder();
   
@@ -90,6 +97,7 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 bool FilePlayer::startAudio() {
   LOGD("startAudio()");
+  if (this->decoder == NULL) return false;
   if (!this->decoder->isLoaded()) {
     LOGE("Trying to start decoder without loading audio first");
     return false;
@@ -101,12 +109,14 @@ bool FilePlayer::startAudio() {
 }
 
 void FilePlayer::pause() {
+  if (this->decoder == NULL) return;
   this->decoder->pause();
   this->playing = false;
 }
 
 bool FilePlayer::resume() {
   LOGD("resume()");
+  if (this->decoder == NULL) return false;
   if (this->decoder->isStopped()) {
     if (!this->startAudio()) return false;
   }
@@ -119,6 +129,7 @@ bool FilePlayer::resume() {
 }
 
 bool FilePlayer::isStopped() {
+  if (this->decoder == NULL) return true;
   bool decoderEnded = this->decoder->isEnded();
   if (decoderEnded) this->playing = false;
   return decoderEnded;
@@ -126,19 +137,32 @@ bool FilePlayer::isStopped() {
 
 
 int FilePlayer::getCurrentPosition() {
+  if (this->decoder == NULL) return -1;
   return this->decoder->getCurrentTime();
 }
 
 int FilePlayer::getDuration() {
+  if (this->decoder == NULL) return -1;
   return this->decoder->getDuration();
 }
 
 void FilePlayer::seekTo(int time_ms) {
+  if (this->decoder == NULL) return;
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
 }
 
 
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
-  audioStream->write(stream, numFrames, 100);
+  auto result = audioStream->write(stream, numFrames, 100);
+  
+  if (!result) {
+    LOGE("Stream write error: %s", convertToText(result.error()));
+    if (result.error() == Result::ErrorDisconnected) {
+      LOGW("Stream is disconnected. Restarting");
+      if (this->restartStream()) {
+        audioStream->write(stream, numFrames, 100);
+      }
+    }
+  }
 }
