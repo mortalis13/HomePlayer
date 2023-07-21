@@ -49,6 +49,10 @@ public:
     return dataChannels;
   }
   
+  bool isLoaded() {
+    return loaded;
+  }
+  
   bool isStopped() {
     return stopped;
   }
@@ -79,6 +83,7 @@ private:
   
 
 private:
+  bool loaded = false;
   bool stopped = true;
   bool playing = false;
   bool ended = false;

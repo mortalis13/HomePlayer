@@ -34,7 +34,7 @@ public:
   bool loadAudio(string audioPath);
   bool startAudio();
   void pause();
-  void resume();
+  bool resume();
   
   int getDuration();
   int getCurrentPosition();

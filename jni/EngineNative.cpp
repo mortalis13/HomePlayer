@@ -61,8 +61,8 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_pause
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_resumeAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
-  player.resume();
-  return 0;
+  bool result = player.resume();
+  return result ? 0: -1;
 }
 
 

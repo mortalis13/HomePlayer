@@ -90,6 +90,11 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 bool FilePlayer::startAudio() {
   LOGD("startAudio()");
+  if (!this->decoder->isLoaded()) {
+    LOGE("Trying to start decoder without loading audio first");
+    return false;
+  }
+  
   this->decoder->start();
   this->playing = true;
   return true;
@@ -100,15 +105,17 @@ void FilePlayer::pause() {
   this->playing = false;
 }
 
-void FilePlayer::resume() {
+bool FilePlayer::resume() {
   LOGD("resume()");
   if (this->decoder->isStopped()) {
-    this->decoder->start();
+    if (!this->startAudio()) return false;
   }
   else if (!this->decoder->isPlaying()) {
     this->decoder->resume();
   }
+  
   this->playing = true;
+  return true;
 }
 
 bool FilePlayer::isStopped() {

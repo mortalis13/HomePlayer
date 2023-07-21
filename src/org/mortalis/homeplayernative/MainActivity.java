@@ -680,8 +680,8 @@ public class MainActivity extends AppCompatActivity {
       audioTrimEnabled = false;
     }
     else if (playerService.isPlayerLoaded()) {
-      playerService.resume();
-      setPlayButtonAsPause();
+      boolean result = playerService.resume();
+      if (result) setPlayButtonAsPause();
     }
     else {
       // If stopped or service is reset, restart audio
@@ -703,12 +703,12 @@ public class MainActivity extends AppCompatActivity {
   
   private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    playerService.fastRewind(10);
+    playerService.fastRewind(5);
   }
   
   private void fastForwardAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    playerService.fastForward(10);
+    playerService.fastForward(5);
   }
   
   private void playbackShuffleAction() {
