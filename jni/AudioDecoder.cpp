@@ -39,7 +39,7 @@ void AudioDecoder::pause() {
 }
 
 void AudioDecoder::resume() {
-  LOGD("pause()");
+  LOGD("resume()");
   this->playing = true;
 }
 
@@ -82,7 +82,7 @@ int AudioDecoder::decodeFrames() {
     goto end;
   }
 
-  LOGD("Decode start");
+  LOGI("Decode start");
   
   while (!this->stopped) {
     if (this->seekPending) {
@@ -336,7 +336,7 @@ int AudioDecoder::getDuration() {
 }
 
 void AudioDecoder::seekTo(int time_ms) {
-  LOGI("Seeking to %d ms", time_ms);
+  LOGI("seeking to %d ms", time_ms);
   if (time_ms < 0) time_ms = 0;
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
   this->seekPending = true;
