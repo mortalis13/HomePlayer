@@ -53,12 +53,13 @@ private:
 
   void initDecoder();
   void emptyQueue();
+  
+  bool restartStream();
 
 private:
   
   bool playing = false;
   bool seeking = false;
-  bool ended = false;
 
   shared_ptr<AudioDecoder> decoder;
   
