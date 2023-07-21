@@ -146,6 +146,7 @@ $ASM_FLAGS \
 --enable-demuxer=aptx_hd \
 --enable-demuxer=asf \
 --enable-demuxer=au \
+--enable-demuxer=avi \
 --enable-demuxer=bink \
 --enable-demuxer=binka \
 --enable-demuxer=boa \
@@ -166,6 +167,7 @@ $ASM_FLAGS \
 --enable-demuxer=hca \
 --enable-demuxer=hcom \
 --enable-demuxer=ilbc \
+--enable-demuxer=matroska \
 --enable-demuxer=m4v \
 --enable-demuxer=mca \
 --enable-demuxer=mcc \
