@@ -90,29 +90,31 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 bool FilePlayer::startAudio() {
   LOGD("startAudio()");
-  this->playing = true;
   this->decoder->start();
+  this->playing = true;
   return true;
 }
 
 void FilePlayer::pause() {
-  this->playing = false;
   this->decoder->pause();
+  this->playing = false;
 }
 
 void FilePlayer::resume() {
   LOGD("resume()");
-  this->playing = true;
   if (this->decoder->isStopped()) {
     this->decoder->start();
   }
   else if (!this->decoder->isPlaying()) {
     this->decoder->resume();
   }
+  this->playing = true;
 }
 
 bool FilePlayer::isStopped() {
-  return this->decoder->isEnded();
+  bool decoderEnded = this->decoder->isEnded();
+  if (decoderEnded) this->playing = false;
+  return decoderEnded;
 }
 
 

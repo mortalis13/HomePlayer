@@ -214,8 +214,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
 
     EngineNative.playAudio();
-    log("Playback started");
-
     updateNotification(ACTION_PAUSE_ID);
   }
 
@@ -232,8 +230,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
     
     EngineNative.resumeAudio();
-    log("Playback resumed");
-    
     updateNotification(ACTION_PAUSE_ID);
     sendPlayerResumed();
   }
@@ -243,9 +239,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     sendUpdateStoppedTime();
 
     EngineNative.stopEngine();
-    
     updateNotification(ACTION_PLAY_ID);
-    log("Playback stopped");
   }
   
   public void pause() {
@@ -254,7 +248,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
-    log("Playback paused");
   }
   
   public void fastRewind(int s) {
