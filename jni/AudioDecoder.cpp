@@ -141,7 +141,7 @@ int AudioDecoder::decodeFrames() {
         continue;
       }
       
-      AVRational audio_time_base = (AVRational){1, audioFrame->sample_rate * this->outChannelCount};
+      AVRational audio_time_base = (AVRational){1, this->outSampleRate * this->outChannelCount};
       audioFrame->pts = av_rescale_q(audioFrame->pts, codecContext->pkt_timebase, audio_time_base);
       this->currentPTS = audioFrame->pts - this->delayedSamples * this->outChannelCount;
       
