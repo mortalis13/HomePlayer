@@ -8,8 +8,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import androidx.core.content.ContextCompat;
-
 import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayernative.Fun;

@@ -8,11 +8,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import androidx.core.content.ContextCompat;
-
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayernative.Fun;
 import org.mortalis.homeplayernative.R;
 import static org.mortalis.homeplayernative.Fun.log;
 
@@ -38,13 +35,6 @@ public class TrimSliderView extends View {
   private int workingHeight;
   
   private int borderWidth;
-  
-  private int mediumLevel;
-  private int highLevel;
-  
-  private int normalColor;
-  private int mediumColor;
-  private int highColor;
   
   private int maxValue;
   private int progress;

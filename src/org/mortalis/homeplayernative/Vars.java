@@ -2,16 +2,15 @@ package org.mortalis.homeplayernative;
 
 public class Vars {
   
-  public enum LogLevel {VERBOSE, DEBUG, INFO, WARN, ERROR};
+  public enum LogLevel { VERBOSE, DEBUG, INFO, WARN, ERROR }
   public static final LogLevel APP_LOG_LEVEL = LogLevel.DEBUG;
   
   public static final String APP_LOG_TAG = "home_player_native";
-  public static final String NOTIFICATION_TITLE = "HomePlayerNative";
-  public static final String PLAYER_NOTIFICATION_TITLE = "HomePlayerNative";
   public static final int NOTIFICATION_ID = 111;
   public static final String NOTIFICATIONS_CHANNEL_ID = "homeplayer_channel_id";
   
   public static final int APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE = 101;
+  public static final int APP_PERMISSION_REQUEST_POST_NOTIFICATIONS = 102;
   
   public static final String EXTRA_AUDIO_PATH = "extra_audio_path";
   public static final String EXTRA_AUDIO_TIME = "extra_audio_time";  // ms
@@ -25,7 +24,7 @@ public class Vars {
   public static final int MIN_PLAYABLE_TIME = 2000;  // ms
   public static final int MAX_TRIM = 300;  // s
   
-  public static final boolean SHOW_TIME_IN_MS = true;
+  public static final boolean SHOW_TIME_MS = false;
   
   public static final String[] AUDIO_EXTS = new String[] {
     "flac",
