@@ -168,7 +168,7 @@ int AudioDecoder::decodeFrames() {
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       
       // Write
-      writeFrame(buffer, frame_count);
+      processAVFrame(buffer, frame_count);
 
       av_freep(&buffer);
       av_frame_unref(audioFrame);
@@ -185,7 +185,7 @@ end:
   return result;
 }
 
-void AudioDecoder::writeFrame(uint8_t* buffer, int32_t numFrames) {
+void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
   // --> Decoder thread
   if (this->streamWriter) {
     streamWriter->writeAudio(buffer, numFrames);
