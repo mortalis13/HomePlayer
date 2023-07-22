@@ -125,22 +125,32 @@ public class Fun {
     return parent;
   }
   
-  public static String formatTime(int time, boolean includeHours) {  // time in s
+  public static String formatTime(int time, boolean withHours, boolean withMs) {  // time in ms
     int _time  = time < 0 ? -time: time;
-    String fmt = time < 0 ? "-%02d:%02d": "%02d:%02d";
+    String sign = time < 0 ? "-": "";
     
-    int h = _time / 3600;
-    int m = _time / 60;
-    int s = _time % 60;
+    int h  = _time / 1000 / 3600;
+    int m  = _time / 1000 / 60;
+    int s  = _time / 1000 % 60;
+    int ms = _time % 1000;
     
     String result;
-    if (h > 0 || includeHours) {
-      fmt += ":%02d";
-      m %= 60;
-      result = String.format(fmt, h, m, s);
+    
+    if (withHours && withMs) {
+      String format = sign + "%02d:%02d:%02d.%03d";
+      result = String.format(format, h, m % 60, s, ms);
+    }
+    else if (withHours && !withMs) {
+      String format = sign + "%02d:%02d:%02d";
+      result = String.format(format, h, m % 60, s);
+    }
+    else if (!withHours && withMs) {
+      String format = sign + "%02d:%02d.%03d";
+      result = String.format(format, m, s, ms);
     }
     else {
-      result = String.format(fmt, m, s);
+      String format = sign + "%02d:%02d";
+      result = String.format(format, m, s);
     }
     
     return result;
