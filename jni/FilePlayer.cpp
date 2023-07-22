@@ -135,6 +135,10 @@ bool FilePlayer::isStopped() {
   return decoderEnded;
 }
 
+bool FilePlayer::isPlaying() {
+  return playing;
+}
+
 void FilePlayer::setRepeat(bool repeat) {
   if (this->decoder == NULL) return;
   this->decoder->setRepeat(repeat);
@@ -160,6 +164,33 @@ void FilePlayer::seekTo(int time_ms) {
   if (this->decoder == NULL) return;
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
+}
+
+
+// ==> Audio params
+int FilePlayer::getChannels() {
+  if (!this->decoder || !this->decoder->isLoaded()) return 0;
+  return this->decoder->audioParams.channels;
+}
+
+int FilePlayer::getSampleRate() {
+  if (!this->decoder || !this->decoder->isLoaded()) return 0;
+  return this->decoder->audioParams.sample_rate;
+}
+
+string FilePlayer::getSampleFormat() {
+  if (!this->decoder || !this->decoder->isLoaded()) return "";
+  return this->decoder->audioParams.sample_format;
+}
+
+int FilePlayer::getBitrate() {
+  if (!this->decoder || !this->decoder->isLoaded()) return 0;
+  return this->decoder->audioParams.bitrate;
+}
+
+string FilePlayer::getCodecName() {
+  if (!this->decoder || !this->decoder->isLoaded()) return "";
+  return this->decoder->audioParams.codec_name;
 }
 
 

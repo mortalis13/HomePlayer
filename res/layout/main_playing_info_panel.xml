@@ -26,12 +26,13 @@
       android:textColor="?secondaryTextColor"
     />
     <TextView
-      android:id="@+id/textCurrentFileSize"
+      android:id="@+id/textFileExtraData"
       android:layout_width="wrap_content"
       android:layout_height="match_parent"
       android:layout_weight="1"
       android:gravity="center_vertical"
       android:textSize="20dp"
+      android:maxLines="1"
       android:textColor="?secondaryTextColor"
     />
   </LinearLayout>

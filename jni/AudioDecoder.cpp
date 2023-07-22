@@ -230,12 +230,14 @@ int AudioDecoder::loadFile(string filePath) {
   }
   LOGD("AV: audio stream found");
 
+  fillAudioParams(audioStream->codecpar);
   printCodecParameters(audioStream->codecpar);
+  
   this->dataChannels = audioStream->codecpar->ch_layout.nb_channels;
   
   const AVCodec* audioCodec = avcodec_find_decoder(audioStream->codecpar->codec_id);
   if (!audioCodec){
-    LOGE("Could not find codec with ID: %d", audioStream->codecpar->codec_id);
+    LOGE("Could not find codec with ID: %d (%s)", audioStream->codecpar->codec_id, avcodec_get_name(audioStream->codecpar->codec_id));
     this->cleanup();
     return -1;
   }
@@ -278,7 +280,7 @@ int AudioDecoder::loadFile(string filePath) {
   AVChannelLayout outChannelLayout;
   av_channel_layout_default(&outChannelLayout, this->outChannelCount);
   
-  printResamplerParameters(audioStream, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
+  printResamplerParameters(audioStream->codecpar, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
   
   av_opt_set_chlayout(swrContext, "in_chlayout", &audioStream->codecpar->ch_layout, 0);
   av_opt_set_int(swrContext, "in_sample_rate", audioStream->codecpar->sample_rate, 0);
@@ -368,11 +370,24 @@ void AudioDecoder::cleanup() {
 }
 
 
-void AudioDecoder::printResamplerParameters(AVStream* audioStream, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat) {
+void AudioDecoder::fillAudioParams(AVCodecParameters* codecParams) {
+  this->audioParams.channels = codecParams->ch_layout.nb_channels;
+  this->audioParams.sample_rate = codecParams->sample_rate;
+  this->audioParams.frame_size = codecParams->frame_size;
+  this->audioParams.sample_format = string(av_get_sample_fmt_name((AVSampleFormat) codecParams->format));
+  this->audioParams.is_planar = (bool) av_sample_fmt_is_planar((AVSampleFormat) codecParams->format);
+  this->audioParams.bytes_per_sample = av_get_bytes_per_sample((AVSampleFormat) codecParams->format);
+  this->audioParams.bitrate = codecParams->bit_rate;
+  this->audioParams.codec_type = string(av_get_media_type_string(codecParams->codec_type));
+  this->audioParams.codec_name = string(avcodec_get_name(codecParams->codec_id));
+}
+
+
+void AudioDecoder::printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat) {
   LOGD("===Resampler params===");
-  LOGD("Channels: %d => %d", audioStream->codecpar->ch_layout.nb_channels, outChannelLayout.nb_channels);
-  LOGD("Sample rate: %d => %d", audioStream->codecpar->sample_rate, outSampleRate);
-  LOGD("Sample format: %s => %s", av_get_sample_fmt_name((AVSampleFormat) audioStream->codecpar->format), av_get_sample_fmt_name(outSampleFormat));
+  LOGD("Channels: %d => %d", codecParams->ch_layout.nb_channels, outChannelLayout.nb_channels);
+  LOGD("Sample rate: %d => %d", codecParams->sample_rate, outSampleRate);
+  LOGD("Sample format: %s => %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format), av_get_sample_fmt_name(outSampleFormat));
   LOGD("===END Resampler params===");
   LOGD("");
 }
@@ -383,9 +398,12 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Channel layout: order %d, mask %d", codecParams->ch_layout.order, (int) codecParams->ch_layout.u.mask);
   LOGD("Sample rate: %d", codecParams->sample_rate);
   LOGD("Frame size: %d", codecParams->frame_size);
-  LOGD("Format: %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format));
+  LOGD("Sample format: %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format));
   LOGD("Is planar: %d", av_sample_fmt_is_planar((AVSampleFormat) codecParams->format));
-  LOGD("Bytes per sample %d\n", av_get_bytes_per_sample((AVSampleFormat) codecParams->format));
+  LOGD("Bytes per sample: %d", av_get_bytes_per_sample((AVSampleFormat) codecParams->format));
+  LOGD("Bitrate: %d", codecParams->bit_rate / 1000);
+  LOGD("Codec type: %s", av_get_media_type_string(codecParams->codec_type));
+  LOGD("Codec ID: %s", avcodec_get_name(codecParams->codec_id));
   LOGD("===END Codec params===");
   LOGD("");
 }

@@ -120,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
   private int audioTrimSeconds;
   private int trimmedProgressColor;
   
+  private boolean extraInfoIsForCurrentFile;
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
   private TextView textTimePlaying;
   private TextView textTimeTotal;
   
-  private TextView textCurrentFileSize;
+  private TextView textFileExtraData;
   private TextView textPlayingPosition;
   private TextView textPlayingFolderTime;
   
@@ -174,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
   private TextView textExtraBitrate;
   private TextView textExtraFrequency;
   private TextView textExtraChannels;
+  private LinearLayout extraCodecBlock;
+  private TextView textExtraCodec;
+  private LinearLayout extraSampleFormatBlock;
+  private TextView textExtraSampleFormat;
   private TextView textExtraSize;
   private TextView textExtraPath;
   
@@ -372,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
     textTimeLeft = findViewById(R.id.textTimeLeft);
     textTimeTotal = findViewById(R.id.textTimeTotal);
     
-    textCurrentFileSize = findViewById(R.id.textCurrentFileSize);
+    textFileExtraData = findViewById(R.id.textFileExtraData);
     textPlayingPosition = findViewById(R.id.textPlayingPosition);
     textPlayingFolderTime = findViewById(R.id.textPlayingFolderTime);
     
@@ -406,6 +412,10 @@ public class MainActivity extends AppCompatActivity {
     textExtraBitrate = findViewById(R.id.textExtraBitrate);
     textExtraFrequency = findViewById(R.id.textExtraFrequency);
     textExtraChannels = findViewById(R.id.textExtraChannels);
+    extraCodecBlock = findViewById(R.id.extraCodecBlock);
+    textExtraCodec = findViewById(R.id.textExtraCodec);
+    extraSampleFormatBlock = findViewById(R.id.extraSampleFormatBlock);
+    textExtraSampleFormat = findViewById(R.id.textExtraSampleFormat);
     textExtraSize = findViewById(R.id.textExtraSize);
     textExtraPath = findViewById(R.id.textExtraPath);
     
@@ -474,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
     textTimePlaying.setTypeface(typeface);
     textTimeLeft.setTypeface(typeface);
     textTimeTotal.setTypeface(typeface);
-    textCurrentFileSize.setTypeface(typeface);
+    textFileExtraData.setTypeface(typeface);
     textPlayingPosition.setTypeface(typeface);
     textPlayingFolderTime.setTypeface(typeface);
     
@@ -991,6 +1001,15 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayerPreloaded() {
     progressSlider.enable();
     updatePlayingStats();
+    
+    if (extraInfoPanel.getVisibility() == View.VISIBLE) {
+      if (extraInfoIsForCurrentFile || 
+          currentExtraInfo != null && currentExtraInfo.file.getPath().equals(playerService.getAudioPath()))
+      {
+        // Update audio info for current loaded file
+        showExtraAudioInfo();
+      }
+    }
 
     if (progressSlider.atMaxProgress()) {
       progressSlider.disable();
@@ -1305,6 +1324,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updatePlayingStats() {
+    logd("updatePlayingStats()");
     if (playerService == null || !playerService.hasAudio()) return;
     File playingFile = new File(playerService.getAudioPath());
     
@@ -1319,8 +1339,11 @@ public class MainActivity extends AppCompatActivity {
     String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
     textPlayingPosition.setText(stats);
     
-    String fileSize = Fun.formatSize(playingFile.length());
-    textCurrentFileSize.setText(fileSize);
+    String extraData = playerService.getCodecName();
+    if (extraData == null || extraData.length() == 0) {
+      extraData = Fun.formatSize(playingFile.length());
+    }
+    textFileExtraData.setText(extraData);
   }
   
   private void updatePlayingTime(int playingTime, int totalTime) {
@@ -1384,22 +1407,34 @@ public class MainActivity extends AppCompatActivity {
       info.artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
       info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
       info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
-      info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
-      }
+      info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
       info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-
       metadata.release();
-      
+    }
+    catch (Exception e) {
+      loge(String.format("Could not get audio metadata for: %s => %s", filePath, e));
+    }
+    
+    try {
       MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
       
       MediaFormat format = mediaExtractor.getTrackFormat(0);
-      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+      info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 0);
+      info.frequency = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 0);
+      mediaExtractor.release();
     }
     catch (Exception e) {
-      loge("Could not get audio metadata for: " + filePath);
+      loge(String.format("Could not get audio parameters for: %s => %s", filePath, e));
+    }
+    
+    extraInfoIsForCurrentFile = (playerService != null && playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
+    
+    info.codec = null;
+    info.sampleFormat = null;
+    if (extraInfoIsForCurrentFile) {
+      info.codec = playerService.getCodecName();
+      info.sampleFormat = playerService.getSampleFormat();
     }
     
     currentExtraInfo = info;
@@ -1470,12 +1505,17 @@ public class MainActivity extends AppCompatActivity {
     textExtraArtist.setText(info.artist);
     textExtraAlbum.setText(info.album);
     textExtraYear.setText(info.year);
-    textExtraBitrate.setText(info.bitrate + " kbps");
+    textExtraBitrate.setText(info.bitrate / 1000 + " kbps");
     textExtraFrequency.setText(String.format("%.1f kHz", (float) info.frequency / 1000));
     textExtraSize.setText(Fun.formatSize(info.file.length()));
     textExtraPath.setText(info.file.getPath());
     textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
     textExtraChannels.setText(String.valueOf(info.channels));
+    
+    textExtraCodec.setText(info.codec);
+    textExtraSampleFormat.setText(info.sampleFormat);
+    extraCodecBlock.setVisibility((info.codec != null) ? View.VISIBLE: View.GONE);
+    extraSampleFormatBlock.setVisibility((info.sampleFormat != null) ? View.VISIBLE: View.GONE);
     
     textImageFileName.setText(info.file.getName());
     String imageInfo = String.format("%d x %d, %s", info.imageWidth, info.imageHeight, Fun.formatSize(info.imageSize));
@@ -1798,7 +1838,8 @@ public class MainActivity extends AppCompatActivity {
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(VOLUME_CHANGED_ACTION) && intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC) {
-        log("Volume changed");
+        int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        log("Volume changed => " + volume);
         updateVolumeLevel();
       }
     }

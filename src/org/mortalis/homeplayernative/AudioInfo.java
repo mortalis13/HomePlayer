@@ -10,13 +10,16 @@ public class AudioInfo {
   String artist;
   String album;
   String year;
-  int bitrate;
-  int frequency;
-  int channels;
-  int time;
   Bitmap image;
   int imageWidth;
   int imageHeight;
   long imageSize;
   String lyrics;
+  
+  int bitrate;
+  int frequency;
+  int channels;
+  String codec;
+  String sampleFormat;
+  int time;
 }
