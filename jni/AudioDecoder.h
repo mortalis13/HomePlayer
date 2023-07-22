@@ -84,7 +84,7 @@ private:
   void run();
   void cleanup();
   int decodeFrames();
-  void writeFrame(uint8_t* buffer, int32_t numFrames);
+  void processAVFrame(uint8_t* buffer, int32_t numFrames);
   
   int findDelayedSamples();
   void fillAudioParams(AVCodecParameters* codecParams);
