@@ -637,7 +637,7 @@ public class MainActivity extends AppCompatActivity {
     volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     updateVolumeLevel();
     
-    textTrimMax.setText(Fun.formatTime(Vars.MAX_TRIM, false));
+    textTrimMax.setText(Fun.formatTime(Vars.MAX_TRIM * 1000, false, false));
     updateAudioTrimText(0);
     
     trimAudioSlider.setMax(Vars.MAX_TRIM);
@@ -1368,15 +1368,12 @@ public class MainActivity extends AppCompatActivity {
       timeTotal   = String.format("%03d.%03d",  totalTime / 1000,   totalTime % 1000);
     }
     else {
-      playingTime /= 1000;
-      totalTime   /= 1000;
-      
       int timeDiff = totalTime - playingTime;
       if (timeDiff < 0) timeDiff = 0;
       
-      timePlaying = Fun.formatTime(playingTime, false);
-      timeLeft = "-" + Fun.formatTime(timeDiff, false);
-      timeTotal = Fun.formatTime(totalTime, false);
+      timePlaying = Fun.formatTime(playingTime, false, false);
+      timeLeft = "-" + Fun.formatTime(timeDiff, false, false);
+      timeTotal = Fun.formatTime(totalTime, false, false);
     }
     
     textTimePlaying.setText(timePlaying);
@@ -1509,7 +1506,7 @@ public class MainActivity extends AppCompatActivity {
     textExtraFrequency.setText(String.format("%.1f kHz", (float) info.frequency / 1000));
     textExtraSize.setText(Fun.formatSize(info.file.length()));
     textExtraPath.setText(info.file.getPath());
-    textExtraLength.setText(Fun.formatTime(info.time / 1000, false));
+    textExtraLength.setText(Fun.formatTime(info.time, false, true));
     textExtraChannels.setText(String.valueOf(info.channels));
     
     textExtraCodec.setText(info.codec);
@@ -1529,15 +1526,15 @@ public class MainActivity extends AppCompatActivity {
     textLyricsPlaceholder.setVisibility((lyrics == null || lyrics.isEmpty()) ? View.VISIBLE: View.GONE);
   }
   
-  private void updateAudioTrimText(int value) {
+  private void updateAudioTrimText(int trimTime) {  // s
     String timeStr = "OFF";
-    if (value > 0) {
-      timeStr = Fun.formatTime(value, false);
+    if (trimTime > 0) {
+      timeStr = Fun.formatTime(trimTime * 1000, false, false);
     }
     textTrimValue.setText(timeStr);
   }
   
-  private void onAudioTrimChanged(int trimTime) {
+  private void onAudioTrimChanged(int trimTime) {  // s
     boolean trimEnabled = trimTime > 0;
     updateAudioTrimText(trimTime);
     
@@ -1741,7 +1738,7 @@ public class MainActivity extends AppCompatActivity {
         updatePlayingDir = true;
       }
       else {
-        String folderTime = Fun.formatTime(totalTime / 1000, true);
+        String folderTime = Fun.formatTime(totalTime, true, false);
         textPlayingFolderTime.setText(folderTime);
       }
     }
@@ -1752,7 +1749,7 @@ public class MainActivity extends AppCompatActivity {
         
         int time = extractAudioTime(item.path);
         totalTime += time;
-        item.time = Fun.formatTime(time / 1000, false);
+        item.time = Fun.formatTime(time, false, false);
         
         if (isCancelled()) {
           logw("Task is cancelled: " + this);
@@ -1764,7 +1761,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected void onPostExecute(Void result) {
-      String folderTime = Fun.formatTime(totalTime / 1000, true);
+      String folderTime = Fun.formatTime(totalTime, true, false);
       textTotalTime.setText(folderTime);
       
       if (updatePlayingDir) {
@@ -1799,7 +1796,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected void onPostExecute(Void result) {
-      String folderTime = Fun.formatTime(totalTime / 1000, true);
+      String folderTime = Fun.formatTime(totalTime, true, false);
       textPlayingFolderTime.setText(folderTime);
     }
   }
@@ -1821,7 +1818,7 @@ public class MainActivity extends AppCompatActivity {
         
         if (item.isFile) {
           int time = extractAudioTime(item.path);
-          item.time = Fun.formatTime(time / 1000, false);
+          item.time = Fun.formatTime(time, false, false);
         }
       }
       
