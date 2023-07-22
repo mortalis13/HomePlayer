@@ -903,9 +903,9 @@ public class MainActivity extends AppCompatActivity {
     hideExtraPanels();
   }
   
-  private void refreshCurrentDir() {
+  private void refreshCurrentDir(boolean scrollTop) {
     logd("refreshCurrentDir()");
-    changeDir(currentPath);
+    changeDir(currentPath, scrollTop);
   }
   
   private void validateCurrentDir() {
@@ -917,7 +917,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     if (!belongsToCurrentDir(getPlayingFile())) {
-      refreshCurrentDir();
+      refreshCurrentDir(true);
     }
   }
   
@@ -1041,7 +1041,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void onItemRemoved(String filePath) {
     log("File removed: " + filePath);
-    refreshCurrentDir();
+    refreshCurrentDir(false);
     
     // Check if the removed file was in the current playlist
     File playingFile = getPlayingFile();
