@@ -15,6 +15,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -34,41 +35,41 @@ import java.io.File;
 
 
 public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
-  
+
   public static final String ACTION_PLAY = "org.mortalis.homeplayernative.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
   public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
-  
+
   public static final int ACTION_PLAY_ID = 0;
   public static final int ACTION_PAUSE_ID = 1;
   public static final int ACTION_EXIT_ID = 2;
-  
+
   private final IBinder binder = new PlayerBinder();
-  
+  private final HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();
+
   private AudioManager audioManager;
   private AudioFocusRequest focusRequest;
-  private HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();
-  
+
   private NotificationManagerCompat notificationManager;
   private NotificationCompat.Builder notifBuilder;
   private NotificationCompat.Action[] notifActions;
   private PlayerServiceReceiver playerServiceReceiver;
-  
+
   private MediaMetadataRetriever metadata;
-  
+
   private String audioPath;
   private int audioTime;
   private boolean startPlayback;
   private boolean repeat;
-  
+
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
-  
+
   private int totalTime;
-  
-  private Handler progressHandler = new Handler();
+
+  private final Handler progressHandler = new Handler(Looper.getMainLooper());
   private Runnable progressRunnable;
-  
+
   public SimpleAction exitAction = () -> {};
   public Action<Integer> progressSetupAction = (arg) -> {};
   public Action<Integer> progressUpdateAction = (arg) -> {};
@@ -80,23 +81,23 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public SimpleAction onPlayerStoppedAction = () -> {};
   public SimpleAction onPlayerErrorAction = () -> {};
   public Action<Integer> onHeadphonesPlugAction = (arg) -> {};
-  
+
   @Override
   public void onCreate() {
     logd("PlayerService.onCreate()");
     super.onCreate();
     init();
   }
-  
+
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     logd("PlayerService.onStartCommand()");
-    
+
     if (intent == null) {
       loge("intent is null");
       return START_STICKY;
     }
-    
+
     try {
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
@@ -104,33 +105,34 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 
       progressHandler.removeCallbacks(progressRunnable);
-      
+
       loadAudio(audioPath);
     }
     catch (Exception e) {
       e.printStackTrace();
     }
-    
+
     return START_STICKY;
   }
-  
+
   @Override
   public void onDestroy() {
     logd("PlayerService.onDestroy()");
     super.onDestroy();
-    
+
     unregisterReceiver(playerServiceReceiver);
     unregisterReceiver(headphonesPlugReceiver);
     removeAudioFocus();
     EngineNative.stopEngine();
+    try {metadata.release();} catch (Exception e) {}
   }
-  
+
   @Override
   public IBinder onBind(Intent intent) {
     logd("PlayerService.onBind()");
     return binder;
   }
-  
+
   @Override
   public boolean onUnbind(Intent intent) {
     logd("PlayerService.onUnbind()");
@@ -138,30 +140,30 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     stopSelf();
     return super.onUnbind(intent);
   }
-  
+
   @Override
   public void onRebind(Intent intent) {
     logd("PlayerService.onRebind()");
   }
-  
-  
+
+
   private void init() {
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-    
+
     AudioAttributes playbackAttributes = new AudioAttributes.Builder()
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .setUsage(AudioAttributes.USAGE_GAME)
     .build();
-    
+
     focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
         .setAudioAttributes(playbackAttributes)
         .setAcceptsDelayedFocusGain(true)
         .setWillPauseWhenDucked(true)
         .setOnAudioFocusChangeListener(this)
     .build();
-    
+
     metadata = new MediaMetadataRetriever();
-    
+
     playerServiceReceiver = new PlayerServiceReceiver();
     playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
       public void onMsgPlay() {
@@ -175,24 +177,24 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
         exitAction.execute();
       }
     });
-    
+
     IntentFilter serviceFilter = new IntentFilter();
     serviceFilter.addAction(ACTION_PLAY);
     serviceFilter.addAction(ACTION_PAUSE);
     serviceFilter.addAction(ACTION_EXIT);
     registerReceiver(playerServiceReceiver, serviceFilter);
-    
+
     IntentFilter headphonesFilter = new IntentFilter();
     headphonesFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     headphonesFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
     registerReceiver(headphonesPlugReceiver, headphonesFilter);
-    
+
     notificationManager = NotificationManagerCompat.from(this);
-    
+
     PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    
+
     notifActions = new NotificationCompat.Action[] {
       new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
       new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
@@ -225,23 +227,23 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       loge("Audio focus is not granted");
       return false;
     }
-    
+
     int result = EngineNative.resumeAudio();
     if (result != 0) {
       loge("Could not resume audio");
       return false;
     }
-    
+
     if (!progressHandler.hasCallbacks(progressRunnable)) {
       enableUpdateTime();
       startProgress();
     }
-    
+
     updateNotification(ACTION_PAUSE_ID);
     sendPlayerResumed();
     return true;
   }
-  
+
   public void stop() {
     progressHandler.removeCallbacks(progressRunnable);
     sendUpdateStoppedTime();
@@ -249,7 +251,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     EngineNative.stopEngine();
     updateNotification(ACTION_PLAY_ID);
   }
-  
+
   public void pause() {
     if (this.isPlaying()) {
       EngineNative.pauseAudio();
@@ -257,45 +259,45 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
   }
-  
+
   public void fastRewind(int s) {
     EngineNative.seekTo(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
-  
+
   public void fastForward(int s) {
     EngineNative.seekTo(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
-  
+
   public void setRepeat(boolean repeat) {
     EngineNative.setRepeat(repeat);
   }
-  
-  
+
+
   private void loadAudio(String audioPath) {
     logd("loadAudio()");
-    
+
     try {
       if (Fun.fileExists(audioPath)) {
         int result = EngineNative.loadAudio(audioPath);
-        
+
         if (result != 0) {
           onLoadError();
         }
         else {
           setRepeat(this.repeat);
           totalTime = EngineNative.getDuration();
-          
+
           if (audioTime > 0 && audioTime != getTotalTime()) {
             log("Seeking to time: " + audioTime);
             changePlayPosition(audioTime);
           }
-          
+
           metadata.setDataSource(audioPath);
-          
+
           preload();
 
           if (startPlayback) {
@@ -307,10 +309,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           else {
             sendPlayerPreloaded();
           }
-          
+
           playerLoaded = true;
         }
-        
+
         var notification = buildPlayerNotification();
         if (notification == null) return;
         startForeground(Vars.NOTIFICATION_ID, notification);
@@ -320,106 +322,109 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       e.printStackTrace();
     }
   }
-  
+
   private void startProgress() {
     logd("startProgress()");
     progressHandler.removeCallbacks(progressRunnable);
-    
-    progressRunnable = new Runnable() {
-      public void run() {
-        if (isStopped()) {
-          onCompleted();
-          return;
-        }
-        
-        if (updateTimeEnabled && isPlaying()) {
-          sendUpdatePlayingTime();
-          sendUpdateProgress();
-        }
-        progressHandler.postDelayed(progressRunnable, 100);
+
+    progressRunnable = () -> {
+      if (isStopped()) {
+        onCompleted();
+        return;
       }
+      if (updateTimeEnabled && isPlaying()) {
+        sendUpdatePlayingTime();
+        sendUpdateProgress();
+      }
+      progressHandler.postDelayed(progressRunnable, 100);
     };
-    
+
     progressHandler.post(progressRunnable);
   }
-  
+
   private void onCompleted() {
     logd("onCompleted()");
     sendUpdateStoppedTime();
     updateNotification(ACTION_PLAY_ID);
-    
+
     playerLoaded = false;
     stopSelf();
     sendPlayerStopped();
   }
-  
+
   private void onLoadError() {
     logd("onLoadError()");
     playerLoaded = false;
     updateNotification(ACTION_PLAY_ID);
     sendPlayerError();
   }
-  
-  
+
+
   // ----- Utils
   private boolean requestAudioFocus() {
+    logd("requestAudioFocus()");
     if (audioManager == null) return false;
-    
+
     int result = 0;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {  // 26
       result = audioManager.requestAudioFocus(focusRequest);
     }
     else {
       result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
-    
-    log("Audio focus request: " + result);
+
+    log("Audio focus request result: " + result);
     return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
   }
 
   private void removeAudioFocus() {
-    audioManager.abandonAudioFocus(this);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {  // 26
+      audioManager.abandonAudioFocusRequest(focusRequest);
+    }
+    else {
+      audioManager.abandonAudioFocus(this);
+    }
   }
-  
+
   private Notification buildPlayerNotification() {
     logd("buildPlayerNotification()");
-    
+
     try {
       String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-      
+
       String title = new File(audioPath).getName();
       String text = audioArtist;
-      
+
       Intent intent = new Intent(this, MainActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-      
+
       notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
       notifBuilder.setContentTitle(title);
       notifBuilder.setContentText(text);
-      
+
       notifBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
       notifBuilder.setOngoing(true);
       notifBuilder.setShowWhen(false);
-      
+
       notifBuilder.setContentIntent(pendingIntent);
-      
+
       int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
       notifBuilder.addAction(notifActions[actionId]);
       notifBuilder.addAction(notifActions[ACTION_EXIT_ID]);
-      
+
       MediaStyle style = new MediaStyle();
       style.setShowActionsInCompactView(0, 1);
       notifBuilder.setStyle(style);
-      
+
       return notifBuilder.build();
     }
     catch (Exception e) {
       e.printStackTrace();
     }
-    
+
     return null;
   }
-  
+
   private void updateNotification(int action) {
     Notification notification = null;
     if (notifBuilder == null) {
@@ -429,7 +434,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       notifBuilder.mActions.set(0, notifActions[action]);
       notification = notifBuilder.build();
     }
-    
+
     if (notification == null) return;
     notificationManager.notify(Vars.NOTIFICATION_ID, notification);
   }

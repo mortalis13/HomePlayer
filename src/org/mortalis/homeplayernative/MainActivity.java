@@ -35,8 +35,6 @@ import android.widget.ScrollView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -114,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
   private AudioManager audioManager;
   private VolumeReceiver volumeReceiver = new VolumeReceiver();
   
-  private Object lock = new Object();
+  private final Object lock = new Object();
   private Thread waveformDecodeThread;
   private String currentWaveformFile;
   
@@ -288,13 +286,12 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void requestAppPermissions(Context context) {
-    if (Build.VERSION.SDK_INT < 30) {
-      boolean isWriteGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-      
-      if (!isWriteGranted) {
-        requestPermissions(new String[] {
-          Manifest.permission.WRITE_EXTERNAL_STORAGE
-        }, Vars.APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE);
+    logd("requestAppPermissions()");
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {  // 30
+      String permission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+      boolean isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+      if (!isGranted) {
+        requestPermissions(new String[] {permission}, Vars.APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE);
       }
     }
     else {
@@ -302,6 +299,13 @@ public class MainActivity extends AppCompatActivity {
         Uri uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID);
         Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
         startActivity(intent);
+      }
+      else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {  // 33
+        String permission = Manifest.permission.POST_NOTIFICATIONS;
+        boolean isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+        if (!isGranted) {
+          requestPermissions(new String[] {permission}, Vars.APP_PERMISSION_REQUEST_POST_NOTIFICATIONS);
+        }
       }
     }
   }
@@ -857,8 +861,8 @@ public class MainActivity extends AppCompatActivity {
     textTotalFiles.setText(String.valueOf(fileList.size()));
     
     long totalSize = Stream.of(files)
-      .mapToLong(file -> file.length())
-      .reduce(0, (total, size) -> total + size);
+      .mapToLong(File::length)
+      .reduce(0, Long::sum);
     textTotalSize.setText(Fun.formatSize(totalSize));
     
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
@@ -924,7 +928,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private boolean belongsToCurrentDir(File file) {
-    if (file == null) return false;
+    if (file == null || file.getParentFile() == null) return false;
     return file.getParentFile().equals(currentPath);
   }
   
@@ -1075,7 +1079,7 @@ public class MainActivity extends AppCompatActivity {
         if (next) {
           return playingList[i == len-1 ? 0: i+1];
         }
-        return file = playingList[i == 0 ? len-1: i-1];
+        return playingList[i == 0 ? len-1: i-1];
       }
     }
     
@@ -1158,7 +1162,7 @@ public class MainActivity extends AppCompatActivity {
     logd("updateShuffleList(): " + audioFile);
     
     String currentAudioPath = playerService.getAudioPath();
-    if (currentAudioPath == null || !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
+    if (currentAudioPath == null || audioFile.getParent() != null && !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
       generateShuffleList(audioFile);
     }
   }
@@ -1188,6 +1192,7 @@ public class MainActivity extends AppCompatActivity {
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
     playingList = dir.listFiles(Fun.fileFilter);
+    if (playingList == null) return;
     Arrays.sort(playingList, Fun.nocaseComp);
   }
   
@@ -1229,7 +1234,8 @@ public class MainActivity extends AppCompatActivity {
   private void processPlayingDirChange(File newAudioFile) {
     logd("processPlayingDirChange(): " + newAudioFile);
     if (playerService == null) return;
-    
+    if (newAudioFile == null || newAudioFile.getParentFile() == null) return;
+
     if (playerService.hasAudio()) {
       var currentAudio = new File(playerService.getAudioPath());
       var currentAudioParent = currentAudio.getParent();
@@ -1330,13 +1336,13 @@ public class MainActivity extends AppCompatActivity {
     String timeLeft;
     String timeTotal;
     
-    if (Vars.SHOW_TIME_IN_MS) {
+    if (Vars.SHOW_TIME_MS) {
       int timeDiff = totalTime - playingTime;
       if (timeDiff < 0) timeDiff = 0;
       
-      timePlaying = String.format("%03d.%03d", playingTime/1000, playingTime%1000);
-      timeLeft = String.format("-%03d.%03d", timeDiff/1000, timeDiff%1000);
-      timeTotal = String.format("%03d.%03d", totalTime/1000,+ totalTime%1000);
+      timePlaying = String.format("%03d.%03d",  playingTime / 1000, playingTime % 1000);
+      timeLeft    = String.format("-%03d.%03d", timeDiff / 1000,    timeDiff % 1000);
+      timeTotal   = String.format("%03d.%03d",  totalTime / 1000,   totalTime % 1000);
     }
     else {
       playingTime /= 1000;
@@ -1379,8 +1385,12 @@ public class MainActivity extends AppCompatActivity {
       info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
       info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
       info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000;
-      info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        info.frequency = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+      }
       info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+
+      metadata.release();
       
       MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
@@ -1415,10 +1425,10 @@ public class MainActivity extends AppCompatActivity {
           currentExtraInfo.imageHeight = image.getHeight();
         }
         
-        if (pictureData != null) {
-          currentExtraInfo.imageSize = pictureData.length;
-        }
+        currentExtraInfo.imageSize = pictureData.length;
       }
+
+      metadata.release();
     }
     catch (Exception e) {
       logw("The file doesn't contain image: " + e);

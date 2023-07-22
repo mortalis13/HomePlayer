@@ -2,9 +2,7 @@ package org.mortalis.homeplayernative.components;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 
@@ -20,8 +18,7 @@ public class SimplePaintView extends AppCompatImageView {
   private Paint canvasPaint;
   
   private RectF canvasRect;
-  private Path canvasPath;
-  
+
   private float itemWidth;
   private float itemHeight;
   
