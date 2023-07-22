@@ -73,9 +73,13 @@ public:
   int getDuration();
 
 
+public:
+  AudioParams audioParams;
+
+
 private:
   static void printCodecParameters(AVCodecParameters* codecParams);
-  static void printResamplerParameters(AVStream* audioStream, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat);
+  static void printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat);
   
   void run();
   void cleanup();
@@ -83,7 +87,7 @@ private:
   void writeFrame(uint8_t* buffer, int32_t numFrames);
   
   int findDelayedSamples();
-  
+  void fillAudioParams(AVCodecParameters* codecParams);
 
 private:
   bool loaded = false;

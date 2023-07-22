@@ -16,4 +16,10 @@ public class EngineNative {
   public static native boolean isPlaying();
   public static native boolean isStopped();
   public static native void setRepeat(boolean repeat);
+  
+  public static native int getChannels();
+  public static native int getSampleRate();
+  public static native String getSampleFormat();
+  public static native int getBitrate();
+  public static native String getCodecName();
 }

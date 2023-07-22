@@ -55,8 +55,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private NotificationCompat.Action[] notifActions;
   private PlayerServiceReceiver playerServiceReceiver;
 
-  private MediaMetadataRetriever metadata;
-
   private String audioPath;
   private int audioTime;
   private boolean startPlayback;
@@ -124,7 +122,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     unregisterReceiver(headphonesPlugReceiver);
     removeAudioFocus();
     EngineNative.stopEngine();
-    try {metadata.release();} catch (Exception e) {}
   }
 
   @Override
@@ -161,8 +158,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
         .setWillPauseWhenDucked(true)
         .setOnAudioFocusChangeListener(this)
     .build();
-
-    metadata = new MediaMetadataRetriever();
 
     playerServiceReceiver = new PlayerServiceReceiver();
     playerServiceReceiver.setReceiverListener(new PlayerServiceReceiver.ReceiverListener() {
@@ -204,12 +199,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
 
   // ----------------------- Actions
-  private void preload() {
-    sendUpdatePlayingTime();
-    sendInitProgress();
-    sendUpdateProgress();
-  }
-
   private void play() {
     boolean audioFocusGranted = requestAudioFocus();
     if (!audioFocusGranted) {
@@ -292,13 +281,14 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           totalTime = EngineNative.getDuration();
 
           if (audioTime > 0 && audioTime != getTotalTime()) {
-            log("Seeking to time: " + audioTime);
+            log("Initial seeking to time: " + audioTime);
             changePlayPosition(audioTime);
           }
 
-          metadata.setDataSource(audioPath);
-
-          preload();
+          sendUpdatePlayingTime();
+          sendInitProgress();
+          sendUpdateProgress();
+          playerLoaded = true;
 
           if (startPlayback) {
             enableUpdateTime();
@@ -309,8 +299,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           else {
             sendPlayerPreloaded();
           }
-
-          playerLoaded = true;
         }
 
         var notification = buildPlayerNotification();
@@ -322,7 +310,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       e.printStackTrace();
     }
   }
-
+  
   private void startProgress() {
     logd("startProgress()");
     progressHandler.removeCallbacks(progressRunnable);
@@ -390,7 +378,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("buildPlayerNotification()");
 
     try {
+      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
+      metadata.setDataSource(audioPath);
       String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+      metadata.release();
 
       String title = new File(audioPath).getName();
       String text = audioArtist;
@@ -534,6 +525,33 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public void resetService() {
     log("resetService()");
     playerLoaded = false;
+  }
+  
+  
+  // ----- Audio params
+  int getChannels() {
+    if (!this.playerLoaded) return 0;
+    return EngineNative.getChannels();
+  }
+
+  int getSampleRate() {
+    if (!this.playerLoaded) return 0;
+    return EngineNative.getSampleRate();
+  }
+
+  String getSampleFormat() {
+    if (!this.playerLoaded) return null;
+    return EngineNative.getSampleFormat();
+  }
+
+  int getBitrate() {
+    if (!this.playerLoaded) return 0;
+    return EngineNative.getBitrate();
+  }
+
+  String getCodecName() {
+    if (!this.playerLoaded) return null;
+    return EngineNative.getCodecName();
   }
   
   

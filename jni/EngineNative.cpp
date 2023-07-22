@@ -90,6 +90,27 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_seekT
   player.seekTo(time);
 }
 
+
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getChannels(JNIEnv *env, jclass obj) {
+  return player.getChannels();
+}
+
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getSampleRate(JNIEnv *env, jclass obj) {
+  return player.getSampleRate();
+}
+
+JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getSampleFormat(JNIEnv *env, jclass obj) {
+  return env->NewStringUTF(player.getSampleFormat().c_str());
+}
+
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getBitrate(JNIEnv *env, jclass obj) {
+  return player.getBitrate();
+}
+
+JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getCodecName(JNIEnv *env, jclass obj) {
+  return env->NewStringUTF(player.getCodecName().c_str());
+}
+
 #ifdef __cplusplus
 }
 #endif

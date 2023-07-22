@@ -26,11 +26,13 @@ public:
   bool init();
   bool destroy();
   
+  // Stream
   bool openStream();
   bool startStream();
   bool stopStream();
   bool closeStream();
   
+  // Decoder
   bool loadAudio(string audioPath);
   bool startAudio();
   void pause();
@@ -40,14 +42,18 @@ public:
   int getCurrentPosition();
   void seekTo(int time_ms);
   
-  bool isPlaying() {
-    return playing;
-  }
-
   bool isStopped();
+  bool isPlaying();
   
   void setRepeat(bool repeat);
   bool isRepeat();
+  
+  // Audio params
+  int getChannels();
+  int getSampleRate();
+  string getSampleFormat();
+  int getBitrate();
+  string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
   
