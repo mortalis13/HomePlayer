@@ -1368,6 +1368,9 @@ public class MainActivity extends AppCompatActivity {
       timeTotal   = String.format("%03d.%03d",  totalTime / 1000,   totalTime % 1000);
     }
     else {
+      totalTime = totalTime / 1000 * 1000;
+      playingTime = playingTime / 1000 * 1000;
+      
       int timeDiff = totalTime - playingTime;
       if (timeDiff < 0) timeDiff = 0;
       
