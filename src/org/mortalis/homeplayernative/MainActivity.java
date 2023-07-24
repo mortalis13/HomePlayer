@@ -279,7 +279,12 @@ public class MainActivity extends AppCompatActivity {
   
   @Override
   public void onBackPressed() {
-    changeToParentDir();
+    if (extraPanelsVisible()) {
+      hideExtraPanels();
+    }
+    else {
+      changeToParentDir();
+    }
   }
   
   @Override
@@ -948,6 +953,8 @@ public class MainActivity extends AppCompatActivity {
     markLastPlayedFile(currentPath);
     markFavorites();
     updateFavoritesStats();
+    
+    hideExtraPanels();
   }
   
   private void changeDir(File path) {
@@ -966,8 +973,6 @@ public class MainActivity extends AppCompatActivity {
     
     int scrollPos = filesAdapter.getItemPosition(prevPath);
     listLayoutManager.scrollToPosition(scrollPos);
-    
-    hideExtraPanels();
   }
   
   private void refreshCurrentDir(boolean scrollTop) {
@@ -1010,6 +1015,7 @@ public class MainActivity extends AppCompatActivity {
       if (scrollPos != -1) {
         listLayoutManager.scrollToPosition(scrollPos);
       }
+      hideExtraPanels();
     }
     else {
       changeDir(playingFile.getParentFile());
@@ -1287,13 +1293,13 @@ public class MainActivity extends AppCompatActivity {
   
   private void itemClick(ListItem item) {
     try {
-      hideExtraPanels();
-      
       File clickedFile = new File(item.path);
       if (clickedFile.isDirectory()) {
         changeDir(clickedFile);
       }
       else {
+        hideExtraPanels();
+        
         int time = 0;
         if (item.isLastPlayed) {
           if (playerService != null && (!playerService.hasAudio() || !playerService.getAudioPath().equals(item.path)) ) {
@@ -1672,13 +1678,27 @@ public class MainActivity extends AppCompatActivity {
     lyricsScroll.scrollTo(0, 0);
   }
   
+  private boolean extraPanelsVisible() {
+    return trimAudioPanel.getVisibility() == View.VISIBLE ||
+           equalizerPanel.getVisibility() == View.VISIBLE ||
+           extraInfoPanel.getVisibility() == View.VISIBLE;
+  }
+  
   private void hideExtraPanels() {
-    if (extraControlPanel.getVisibility() == View.VISIBLE) {
-      extraControlPanel.setVisibility(View.GONE);
+    if (trimAudioPanel.getVisibility() == View.VISIBLE) {
       trimAudioPanel.setVisibility(View.GONE);
       bTrimAudio.setSelected(false);
     }
-    if (extraInfoPanel.getVisibility() == View.VISIBLE) extraInfoPanel.setVisibility(View.GONE);
+    if (equalizerPanel.getVisibility() == View.VISIBLE) {
+      equalizerPanel.setVisibility(View.GONE);
+      bEqualizer.setSelected(false);
+    }
+    if (extraControlPanel.getVisibility() == View.VISIBLE) {
+      extraControlPanel.setVisibility(View.GONE);
+    }
+    if (extraInfoPanel.getVisibility() == View.VISIBLE) {
+      extraInfoPanel.setVisibility(View.GONE);
+    }
   }
   
   private void toggleExtraControlPanel() {
@@ -1692,12 +1712,20 @@ public class MainActivity extends AppCompatActivity {
       equalizerPanel.setVisibility(View.GONE);
       bEqualizer.setSelected(false);
     }
+    if (visibility == View.VISIBLE) {
+      hideExtraInfoPanel();
+    }
   }
   
   private void toggleTrimAudioPanel() {
     logd("toggleTrimAudioPanel()");
     int visibility = trimAudioPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
     trimAudioPanel.setVisibility(visibility);
+    
+    if (visibility == View.VISIBLE) {
+      equalizerPanel.setVisibility(View.GONE);
+      bEqualizer.setSelected(false);
+    }
   }
   
   private void toggleEqualizerPanel() {
@@ -1705,6 +1733,9 @@ public class MainActivity extends AppCompatActivity {
     extraControlPanel.post(() -> { 
       int visibility = equalizerPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
       if (visibility == View.VISIBLE) {
+        trimAudioPanel.setVisibility(View.GONE);
+        bTrimAudio.setSelected(false);
+        
         int[] location = new int[2];
         extraControlPanel.getLocationOnScreen(location);
         int control_panel_y = location[1];
@@ -1725,7 +1756,9 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleExtraInfoPanel() {
-    if (extraInfoPanel.getVisibility() == View.GONE) {
+    int visibility = extraInfoPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    if (visibility == View.VISIBLE) {
+      hideExtraPanels();
       showExtraAudioInfo();
     }
     else {
