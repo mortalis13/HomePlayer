@@ -19,6 +19,11 @@ public class EngineNative {
   public static native boolean isStopped();
   public static native void setRepeat(boolean repeat);
   
+  public static native void enableFilter();
+  public static native void disableFilter();
+  public static native void setFilterFrequency(int band, float frequency);
+  public static native void setFilterGain(int band, float gain);
+  
   public static native int getChannels();
   public static native int getSampleRate();
   public static native String getSampleFormat();

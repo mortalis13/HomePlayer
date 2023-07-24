@@ -107,6 +107,26 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_seekT
 }
 
 
+// Filter
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_enableFilter(JNIEnv *env, jclass obj) {
+  LOGD(__func__);
+  player.enableFilter();
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_disableFilter(JNIEnv *env, jclass obj) {
+  LOGD(__func__);
+  player.disableFilter();
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterFrequency(JNIEnv *env, jclass obj, jint band, jfloat hz) {
+  player.setFilterFrequency(band, hz);
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterGain(JNIEnv *env, jclass obj, jint band, jfloat db) {
+  player.setFilterGain(band, db);
+}
+
+
 // Audio params
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getChannels(JNIEnv *env, jclass obj) {
   LOGD(__func__);

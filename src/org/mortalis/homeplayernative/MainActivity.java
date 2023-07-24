@@ -26,6 +26,7 @@ import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.HorizontalScrollView;
@@ -47,6 +48,8 @@ import com.google.android.material.color.MaterialColors;
 import org.mortalis.homeplayernative.components.ProgressSliderView;
 import org.mortalis.homeplayernative.components.VolumeSliderView;
 import org.mortalis.homeplayernative.components.TrimSliderView;
+import org.mortalis.homeplayernative.components.EqualizerView;
+
 import org.mortalis.homeplayernative.decoder.DecoderNative;
 import org.mortalis.homeplayernative.decoder.DecoderResult;
 import org.mortalis.homeplayernative.jni.EngineNative;
@@ -145,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
   private ImageView playExtraIconShuffle;
   private ImageView playExtraIconRepeat;
   private ImageView playExtraIconTrim;
+  private ImageView playExtraIconEQ;
   
   private LinearLayout panelInfoLeft;
   private LinearLayout panelInfoCenter;
@@ -153,12 +157,16 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout extraControlPanel;
   private ImageButton bShuffle;
   private ImageButton bTrimAudio;
+  private ImageButton bEqualizer;
   private ImageButton bRepeat;
   
   private RelativeLayout trimAudioPanel;
   private TrimSliderView trimAudioSlider;
   private TextView textTrimValue;
   private TextView textTrimMax;
+  
+  private LinearLayout equalizerPanel;
+  private EqualizerView equalizerView;
   
   private LinearLayout extraInfoPanel;
   private ScrollView mainScroll;
@@ -199,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout totalFavoritesBlock;
   private TextView textTotalFavorites;
   
+  private LinearLayout statusPanel;
   private VolumeSliderView volumeSlider;
   
   static {
@@ -221,9 +230,9 @@ public class MainActivity extends AppCompatActivity {
     Fun.createNotificationChannel(context);
     
     init();
-    initEngine();
     configUI();
     restoreState();
+    initEngine();
     
     File dir = lastFolder == null ? START_DIR: new File(lastFolder);
     changeDir(dir);
@@ -372,6 +381,12 @@ public class MainActivity extends AppCompatActivity {
     new Thread(() -> {
       EngineNative.startEngine();
       log("Audio engine started");
+      
+      for (int band = 0; band < equalizerView.getBandsCount(); band++) {
+        EngineNative.setFilterFrequency(band + 1, equalizerView.getBandFrequency(band));
+        float gain = equalizerView.getBandGain(band);
+        if (gain != 0) EngineNative.setFilterGain(band + 1, gain);
+      }
     }).start();
   }
   
@@ -398,12 +413,16 @@ public class MainActivity extends AppCompatActivity {
     extraControlPanel = findViewById(R.id.extraControlPanel);
     bShuffle = findViewById(R.id.bShuffle);
     bTrimAudio = findViewById(R.id.bTrimAudio);
+    bEqualizer = findViewById(R.id.bEqualizer);
     bRepeat = findViewById(R.id.bRepeat);
     
     trimAudioPanel = findViewById(R.id.trimAudioPanel);
     trimAudioSlider = findViewById(R.id.trimAudioSlider);
     textTrimValue = findViewById(R.id.textTrimValue);
     textTrimMax = findViewById(R.id.textTrimMax);
+    
+    equalizerPanel = findViewById(R.id.equalizerPanel);
+    equalizerView = findViewById(R.id.equalizerView);
     
     extraInfoPanel = findViewById(R.id.extraInfoPanel);
     mainScroll = findViewById(R.id.mainScroll);
@@ -445,6 +464,7 @@ public class MainActivity extends AppCompatActivity {
     playExtraIconShuffle = findViewById(R.id.playExtraIconShuffle);
     playExtraIconRepeat = findViewById(R.id.playExtraIconRepeat);
     playExtraIconTrim = findViewById(R.id.playExtraIconTrim);
+    playExtraIconEQ = findViewById(R.id.playExtraIconEQ);
     
     textTotalFiles = findViewById(R.id.textTotalFiles);
     textTotalSize = findViewById(R.id.textTotalSize);
@@ -454,6 +474,7 @@ public class MainActivity extends AppCompatActivity {
     totalFavoritesBlock = findViewById(R.id.totalFavoritesBlock);
     textTotalFavorites = findViewById(R.id.textTotalFavorites);
     
+    statusPanel = findViewById(R.id.statusPanel);
     volumeSlider = findViewById(R.id.volumeSlider);
     
     // Init components
@@ -535,6 +556,11 @@ public class MainActivity extends AppCompatActivity {
     bTrimAudio.setOnClickListener(v -> {
       v.setSelected(!v.isSelected());
       toggleTrimAudioPanel();
+    });
+    
+    bEqualizer.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      toggleEqualizerPanel();
     });
     
     bRepeat.setOnClickListener(v -> {
@@ -659,6 +685,27 @@ public class MainActivity extends AppCompatActivity {
       // Reset the trimming configuration until new playback is started
       audioTrimEnabled = false;
     });
+    
+    equalizerView.setChangeListener(new EqualizerView.ChangeListener() {
+      public void stateChanged(boolean enabled) {
+        if (enabled) {
+          EngineNative.enableFilter();
+        }
+        else {
+          EngineNative.disableFilter();
+        }
+        
+        int visibility = enabled ? View.VISIBLE: View.GONE;
+        if (playExtraIconEQ.getVisibility() != visibility) {
+          playExtraIconEQ.setVisibility(visibility);
+        }
+      }
+      
+      public void gainChanged(int band, float gain) {
+        Fun.saveSharedPref(context, "PREF_EQ_GAIN_BAND_" + band, gain);
+        EngineNative.setFilterGain(band, gain);
+      }
+    });
   }
   
   private void restoreState() {
@@ -685,6 +732,12 @@ public class MainActivity extends AppCompatActivity {
       log("PREF playbackShuffle: " + playbackShuffle);
       bShuffle.setSelected(playbackShuffle);
       playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
+      
+      for (int band = 0; band < equalizerView.getBandsCount(); band++) {
+        float gain = Fun.getSharedPrefFloat(context, "PREF_EQ_GAIN_BAND_" + (band + 1));
+        if (gain == -1) gain = 0;
+        equalizerView.setBandGain(band, gain);
+      }
       
       cleanPrefs();
     }
@@ -740,11 +793,6 @@ public class MainActivity extends AppCompatActivity {
     playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
     
     if (shuffleList != null) shuffleList.clear();
-  }
-  
-  private void toggleTrimAudioPanel() {
-    int visibility = trimAudioPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
-    trimAudioPanel.setVisibility(visibility);
   }
   
   private void playbackRepeatAction() {
@@ -1634,12 +1682,46 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void toggleExtraControlPanel() {
+    logd("toggleExtraControlPanel()");
     int visibility = extraControlPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
     extraControlPanel.setVisibility(visibility);
+    
     if (visibility == View.GONE) {
       trimAudioPanel.setVisibility(View.GONE);
       bTrimAudio.setSelected(false);
+      equalizerPanel.setVisibility(View.GONE);
+      bEqualizer.setSelected(false);
     }
+  }
+  
+  private void toggleTrimAudioPanel() {
+    logd("toggleTrimAudioPanel()");
+    int visibility = trimAudioPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    trimAudioPanel.setVisibility(visibility);
+  }
+  
+  private void toggleEqualizerPanel() {
+    logd("toggleEqualizerPanel()");
+    extraControlPanel.post(() -> { 
+      int visibility = equalizerPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+      if (visibility == View.VISIBLE) {
+        int[] location = new int[2];
+        extraControlPanel.getLocationOnScreen(location);
+        int control_panel_y = location[1];
+
+        statusPanel.getLocationOnScreen(location);
+        int status_panel_y = location[1];
+        
+        int eqViewHeight = status_panel_y - control_panel_y - extraControlPanel.getHeight();
+        if (eqViewHeight < 0) eqViewHeight = 0;
+        log("Changing equalizerView height => " + eqViewHeight);
+        
+        // Dynamically set EQ view height to fill the remaining space between the contorl panel and status panel
+        equalizerView.setLayoutParams(new LinearLayout.LayoutParams(equalizerView.getLayoutParams().width, eqViewHeight));
+      }
+      
+      equalizerPanel.setVisibility(visibility);
+    });
   }
   
   private void toggleExtraInfoPanel() {
@@ -1652,6 +1734,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void hideExtraInfoPanel(boolean animate) {
+    logd("hideExtraInfoPanel()");
     if (animate) {
       TranslateAnimation animation = new TranslateAnimation(0, 0, 0, -extraInfoPanel.getHeight());
       animation.setDuration(200);

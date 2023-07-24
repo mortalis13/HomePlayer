@@ -1,5 +1,6 @@
 package org.mortalis.homeplayernative;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -194,6 +195,14 @@ public class Fun {
     editor.commit();
   }
   
+  public static void saveSharedPref(Context context, String key, float value) {
+    if (context == null) return;
+    SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
+    var editor = sharedPreferences.edit();
+    editor.putFloat(key, value);
+    editor.commit();
+  }
+  
   public static void saveSharedPref(Context context, String key, boolean value) {
     if (context == null) return;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
@@ -227,6 +236,12 @@ public class Fun {
     if (context == null) return 0;
     SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
     return sharedPreferences.getInt(key, -1);
+  }
+  
+  public static float getSharedPrefFloat(Context context, String key) {
+    if (context == null) return 0;
+    SharedPreferences sharedPreferences = context.getSharedPreferences(Vars.PREFS_FILE, 0);
+    return sharedPreferences.getFloat(key, -1);
   }
   
   public static boolean getSharedPrefBool(Context context, String key) {

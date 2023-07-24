@@ -4,13 +4,24 @@
 #include "utils/logging.h"
 
 
+FilePlayer::FilePlayer() {
+  this->filters = new PeakingFilter[FILTER_BANDS_NUMBER];
+  for (int band = 0; band < FILTER_BANDS_NUMBER; ++band) {
+    this->filters[band].setSampleRate(STREAM_SAMPLE_RATE);
+    this->filters[band].setQFactor(1.0);
+  }
+}
+
+
 bool FilePlayer::init() {
+  LOGD("init()");
   if (!this->openStream()) return false;
   if (!this->startStream()) return false;
   return true;
 }
 
 bool FilePlayer::destroy() {
+  LOGD("destroy()");
   this->playing = false;
   
   if (this->decoder != NULL) {
@@ -179,6 +190,32 @@ void FilePlayer::seekTo(int time_ms) {
 }
 
 
+// ==> Filter
+void FilePlayer::enableFilter() {
+  LOGD("enableFilter()");
+  for (int band = 0; band < FILTER_BANDS_NUMBER; ++band) {
+    this->filters[band].reset();
+  }
+  this->isFilterEnabled = true;
+}
+
+void FilePlayer::disableFilter() {
+  LOGD("disableFilter()");
+  this->isFilterEnabled = false;
+}
+
+void FilePlayer::setFilterFrequency(int band, float frequency) {
+  LOGD("setFilterFrequency(): %d => %.0f Hz", band, frequency);
+  this->filters[band-1].setFrequency(frequency);
+}
+
+void FilePlayer::setFilterGain(int band, float gain) {
+  float frequency = this->filters[band-1].getFrequency();
+  LOGD("setFilterGain(): %d [%.0f Hz] => %+.1f dB", band, frequency, gain);
+  this->filters[band-1].setGainDb(gain);
+}
+
+
 // ==> Audio params
 int FilePlayer::getChannels() {
   if (!this->decoder || !this->decoder->isLoaded()) return 0;
@@ -206,7 +243,25 @@ string FilePlayer::getCodecName() {
 }
 
 
+void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) {
+  for (int i = 0; i < numFrames; ++i) {
+    for (int ch = 0; ch < channels; ++ch) {
+      int id = i * channels + ch;
+      
+      float sample = stream[id];
+      for (int band = 0; band < FILTER_BANDS_NUMBER; ++band) {
+        sample = this->filters[band].processAudioSample(sample, ch);
+      }
+      stream[id] = sample;
+    }
+  }
+}
+
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
+  if (this->isFilterEnabled) {
+    this->filterAudio((float*) stream, numFrames, this->audioStream->getChannelCount());
+  }
+
   auto result = audioStream->write(stream, numFrames, 100);
   
   if (!result) {
