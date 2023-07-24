@@ -24,7 +24,7 @@ bool FilePlayer::destroy() {
   LOGD("destroy()");
   this->playing = false;
   
-  if (this->decoder != NULL) {
+  if (this->decoder) {
     this->decoder->pause();
   }
   
@@ -79,6 +79,7 @@ bool FilePlayer::closeStream() {
 
 bool FilePlayer::restartStream() {
   LOGD("restartStream()");
+  bool result = false;
   this->restarting = true;
   this->closeStream();
   
@@ -86,19 +87,18 @@ bool FilePlayer::restartStream() {
     auto nextState = StreamState::Uninitialized;
     int64_t ms = 100 * 1000000;  // value x nanos
     audioStream->waitForStateChange(StreamState::Starting, &nextState, ms);
-    this->restarting = false;
-    return true;
+    result = true;
   }
   
   this->restarting = false;
-  return false;
+  return result;
 }
 
 
 // ==> Decoder
 void FilePlayer::initDecoder() {
   LOGD("initDecoder()");
-  if (this->decoder != NULL) {
+  if (this->decoder) {
     this->decoder->stop();
   }
   
@@ -110,7 +110,6 @@ void FilePlayer::initDecoder() {
 bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio()");
   this->playing = false;
-  
   this->initDecoder();
   
   int result = this->decoder->loadFile(audioPath);
@@ -120,7 +119,7 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 bool FilePlayer::startAudio() {
   LOGD("startAudio()");
-  if (this->decoder == NULL) return false;
+  if (!this->decoder) return false;
   if (!this->decoder->isLoaded()) {
     LOGE("Trying to start decoder without loading audio first");
     return false;
@@ -132,14 +131,15 @@ bool FilePlayer::startAudio() {
 }
 
 void FilePlayer::pause() {
-  if (this->decoder == NULL) return;
+  if (!this->decoder) return;
   this->decoder->pause();
   this->playing = false;
 }
 
 bool FilePlayer::resume() {
   LOGD("resume()");
-  if (this->decoder == NULL) return false;
+  if (!this->decoder) return false;
+  
   if (this->decoder->isStopped()) {
     if (!this->startAudio()) return false;
   }
@@ -152,7 +152,7 @@ bool FilePlayer::resume() {
 }
 
 bool FilePlayer::isStopped() {
-  if (this->decoder == NULL) return true;
+  if (!this->decoder) return true;
   bool decoderEnded = this->decoder->isEnded();
   if (decoderEnded) this->playing = false;
   return decoderEnded;
@@ -163,28 +163,28 @@ bool FilePlayer::isPlaying() {
 }
 
 void FilePlayer::setRepeat(bool repeat) {
-  if (this->decoder == NULL) return;
+  if (!this->decoder) return;
   this->decoder->setRepeat(repeat);
 }
 
 bool FilePlayer::isRepeat() {
-  if (this->decoder == NULL) return false;
+  if (!this->decoder) return false;
   return this->decoder->isRepeat();
 }
 
 
 int FilePlayer::getCurrentPosition() {
-  if (this->decoder == NULL) return -1;
+  if (!this->decoder) return -1;
   return this->decoder->getCurrentTime();
 }
 
 int FilePlayer::getDuration() {
-  if (this->decoder == NULL) return -1;
+  if (!this->decoder) return -1;
   return this->decoder->getDuration();
 }
 
 void FilePlayer::seekTo(int time_ms) {
-  if (this->decoder == NULL) return;
+  if (!this->decoder) return;
   if (time_ms < 0) time_ms = 0;
   this->decoder->seekTo(time_ms);
 }
@@ -206,12 +206,15 @@ void FilePlayer::disableFilter() {
 
 void FilePlayer::setFilterFrequency(int band, float frequency) {
   LOGD("setFilterFrequency(): %d => %.0f Hz", band, frequency);
+  // band is order number from 1 to total bands
+  if (band < 1 || band > FILTER_BANDS_NUMBER) return;
   this->filters[band-1].setFrequency(frequency);
 }
 
 void FilePlayer::setFilterGain(int band, float gain) {
   float frequency = this->filters[band-1].getFrequency();
   LOGD("setFilterGain(): %d [%.0f Hz] => %+.1f dB", band, frequency, gain);
+  if (band < 1 || band > FILTER_BANDS_NUMBER) return;
   this->filters[band-1].setGainDb(gain);
 }
 

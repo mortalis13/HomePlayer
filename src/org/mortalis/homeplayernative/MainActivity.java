@@ -1731,12 +1731,13 @@ public class MainActivity extends AppCompatActivity {
   
   private void toggleEqualizerPanel() {
     logd("toggleEqualizerPanel()");
-    extraControlPanel.post(() -> { 
-      int visibility = equalizerPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
-      if (visibility == View.VISIBLE) {
-        trimAudioPanel.setVisibility(View.GONE);
-        bTrimAudio.setSelected(false);
-        
+    int visibility = equalizerPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+ 
+    if (visibility == View.VISIBLE) {
+      trimAudioPanel.setVisibility(View.GONE);
+      bTrimAudio.setSelected(false);
+      
+      extraControlPanel.post(() -> {
         int[] location = new int[2];
         extraControlPanel.getLocationOnScreen(location);
         int control_panel_y = location[1];
@@ -1750,10 +1751,13 @@ public class MainActivity extends AppCompatActivity {
         
         // Dynamically set EQ view height to fill the remaining space between the contorl panel and status panel
         equalizerView.setLayoutParams(new LinearLayout.LayoutParams(equalizerView.getLayoutParams().width, eqViewHeight));
-      }
-      
+        
+        equalizerPanel.setVisibility(visibility);
+      });
+    }
+    else {
       equalizerPanel.setVisibility(visibility);
-    });
+    }
   }
   
   private void toggleExtraInfoPanel() {
