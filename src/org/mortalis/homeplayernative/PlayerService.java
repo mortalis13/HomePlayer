@@ -29,6 +29,7 @@ import org.mortalis.homeplayernative.jni.EngineNative;
 
 import static org.mortalis.homeplayernative.Fun.log;
 import static org.mortalis.homeplayernative.Fun.logd;
+import static org.mortalis.homeplayernative.Fun.logw;
 import static org.mortalis.homeplayernative.Fun.loge;
 
 import java.io.File;
@@ -216,6 +217,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       loge("Audio focus is not granted");
       return false;
     }
+    
+    if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
+      log("Stream closed. Restarting");
+      EngineNative.startEngine();
+    }
 
     int result = EngineNative.resumeAudio();
     if (result != 0) {
@@ -242,9 +248,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public void pause() {
-    if (this.isPlaying()) {
-      EngineNative.pauseAudio();
-    }
+    logd("pause()");
+    if (!this.isPlaying()) return;
+    EngineNative.pauseAudio();
     sendPlayerPaused();
     updateNotification(ACTION_PLAY_ID);
   }
@@ -270,6 +276,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("loadAudio()");
 
     try {
+      if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
+        log("Stream closed. Restarting");
+        EngineNative.startEngine();
+      }
+      
       if (Fun.fileExists(audioPath)) {
         int result = EngineNative.loadAudio(audioPath);
 
@@ -602,7 +613,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
         int state = intent.getIntExtra("state", 0);
         if (state == 1) {
           log("Headphones plugged");
-          EngineNative.startEngine();
+          pause();
+          if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
+            logw("Stream closed. Restarting");
+            EngineNative.startEngine();
+          }
         }
         onHeadphonesPlugAction.execute(state);
       }

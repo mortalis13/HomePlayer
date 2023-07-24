@@ -14,12 +14,21 @@ bool FilePlayer::destroy() {
   this->playing = false;
   
   if (this->decoder != NULL) {
-    this->decoder->stop();
+    this->decoder->pause();
   }
   
   this->stopStream();
   this->closeStream();
   return true;
+}
+
+bool FilePlayer::isStreamClosed() {
+  if (!this->audioStream) return true;
+  return this->audioStream->getState() == StreamState::Closed;
+}
+
+bool FilePlayer::isRestarting() {
+  return this->restarting;
 }
 
 
@@ -59,15 +68,18 @@ bool FilePlayer::closeStream() {
 
 bool FilePlayer::restartStream() {
   LOGD("restartStream()");
+  this->restarting = true;
   this->closeStream();
   
   if (this->init()) {
     auto nextState = StreamState::Uninitialized;
     int64_t ms = 100 * 1000000;  // value x nanos
     audioStream->waitForStateChange(StreamState::Starting, &nextState, ms);
+    this->restarting = false;
     return true;
   }
   
+  this->restarting = false;
   return false;
 }
 

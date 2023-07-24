@@ -23,6 +23,7 @@ public:
   FilePlayer() {}
   ~FilePlayer() {}
   
+  // Engine
   bool init();
   bool destroy();
   
@@ -31,6 +32,8 @@ public:
   bool startStream();
   bool stopStream();
   bool closeStream();
+  bool isStreamClosed();
+  bool isRestarting();
   
   // Decoder
   bool loadAudio(string audioPath);
@@ -69,6 +72,7 @@ private:
   
   bool playing = false;
   bool seeking = false;
+  bool restarting = false;
 
   shared_ptr<AudioDecoder> decoder;
   
