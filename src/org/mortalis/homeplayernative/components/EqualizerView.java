@@ -19,12 +19,14 @@ import com.google.android.material.color.MaterialColors;
 import org.mortalis.homeplayernative.Fun;
 import org.mortalis.homeplayernative.R;
 import static org.mortalis.homeplayernative.Fun.log;
+import static org.mortalis.homeplayernative.Fun.loge;
 
 
 public class EqualizerView extends View {
   
-  public static final int MAX_BANDS = 8;
-  public static final float MAX_UNITS = 20f;  // 10dB
+  public static final int MIN_BANDS = 6;
+  public static final int MAX_BANDS = 10;
+  public static final float MAX_UNITS = 20f;  // 20dB
   
   public static final int SIDE_MARGIN = 20;
   public static final int CENTRAL_MARK_WIDTH = 12;  // px
@@ -48,6 +50,7 @@ public class EqualizerView extends View {
   private int canvasHeight;
   
   private List<Band> bands;
+  private int bandsCount;
   
   private float bandTextYOffset;
   private float bandHeight;
@@ -119,28 +122,10 @@ public class EqualizerView extends View {
     activationButtonHeight = Math.round(getResources().getDimension(R.dimen.eq_activation_button_height));
     
     bands = new ArrayList<>(MAX_BANDS);
-    for (int i = 0; i < MAX_BANDS; i++) {
-      bands.add(new Band());
-    }
-    
-    fillBandFrequencies();
     
     this.canvasRect = new RectF();
     this.activationButtonRect = new RectF();
     this.bandCenterRect = new RectF();
-  }
-  
-  private void fillBandFrequencies() {
-    if (bands.size() == 8) {
-      bands.get(0).frequency = 50f;
-      bands.get(1).frequency = 200f;
-      bands.get(2).frequency = 400f;
-      bands.get(3).frequency = 900f;
-      bands.get(4).frequency = 1500f;
-      bands.get(5).frequency = 4000f;
-      bands.get(6).frequency = 10000f;
-      bands.get(7).frequency = 18000f;
-    }
   }
   
   private void rebuildBandGain(int bandNum) {
@@ -330,12 +315,40 @@ public class EqualizerView extends View {
   }
   
   
+  private void fillBandFrequencies() {
+    if (bands.size() == 8) {
+      bands.get(0).frequency = 50f;
+      bands.get(1).frequency = 200f;
+      bands.get(2).frequency = 400f;
+      bands.get(3).frequency = 900f;
+      bands.get(4).frequency = 1500f;
+      bands.get(5).frequency = 4000f;
+      bands.get(6).frequency = 10000f;
+      bands.get(7).frequency = 18000f;
+    }
+  }
+  
+  public void setupBands(int bandsCount) {
+    if (bandsCount < MIN_BANDS || bandsCount > MAX_BANDS) {
+      loge("Incorrect number of EQ bands, not within [%d, %d]", MIN_BANDS, MAX_BANDS);
+      return;
+    }
+    
+    this.bandsCount = bandsCount;
+    bands.clear();
+    for (int i = 0; i < bandsCount; i++) {
+      bands.add(new Band());
+    }
+    fillBandFrequencies();
+  }
+  
+  
   public void setChangeListener(ChangeListener changeListener) {
     this.changeListener = changeListener;
   }
   
   public int getBandsCount() {
-    return MAX_BANDS;
+    return this.bandsCount;
   }
   
   public float getBandFrequency(int band) {
