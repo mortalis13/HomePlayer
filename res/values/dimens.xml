@@ -18,11 +18,11 @@
   <dimen name="trim_slider_border_width">0dp</dimen>
   <dimen name="trim_slider_snap_size">2dp</dimen>
   
-  <dimen name="eq_band_height">40dp</dimen>
+  <dimen name="eq_band_height">42dp</dimen>
   <dimen name="eq_band_text_size">14dp</dimen>
   
-  <dimen name="eq_activation_button_width">44dp</dimen>
-  <dimen name="eq_activation_button_height">44dp</dimen>
+  <dimen name="eq_activation_button_width">62dp</dimen>
+  <dimen name="eq_activation_button_height">58dp</dimen>
   
   <dimen name="favorite_mark_width">4.5dp</dimen>
   <dimen name="favorite_mark_height">36dp</dimen>
