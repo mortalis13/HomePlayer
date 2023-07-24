@@ -382,19 +382,6 @@ public class MainActivity extends AppCompatActivity {
     bindPlayerService();
   }
   
-  private void initEngine() {
-    new Thread(() -> {
-      EngineNative.startEngine();
-      log("Audio engine started");
-      
-      for (int band = 0; band < equalizerView.getBandsCount(); band++) {
-        EngineNative.setFilterFrequency(band + 1, equalizerView.getBandFrequency(band));
-        float gain = equalizerView.getBandGain(band);
-        if (gain != 0) EngineNative.setFilterGain(band + 1, gain);
-      }
-    }).start();
-  }
-  
   private void configUI() {
     // Find views
     titleScroller = findViewById(R.id.titleScroller);
@@ -691,6 +678,7 @@ public class MainActivity extends AppCompatActivity {
       audioTrimEnabled = false;
     });
     
+    equalizerView.setupBands(Vars.EQ_BANDS);
     equalizerView.setChangeListener(new EqualizerView.ChangeListener() {
       public void stateChanged(boolean enabled) {
         if (enabled) {
@@ -749,6 +737,19 @@ public class MainActivity extends AppCompatActivity {
     catch (Exception e) {
       e.printStackTrace();
     }
+  }
+  
+  private void initEngine() {
+    new Thread(() -> {
+      EngineNative.startEngine();
+      log("Audio engine started");
+      
+      for (int band = 0; band < equalizerView.getBandsCount(); band++) {
+        EngineNative.setFilterFrequency(band + 1, equalizerView.getBandFrequency(band));
+        float gain = equalizerView.getBandGain(band);
+        if (gain != 0) EngineNative.setFilterGain(band + 1, gain);
+      }
+    }).start();
   }
   
   

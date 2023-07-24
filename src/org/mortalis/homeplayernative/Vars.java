@@ -24,6 +24,8 @@ public class Vars {
   public static final int MIN_PLAYABLE_TIME = 2000;  // ms
   public static final int MAX_TRIM = 300;  // s
   
+  public static final int EQ_BANDS = 8;
+  
   public static final boolean SHOW_TIME_MS = false;
   
   public static final String[] AUDIO_EXTS = new String[] {
