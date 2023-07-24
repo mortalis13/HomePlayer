@@ -26,9 +26,7 @@ public:
     this->streamWriter = streamWriter;
   }
   
-  ~AudioDecoder() {
-    this->cleanup();
-  }
+  ~AudioDecoder();
   
   int loadFile(string filePath);
   

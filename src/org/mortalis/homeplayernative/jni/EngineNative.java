@@ -3,6 +3,8 @@ package org.mortalis.homeplayernative.jni;
 public class EngineNative {
   public static native int startEngine();
   public static native int stopEngine();
+  public static native boolean isStreamClosed();
+  public static native boolean isStreamRestarting();
 
   public static native int loadAudio(String audioPath);
   public static native int playAudio();

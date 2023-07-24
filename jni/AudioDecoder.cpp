@@ -8,6 +8,15 @@
 #include "utils/logging.h"
 
 
+AudioDecoder::~AudioDecoder() {
+  LOGD("~AudioDecoder()");
+  if (!isStopped()) {
+    stop();
+  }
+  this->cleanup();
+}
+
+
 void AudioDecoder::start() {
   LOGD("start()");
   this->playing = true;
