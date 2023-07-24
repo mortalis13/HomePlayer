@@ -93,7 +93,7 @@
     <FrameLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_above="@+id/status_block"
+      android:layout_above="@+id/statusPanel"
       android:layout_alignParentTop="true"
     >
     <!-- =========== File browser =========== -->

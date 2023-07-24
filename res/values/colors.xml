@@ -49,6 +49,18 @@
   <color name="toggle_button_background_selected">#bacad1</color>
   <color name="toggle_button_background_default">@color/transparent</color>
   
+  <color name="eq_button_background_pressed">#999</color>
+  <color name="eq_button_background_selected">#71ad75</color>
+  <color name="eq_button_background_default">#aaa</color>
+  
+  <color name="eq_background">@color/transparent</color>
+  <color name="eq_activation_button_background">#4b4b4b</color>
+  <color name="eq_activation_button_active_background">#496e4c</color>
+  <color name="eq_band_background">#3e3e3e</color>
+  <color name="eq_band_progress_background">#62536b</color>
+  <color name="eq_band_center_background">#232323</color>
+  <color name="eq_band_text_color">#fff</color>
+  
   <color name="panel_toggle_button_background_pressed">#ccc</color>
   <color name="panel_toggle_button_background_selected">#ccc</color>
   <color name="panel_toggle_button_background_default">@color/transparent</color>
@@ -108,6 +120,18 @@
   
   <color name="toggle_button_background_pressed_dark">#4b585e</color>
   <color name="toggle_button_background_selected_dark">#516066</color>
+
+  <color name="eq_button_background_pressed_dark">#555</color>
+  <color name="eq_button_background_selected_dark">#71ad75</color>
+  <color name="eq_button_background_default_dark">#444</color>
+  
+  <color name="eq_background_dark">@color/transparent</color>
+  <color name="eq_activation_button_background_dark">#4b4b4b</color>
+  <color name="eq_activation_button_active_background_dark">#496e4c</color>
+  <color name="eq_band_background_dark">#3e3e3e</color>
+  <color name="eq_band_progress_background_dark">#62536b</color>
+  <color name="eq_band_center_background_dark">#aaa</color>
+  <color name="eq_band_text_color_dark">#fff</color>
   
   <color name="panel_toggle_button_background_pressed_dark">#454545</color>
   <color name="panel_toggle_button_background_selected_dark">#454545</color>

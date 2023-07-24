@@ -42,6 +42,18 @@
   <attr name="toggleButtonBackgroundSelected" format="color"/>
   <attr name="toggleButtonBackgroundDefault" format="color"/>
   
+  <attr name="eqButtonBackgroundPressed" format="color"/>
+  <attr name="eqButtonBackgroundSelected" format="color"/>
+  <attr name="eqButtonBackgroundDefault" format="color"/>
+  
+  <attr name="eqBackground" format="color"/>
+  <attr name="eqActivationButtonBackground" format="color"/>
+  <attr name="eqActivationButtonActiveBackground" format="color"/>
+  <attr name="eqBandBackground" format="color"/>
+  <attr name="eqBandProgressBackground" format="color"/>
+  <attr name="eqBandCenterBackground" format="color"/>
+  <attr name="eqBandTextColor" format="color"/>
+  
   <attr name="panelToggleButtonBackgroundPressed" format="color"/>
   <attr name="panelToggleButtonBackgroundSelected" format="color"/>
   <attr name="panelToggleButtonBackgroundDefault" format="color"/>

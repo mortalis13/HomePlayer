@@ -48,6 +48,16 @@
   />
   
   <ImageButton
+    android:id="@+id/bEqualizer"
+    android:layout_width="60dp"
+    android:layout_height="match_parent"
+    android:src="@drawable/baseline_equalizer_black_24"
+    android:tint="?secondaryTextColor"
+    android:background="@color/panel_toggle_button_background"
+    android:layout_toRightOf="@+id/bTrimAudio"
+  />
+  
+  <ImageButton
     android:id="@+id/bRepeat"
     android:layout_width="60dp"
     android:layout_height="match_parent"
@@ -67,6 +77,8 @@
 </RelativeLayout>
 
 <include layout="@layout/main_trim_audio_panel"/>
+
+<include layout="@layout/main_equalizer_panel"/>
 
 </LinearLayout>
 

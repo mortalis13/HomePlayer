@@ -101,6 +101,26 @@
           android:visibility="gone"
         />
       </RelativeLayout>
+      
+      <RelativeLayout
+          android:layout_width="16dp"
+          android:layout_height="16dp"
+          android:layout_marginRight="16dp"
+          android:layout_marginBottom="6dp"
+          android:layout_alignParentRight="true"
+          android:layout_alignParentBottom="true"
+      >
+        <ImageView
+          android:id="@+id/playExtraIconEQ"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_gravity="center"
+          android:gravity="center"
+          android:tint="?extraIconTintColor"
+          android:src="@drawable/baseline_equalizer_black_24"
+          android:visibility="gone"
+        />
+      </RelativeLayout>
     </RelativeLayout>
   </FrameLayout>
   <ImageButton

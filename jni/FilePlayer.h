@@ -18,10 +18,13 @@ class FilePlayer : public AudioStreamWriter {
 static const AudioFormat STREAM_SAMPLE_FORMAT = AudioFormat::Float;
 static const int STREAM_CHANNELS = 2;
 static const int STREAM_SAMPLE_RATE = 44100;
+static const int FILTER_BANDS_NUMBER = 8;
 
 public:
-  FilePlayer() {}
-  ~FilePlayer() {}
+  FilePlayer();
+  ~FilePlayer() {
+    delete[] this->filters;
+  }
   
   // Engine
   bool init();
@@ -51,6 +54,13 @@ public:
   void setRepeat(bool repeat);
   bool isRepeat();
   
+  // Filter
+  void enableFilter();
+  void disableFilter();
+  
+  void setFilterFrequency(int band, float frequency);
+  void setFilterGain(int band, float gain);
+  
   // Audio params
   int getChannels();
   int getSampleRate();
@@ -59,14 +69,15 @@ public:
   string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
-  
+
+
 private:
-  bool loadFile(string audioPath);
+  bool restartStream();
 
   void initDecoder();
-  void emptyQueue();
+  bool loadFile(string audioPath);
   
-  bool restartStream();
+  void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
 private:
   
@@ -74,9 +85,11 @@ private:
   bool seeking = false;
   bool restarting = false;
 
-  shared_ptr<AudioDecoder> decoder;
-  
   shared_ptr<AudioStream> audioStream;
+  shared_ptr<AudioDecoder> decoder;
+
+  PeakingFilter* filters;
+  bool isFilterEnabled = false;
 
 };
 #endif //FILE_PLAYER_H
