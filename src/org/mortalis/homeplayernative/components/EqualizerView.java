@@ -61,7 +61,8 @@ public class EqualizerView extends View {
   private float bandsAreaY;
   
   private boolean bandSelected;
-  private boolean hasMoved;
+  private boolean bandCenterSelected;
+
   private int currentBand;
   private float startX;
   private float startGain;
@@ -166,23 +167,23 @@ public class EqualizerView extends View {
   
   private void rebuildUI() {
     this.pixelsPerUnit = (float) this.canvasWidth / 2 / MAX_UNITS;
-    this.margin = (float) (this.canvasHeight - this.activationButtonHeight - bands.size() * this.bandHeight) / (bands.size() + 2);
+    this.margin = (float) (this.canvasHeight - this.activationButtonHeight - bands.size() * this.bandHeight) / (bands.size());
     
     float bandMargin = margin;
     if (bandMargin < 0) bandMargin = 0;
     
-    this.bandsAreaY = margin + this.activationButtonHeight + margin;
+    this.bandsAreaY = this.activationButtonHeight;
     
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
-    this.activationButtonRect.set(SIDE_MARGIN, margin, SIDE_MARGIN + this.activationButtonWidth, margin + this.activationButtonHeight);
+    this.activationButtonRect.set(this.canvasWidth - this.activationButtonWidth, 0, this.canvasWidth, this.activationButtonHeight);
     
     float centralX0 = this.canvasRect.centerX() - CENTRAL_MARK_WIDTH / 2;
-    float centralY0 = this.activationButtonRect.bottom + margin;
+    float centralY0 = this.activationButtonRect.bottom;
     this.bandCenterRect.set(centralX0, centralY0, centralX0 + CENTRAL_MARK_WIDTH, this.canvasHeight - margin);
     
     for (int i = 0; i < bands.size(); i++) {
       Band band = bands.get(i);
-      float bandY = (this.activationButtonRect.bottom + margin) + i * (this.bandHeight + bandMargin);
+      float bandY = this.activationButtonRect.bottom + i * (this.bandHeight + bandMargin);
       band.rect = new RectF(0, bandY, this.canvasWidth, bandY + this.bandHeight);
       
       if (band.frequency >= 1000) {
@@ -205,6 +206,22 @@ public class EqualizerView extends View {
     invalidate();
   }
   
+  private void onGainChanged(int band, float gain) {
+    bands.get(band).gain = gain;
+    rebuildBandGain(band);
+    if (this.changeListener != null) {
+      this.changeListener.gainChanged(band + 1, gain);
+    }
+  }
+  
+  private void onActiveButton() {
+    this.enabled = !this.enabled;
+    invalidate();
+    if (this.changeListener != null) {
+      this.changeListener.stateChanged(this.enabled);
+    }
+  }
+  
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     int action = event.getAction();
@@ -213,9 +230,7 @@ public class EqualizerView extends View {
     
     if (action == MotionEvent.ACTION_DOWN) {
       if (x > this.activationButtonRect.left && x < this.activationButtonRect.right && y > this.activationButtonRect.top && y < this.activationButtonRect.bottom) {
-        this.enabled = !this.enabled;
-        invalidate();
-        if (this.changeListener != null) this.changeListener.stateChanged(this.enabled);
+        onActiveButton();
         return true;
       }
       
@@ -229,12 +244,16 @@ public class EqualizerView extends View {
           this.startX = x;
           this.currentBand = bandNum;
           this.startGain = band.gain;
+          
+          if (x >= (bandCenterRect.left - BAND_ZERO_GAP) && x <= (bandCenterRect.right + BAND_ZERO_GAP)) {
+            this.bandCenterSelected = true;
+          }
         }
       }
     }
+    
     else if (action == MotionEvent.ACTION_MOVE) {
       if (this.bandSelected) {
-        this.hasMoved = true;
         float offsetX = x - this.startX;
 
         float gain = this.startGain + offsetX / this.pixelsPerUnit;
@@ -247,24 +266,21 @@ public class EqualizerView extends View {
         
         Band band = bands.get(this.currentBand);
         if (gain != band.gain) {
-          band.gain = gain;
-          rebuildBandGain(this.currentBand);
-          if (this.changeListener != null) this.changeListener.gainChanged(this.currentBand + 1, band.gain);
+          onGainChanged(this.currentBand, gain);
         }
       }
     }
+    
     else if (action == MotionEvent.ACTION_UP) {
-      if (this.bandSelected && !this.hasMoved) {
+      if (this.bandSelected && this.bandCenterSelected) {
         Band band = bands.get(this.currentBand);
         if (band.gain != 0 && x >= (bandCenterRect.left - BAND_ZERO_GAP) && x <= (bandCenterRect.right + BAND_ZERO_GAP)) {
-          band.gain = 0;
-          rebuildBandGain(this.currentBand);
-          if (this.changeListener != null) this.changeListener.gainChanged(this.currentBand + 1, band.gain);
+          onGainChanged(this.currentBand, 0);
         }
       }
       
       this.bandSelected = false;
-      this.hasMoved = false;
+      this.bandCenterSelected = false;
       this.currentBand = -1;
       this.startX = -1;
       this.startGain = -1;
