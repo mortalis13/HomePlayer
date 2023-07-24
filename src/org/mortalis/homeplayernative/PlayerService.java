@@ -636,6 +636,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           log("Headphones unplugged");
           onHeadphonesUnplugAction.execute();
         }
+        
         else if (state == 1) {
           log("Headphones plugged");
           pause();
