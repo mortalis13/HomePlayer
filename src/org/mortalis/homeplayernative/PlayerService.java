@@ -629,6 +629,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       }
       
       else if (action.equals(AudioManager.ACTION_HEADSET_PLUG)) {
+        if (isInitialStickyBroadcast()) return;
         int state = intent.getIntExtra("state", 0);
         
         if (state == 0) {
