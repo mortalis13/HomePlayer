@@ -241,7 +241,15 @@ public class MainActivity extends AppCompatActivity {
     super.onResume();
     bindPlayerService();
     if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) playerService.resetService();
+    if (playerService != null) playerService.registerHeadphonesReceiver();
     validateCurrentDir();
+  }
+  
+  @Override
+  protected void onPause() {
+    logd("MainActivity.onPause()");
+    super.onPause();
+    if (playerService != null) playerService.unregisterHeadphonesReceiver();
   }
   
   @Override
@@ -326,7 +334,6 @@ public class MainActivity extends AppCompatActivity {
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         logd("onServiceConnected()");
-        
         var binder = (PlayerService.PlayerBinder) service;
         playerService = binder.getService();
         
@@ -340,7 +347,8 @@ public class MainActivity extends AppCompatActivity {
         playerService.onPlayerResumedAction = () -> onPlayerResumed();
         playerService.onPlayerStoppedAction = () -> onPlayerStopped();
         playerService.onPlayerErrorAction = () -> onPlayerError();
-        playerService.onHeadphonesPlugAction = (state) -> onHeadphonesPlug(state);
+        playerService.onHeadphonesUnplugAction = () -> onHeadphonesUnplug();
+        playerService.onHeadphonesPlugAction = () -> onHeadphonesPlug();
         
         serviceBound = true;
         
@@ -351,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
       }
 
       public void onServiceDisconnected(ComponentName name) {
+        logd("onServiceDisconnected()");
         playerService = null;
         serviceBound = false;
       }
@@ -1054,7 +1063,11 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void onHeadphonesPlug(int state) {
+  private void onHeadphonesUnplug() {
+    updateVolumeLevel();
+  }
+  
+  private void onHeadphonesPlug() {
     updateVolumeLevel();
   }
   
@@ -1375,8 +1388,8 @@ public class MainActivity extends AppCompatActivity {
       if (timeDiff < 0) timeDiff = 0;
       
       timePlaying = Fun.formatTime(playingTime, false, false);
-      timeLeft = "-" + Fun.formatTime(timeDiff, false, false);
-      timeTotal = Fun.formatTime(totalTime, false, false);
+      timeLeft    = "-" + Fun.formatTime(timeDiff, false, false);
+      timeTotal   = Fun.formatTime(totalTime, false, false);
     }
     
     textTimePlaying.setText(timePlaying);
@@ -1672,6 +1685,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateVolumeLevel() {
+    logd("updateVolumeLevel()");
     int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     float volumePercent = (float) volume / maxVolume * 100;
@@ -1847,12 +1861,6 @@ public class MainActivity extends AppCompatActivity {
   
   
   // --------------------
-  @Override
-  protected void onPause() {
-    logd("MainActivity.onPause()");
-    super.onPause();
-  }
-  
   @Override
   protected void onStop() {
     logd("MainActivity.onStop()");

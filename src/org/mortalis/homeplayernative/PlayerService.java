@@ -79,7 +79,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public SimpleAction onPlayerResumedAction = () -> {};
   public SimpleAction onPlayerStoppedAction = () -> {};
   public SimpleAction onPlayerErrorAction = () -> {};
-  public Action<Integer> onHeadphonesPlugAction = (arg) -> {};
+  public SimpleAction onHeadphonesUnplugAction = () -> {};
+  public SimpleAction onHeadphonesPlugAction = () -> {};
 
   @Override
   public void onCreate() {
@@ -120,7 +121,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     super.onDestroy();
 
     unregisterReceiver(playerServiceReceiver);
-    unregisterReceiver(headphonesPlugReceiver);
+    try {
+      unregisterReceiver(headphonesPlugReceiver);
+    }
+    catch (Exception e) {}
+    
     removeAudioFocus();
     EngineNative.stopEngine();
   }
@@ -179,11 +184,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     serviceFilter.addAction(ACTION_PAUSE);
     serviceFilter.addAction(ACTION_EXIT);
     registerReceiver(playerServiceReceiver, serviceFilter);
-
-    IntentFilter headphonesFilter = new IntentFilter();
-    headphonesFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-    headphonesFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
-    registerReceiver(headphonesPlugReceiver, headphonesFilter);
+    
+    registerHeadphonesReceiver();
 
     notificationManager = NotificationManagerCompat.from(this);
 
@@ -566,6 +568,20 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   
+  public void registerHeadphonesReceiver() {
+    logd("registerHeadphonesReceiver()");
+    IntentFilter headphonesFilter = new IntentFilter();
+    headphonesFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+    headphonesFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
+    registerReceiver(headphonesPlugReceiver, headphonesFilter);
+  }
+  
+  public void unregisterHeadphonesReceiver() {
+    logd("unregisterHeadphonesReceiver()");
+    unregisterReceiver(headphonesPlugReceiver);
+  }
+  
+  
   // --> AudioManager.OnAudioFocusChangeListener
   @Override
   public void onAudioFocusChange(int focusChange) {
@@ -601,27 +617,36 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   private class HeadphonesPlugReceiver extends BroadcastReceiver {
+    
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
+      
       if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
-        log("Headphones unplugged");
+        log("Headphones unplugged [noisy]");
         pause();
         try {Thread.sleep(100);} catch (Exception e) {}
         EngineNative.stopEngine();
       }
+      
       else if (action.equals(AudioManager.ACTION_HEADSET_PLUG)) {
         int state = intent.getIntExtra("state", 0);
-        if (state == 1) {
+        
+        if (state == 0) {
+          log("Headphones unplugged");
+          onHeadphonesUnplugAction.execute();
+        }
+        else if (state == 1) {
           log("Headphones plugged");
           pause();
           if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
             logw("Stream closed. Restarting");
             EngineNative.startEngine();
           }
+          onHeadphonesPlugAction.execute();
         }
-        onHeadphonesPlugAction.execute(state);
       }
     }
+    
   }
   
 }
