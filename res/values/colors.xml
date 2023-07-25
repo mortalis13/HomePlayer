@@ -49,20 +49,6 @@
   <color name="toggle_button_background_selected">#bacad1</color>
   <color name="toggle_button_background_default">@color/transparent</color>
   
-  <color name="eq_button_background_pressed">#999</color>
-  <color name="eq_button_background_selected">#71ad75</color>
-  <color name="eq_button_background_default">#aaa</color>
-  
-  <color name="eq_background">@color/transparent</color>
-  <color name="eq_activation_button_background">#4b4b4b</color>
-  <color name="eq_activation_button_active_background">#496e4c</color>
-  <color name="eq_reset_button_background">#4b4b4b</color>
-  <color name="eq_reset_button_selected_background">#496e4c</color>
-  <color name="eq_band_background">#3e3e3e</color>
-  <color name="eq_band_progress_background">#62536b</color>
-  <color name="eq_band_center_background">#232323</color>
-  <color name="eq_band_text_color">#fff</color>
-  
   <color name="panel_toggle_button_background_pressed">#ccc</color>
   <color name="panel_toggle_button_background_selected">#ccc</color>
   <color name="panel_toggle_button_background_default">@color/transparent</color>
@@ -75,6 +61,16 @@
   <color name="trim_slider_background_color">@color/transparent</color>
   <color name="trim_slider_progress_color">#c0b4c6</color>
   <color name="trim_slider_border_color">@color/transparent</color>
+  
+  <color name="eq_background">@color/transparent</color>
+  <color name="eq_activation_button_background">#bbb</color>
+  <color name="eq_activation_button_active_background">#7faa81</color>
+  <color name="eq_reset_button_background">#999</color>
+  <color name="eq_reset_button_selected_background">#bbb</color>
+  <color name="eq_band_background">#ccc</color>
+  <color name="eq_band_progress_background">#bca7c9</color>
+  <color name="eq_band_center_background">#999</color>
+  <color name="eq_band_text_color">#111</color>
   
   <color name="volume_slider_background_color">@color/transparent</color>
   <color name="volume_slider_progress_color">#aec6b4</color>
@@ -123,9 +119,10 @@
   <color name="toggle_button_background_pressed_dark">#4b585e</color>
   <color name="toggle_button_background_selected_dark">#516066</color>
 
-  <color name="eq_button_background_pressed_dark">#555</color>
-  <color name="eq_button_background_selected_dark">#71ad75</color>
-  <color name="eq_button_background_default_dark">#444</color>
+  <color name="panel_toggle_button_background_pressed_dark">#454545</color>
+  <color name="panel_toggle_button_background_selected_dark">#454545</color>
+  
+  <color name="trim_slider_progress_color_dark">#7f7087</color>
   
   <color name="eq_background_dark">@color/transparent</color>
   <color name="eq_activation_button_background_dark">#4b4b4b</color>
@@ -136,11 +133,6 @@
   <color name="eq_band_progress_background_dark">#62536b</color>
   <color name="eq_band_center_background_dark">#aaa</color>
   <color name="eq_band_text_color_dark">#fff</color>
-  
-  <color name="panel_toggle_button_background_pressed_dark">#454545</color>
-  <color name="panel_toggle_button_background_selected_dark">#454545</color>
-  
-  <color name="trim_slider_progress_color_dark">#7f7087</color>
   
   <color name="volume_slider_progress_color_dark">#526556</color>
   <color name="volume_slider_progress_medium_color_dark">#b27e5e</color>
