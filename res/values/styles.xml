@@ -51,6 +51,14 @@
     <item name="toggleButtonBackgroundSelected">@color/toggle_button_background_selected</item>
     <item name="toggleButtonBackgroundDefault">@color/toggle_button_background_default</item>
     
+    <item name="panelToggleButtonBackgroundPressed">@color/panel_toggle_button_background_pressed</item>
+    <item name="panelToggleButtonBackgroundSelected">@color/panel_toggle_button_background_selected</item>
+    <item name="panelToggleButtonBackgroundDefault">@color/panel_toggle_button_background_default</item>
+    
+    <item name="trimSliderBackgroundColor">@color/trim_slider_background_color</item>
+    <item name="trimSliderProgressColor">@color/trim_slider_progress_color</item>
+    <item name="trimSliderBorderColor">@color/trim_slider_border_color</item>
+    
     <item name="eqBackground">@color/eq_background</item>
     <item name="eqActivationButtonBackground">@color/eq_activation_button_background</item>
     <item name="eqActivationButtonActiveBackground">@color/eq_activation_button_active_background</item>
@@ -60,14 +68,6 @@
     <item name="eqBandProgressBackground">@color/eq_band_progress_background</item>
     <item name="eqBandCenterBackground">@color/eq_band_center_background</item>
     <item name="eqBandTextColor">@color/eq_band_text_color</item>
-    
-    <item name="panelToggleButtonBackgroundPressed">@color/panel_toggle_button_background_pressed</item>
-    <item name="panelToggleButtonBackgroundSelected">@color/panel_toggle_button_background_selected</item>
-    <item name="panelToggleButtonBackgroundDefault">@color/panel_toggle_button_background_default</item>
-    
-    <item name="trimSliderBackgroundColor">@color/trim_slider_background_color</item>
-    <item name="trimSliderProgressColor">@color/trim_slider_progress_color</item>
-    <item name="trimSliderBorderColor">@color/trim_slider_border_color</item>
     
     <item name="volumeSliderProgressColor">@color/volume_slider_progress_color</item>
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color</item>
@@ -115,9 +115,10 @@
     <item name="toggleButtonBackgroundPressed">@color/toggle_button_background_pressed_dark</item>
     <item name="toggleButtonBackgroundSelected">@color/toggle_button_background_selected_dark</item>
     
-    <item name="eqButtonBackgroundPressed">@color/eq_button_background_pressed_dark</item>
-    <item name="eqButtonBackgroundSelected">@color/eq_button_background_selected_dark</item>
-    <item name="eqButtonBackgroundDefault">@color/eq_button_background_default_dark</item>
+    <item name="panelToggleButtonBackgroundPressed">@color/panel_toggle_button_background_pressed_dark</item>
+    <item name="panelToggleButtonBackgroundSelected">@color/panel_toggle_button_background_selected_dark</item>
+    
+    <item name="trimSliderProgressColor">@color/trim_slider_progress_color_dark</item>
     
     <item name="eqBackground">@color/eq_background_dark</item>
     <item name="eqActivationButtonBackground">@color/eq_activation_button_background_dark</item>
@@ -128,11 +129,6 @@
     <item name="eqBandProgressBackground">@color/eq_band_progress_background_dark</item>
     <item name="eqBandCenterBackground">@color/eq_band_center_background_dark</item>
     <item name="eqBandTextColor">@color/eq_band_text_color_dark</item>
-    
-    <item name="panelToggleButtonBackgroundPressed">@color/panel_toggle_button_background_pressed_dark</item>
-    <item name="panelToggleButtonBackgroundSelected">@color/panel_toggle_button_background_selected_dark</item>
-    
-    <item name="trimSliderProgressColor">@color/trim_slider_progress_color_dark</item>
     
     <item name="volumeSliderProgressColor">@color/volume_slider_progress_color_dark</item>
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color_dark</item>
