@@ -56,6 +56,8 @@
   <color name="eq_background">@color/transparent</color>
   <color name="eq_activation_button_background">#4b4b4b</color>
   <color name="eq_activation_button_active_background">#496e4c</color>
+  <color name="eq_reset_button_background">#4b4b4b</color>
+  <color name="eq_reset_button_selected_background">#496e4c</color>
   <color name="eq_band_background">#3e3e3e</color>
   <color name="eq_band_progress_background">#62536b</color>
   <color name="eq_band_center_background">#232323</color>
@@ -128,6 +130,8 @@
   <color name="eq_background_dark">@color/transparent</color>
   <color name="eq_activation_button_background_dark">#4b4b4b</color>
   <color name="eq_activation_button_active_background_dark">#496e4c</color>
+  <color name="eq_reset_button_background_dark">#aaa</color>
+  <color name="eq_reset_button_selected_background_dark">#777</color>
   <color name="eq_band_background_dark">#3e3e3e</color>
   <color name="eq_band_progress_background_dark">#62536b</color>
   <color name="eq_band_center_background_dark">#aaa</color>

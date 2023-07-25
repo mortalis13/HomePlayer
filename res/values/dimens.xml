@@ -21,8 +21,8 @@
   <dimen name="eq_band_height">42dp</dimen>
   <dimen name="eq_band_text_size">14dp</dimen>
   
-  <dimen name="eq_activation_button_width">62dp</dimen>
-  <dimen name="eq_activation_button_height">58dp</dimen>
+  <dimen name="eq_button_width">62dp</dimen>
+  <dimen name="eq_button_height">58dp</dimen>
   
   <dimen name="favorite_mark_width">4.5dp</dimen>
   <dimen name="favorite_mark_height">36dp</dimen>

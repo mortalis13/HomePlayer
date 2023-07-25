@@ -37,6 +37,9 @@ public class EqualizerView extends View {
   private Paint canvasPaint;
   private Paint activationButtonPaint;
   private Paint activationButtonActivePaint;
+  private Paint resetButtonPaint;
+  private Paint resetButtonSelectedPaint;
+  
   private Paint bandPaint;
   private Paint bandProgressPaint;
   private TextPaint bandTextPaint;
@@ -44,6 +47,7 @@ public class EqualizerView extends View {
   
   private RectF canvasRect;
   private RectF activationButtonRect;
+  private RectF resetButtonRect;
   private RectF bandCenterRect;
 
   private int canvasWidth;
@@ -55,8 +59,8 @@ public class EqualizerView extends View {
   private float bandTextYOffset;
   private int bandHeight;
   
-  private int activationButtonWidth;
-  private int activationButtonHeight;
+  private int buttonWidth;
+  private int buttonHeight;
   
   private float pixelsPerUnit;
   
@@ -69,6 +73,8 @@ public class EqualizerView extends View {
   private int currentBand;
   private float startX;
   private float startGain;
+  
+  private boolean resetPressed;
   
   private ChangeListener changeListener;
   
@@ -96,6 +102,14 @@ public class EqualizerView extends View {
     this.activationButtonActivePaint.setColor(MaterialColors.getColor(this, R.attr.eqActivationButtonActiveBackground));
     this.activationButtonActivePaint.setStyle(Paint.Style.FILL);
     
+    this.resetButtonPaint = new Paint();
+    this.resetButtonPaint.setColor(MaterialColors.getColor(this, R.attr.eqResetButtonBackground));
+    this.resetButtonPaint.setStyle(Paint.Style.FILL);
+    
+    this.resetButtonSelectedPaint = new Paint();
+    this.resetButtonSelectedPaint.setColor(MaterialColors.getColor(this, R.attr.eqResetButtonSelectedBackground));
+    this.resetButtonSelectedPaint.setStyle(Paint.Style.FILL);
+    
     this.bandPaint = new Paint();
     this.bandPaint.setColor(MaterialColors.getColor(this, R.attr.eqBandBackground));
     this.bandPaint.setStyle(Paint.Style.FILL);
@@ -118,17 +132,19 @@ public class EqualizerView extends View {
     
     bandHeight = (int) (getResources().getDimension(R.dimen.eq_band_height));
     
-    activationButtonWidth = (int) (getResources().getDimension(R.dimen.eq_activation_button_width));
-    activationButtonHeight = (int) (getResources().getDimension(R.dimen.eq_activation_button_height));
+    buttonWidth = (int) (getResources().getDimension(R.dimen.eq_button_width));
+    buttonHeight = (int) (getResources().getDimension(R.dimen.eq_button_height));
     
     bands = new ArrayList<>(MAX_BANDS);
     
     this.canvasRect = new RectF();
     this.activationButtonRect = new RectF();
+    this.resetButtonRect = new RectF();
     this.bandCenterRect = new RectF();
   }
   
-  private void rebuildBandGain(int bandNum) {
+  private void rebuildBand(int bandNum) {
+    // Updates dynamic band data (gain progress and text)
     Band band = bands.get(bandNum);
     
     float progressX = band.rect.centerX();
@@ -146,13 +162,11 @@ public class EqualizerView extends View {
     
     band.gainTextX = band.rect.right - SIDE_MARGIN - this.bandTextPaint.measureText(band.gainText);
     band.gainTextY = band.rect.centerY() + bandTextYOffset;
-    
-    invalidate();
   }
   
   private void rebuildUI() {
     this.pixelsPerUnit = (float) this.canvasWidth / 2 / MAX_UNITS;
-    this.margin = (int) ((float) (this.canvasHeight - this.activationButtonHeight - bands.size() * this.bandHeight) / bands.size());
+    this.margin = (int) ((float) (this.canvasHeight - this.buttonHeight - bands.size() * this.bandHeight) / bands.size());
     
     if (margin < 0) {
       if (Math.abs(margin) < this.bandHeight / 2) {
@@ -161,10 +175,11 @@ public class EqualizerView extends View {
       margin = 0;
     }
     
-    this.bandsAreaY = this.activationButtonHeight;
+    this.bandsAreaY = this.buttonHeight;
     
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
-    this.activationButtonRect.set(this.canvasWidth - this.activationButtonWidth, 0, this.canvasWidth, this.activationButtonHeight);
+    this.activationButtonRect.set(this.canvasWidth - this.buttonWidth, 0, this.canvasWidth, this.buttonHeight);
+    this.resetButtonRect.set(0, 0, this.buttonWidth, this.buttonHeight);
     
     float centralX0 = this.canvasRect.centerX() - CENTRAL_MARK_WIDTH / 2;
     float centralY0 = this.activationButtonRect.bottom;
@@ -190,25 +205,33 @@ public class EqualizerView extends View {
       band.frequencyTextX = SIDE_MARGIN;
       band.frequencyTextY = band.rect.centerY() + bandTextYOffset;
       
-      rebuildBandGain(i);
+      rebuildBand(i);
     }
     
     invalidate();
   }
-  
-  private void onGainChanged(int band, float gain) {
-    bands.get(band).gain = gain;
-    rebuildBandGain(band);
+
+
+  private void onActiveButton() {
     if (this.changeListener != null) {
-      this.changeListener.gainChanged(band + 1, gain);
+      this.changeListener.stateChanged(this.enabled);
     }
   }
   
-  private void onActiveButton() {
-    this.enabled = !this.enabled;
+  private void onResetButton() {
+    for (int i = 0; i < bands.size(); i++) {
+      if (bands.get(i).gain != 0) {
+        bands.get(i).gain = 0;
+        rebuildBand(i);
+        onGainChanged(i);
+      }
+    }
     invalidate();
+  }
+  
+  private void onGainChanged(int band) {
     if (this.changeListener != null) {
-      this.changeListener.stateChanged(this.enabled);
+      this.changeListener.gainChanged(band + 1, bands.get(band).gain);
     }
   }
   
@@ -224,7 +247,19 @@ public class EqualizerView extends View {
           y > this.activationButtonRect.top &&
           y < this.activationButtonRect.bottom)
       {
+        this.enabled = !this.enabled;
+        invalidate();
         onActiveButton();
+        return true;
+      }
+      
+      if (x > this.resetButtonRect.left &&
+          x < this.resetButtonRect.right &&
+          y > this.resetButtonRect.top &&
+          y < this.resetButtonRect.bottom)
+      {
+        this.resetPressed = true;
+        invalidate();
         return true;
       }
       
@@ -259,13 +294,32 @@ public class EqualizerView extends View {
         gain = (int) (gain * 10) / 10f;
         
         Band band = bands.get(this.currentBand);
-        if (gain != band.gain) {
-          onGainChanged(this.currentBand, gain);
+        if (band.gain != gain) {
+          band.gain = gain;
+          rebuildBand(this.currentBand);
+          invalidate();
+          onGainChanged(this.currentBand);
         }
       }
     }
     
     else if (action == MotionEvent.ACTION_UP) {
+      if (this.resetPressed &&
+          x > this.resetButtonRect.left &&
+          x < this.resetButtonRect.right &&
+          y > this.resetButtonRect.top &&
+          y < this.resetButtonRect.bottom)
+      {
+        this.resetPressed = false;
+        onResetButton();
+        return true;
+      }
+      
+      if (this.resetPressed) {
+        this.resetPressed = false;
+        invalidate();
+      }
+      
       if (this.bandSelected && this.bandCenterSelected) {
         Band band = bands.get(this.currentBand);
         if (band.gain != 0 &&
@@ -274,7 +328,10 @@ public class EqualizerView extends View {
             y >= band.rect.top &&
             y <= band.rect.bottom)
         {
-          onGainChanged(this.currentBand, 0);
+          band.gain = 0;
+          rebuildBand(this.currentBand);
+          invalidate();
+          onGainChanged(this.currentBand);
         }
       }
       
@@ -300,6 +357,7 @@ public class EqualizerView extends View {
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.activationButtonRect, enabled ? this.activationButtonActivePaint : this.activationButtonPaint);
+    canvas.drawRect(this.resetButtonRect, resetPressed ? this.resetButtonSelectedPaint : this.resetButtonPaint);
     
     for (int i = 0; i < bands.size(); i++) {
       Band band = bands.get(i);

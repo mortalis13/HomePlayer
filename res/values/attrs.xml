@@ -49,6 +49,8 @@
   <attr name="eqBackground" format="color"/>
   <attr name="eqActivationButtonBackground" format="color"/>
   <attr name="eqActivationButtonActiveBackground" format="color"/>
+  <attr name="eqResetButtonBackground" format="color"/>
+  <attr name="eqResetButtonSelectedBackground" format="color"/>
   <attr name="eqBandBackground" format="color"/>
   <attr name="eqBandProgressBackground" format="color"/>
   <attr name="eqBandCenterBackground" format="color"/>
