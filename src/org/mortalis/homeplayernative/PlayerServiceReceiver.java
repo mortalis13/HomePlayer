@@ -15,7 +15,6 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
   @Override
   public void onReceive(Context context, Intent intent) {
     Fun.logd("PlayerServiceReceiver.onReceive: " + intent.getAction());
-    
     if (receiverListener == null) return;
     
     String action = intent.getAction();

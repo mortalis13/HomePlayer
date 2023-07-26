@@ -55,8 +55,6 @@ public class Vars {
     "mov",
     "mp4",
     "wmv",
-    
-    // Other video
     "avi",
     "mkv",
     "webm",
