@@ -77,6 +77,10 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_resum
   return result ? 0: -1;
 }
 
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setGain(JNIEnv *env, jclass obj, jfloat gain) {
+  player.setGain(gain);
+}
+
 
 // Decoder
 JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
@@ -118,12 +122,12 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_disab
   player.disableFilter();
 }
 
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterFrequency(JNIEnv *env, jclass obj, jint band, jfloat hz) {
-  player.setFilterFrequency(band, hz);
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterFrequency(JNIEnv *env, jclass obj, jint band, jfloat frequency) {
+  player.setFilterFrequency(band, frequency);
 }
 
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterGain(JNIEnv *env, jclass obj, jint band, jfloat db) {
-  player.setFilterGain(band, db);
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterGain(JNIEnv *env, jclass obj, jint band, jfloat gain) {
+  player.setFilterGain(band, gain);
 }
 
 

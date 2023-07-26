@@ -59,6 +59,7 @@
   <attr name="eqBandProgressBackground" format="color"/>
   <attr name="eqBandCenterBackground" format="color"/>
   <attr name="eqBandTextColor" format="color"/>
+  <attr name="eqMainGainProgressBackground" format="color"/>
   
   <attr name="volumeSliderProgressColor" format="color"/>
   <attr name="volumeSliderProgressMediumColor" format="color"/>

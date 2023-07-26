@@ -37,6 +37,7 @@ public:
   bool closeStream();
   bool isStreamClosed();
   bool isRestarting();
+  void setGain(float gainDb);
   
   // Decoder
   bool loadAudio(string audioPath);
@@ -77,6 +78,7 @@ private:
   void initDecoder();
   bool loadFile(string audioPath);
   
+  void processAudio(float* stream, int32_t numFrames, int8_t channels);
   void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
 private:
@@ -84,6 +86,8 @@ private:
   bool playing = false;
   bool seeking = false;
   bool restarting = false;
+  
+  float gain = 1.0f;
 
   shared_ptr<AudioStream> audioStream;
   shared_ptr<AudioDecoder> decoder;
