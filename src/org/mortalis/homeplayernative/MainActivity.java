@@ -78,6 +78,8 @@ import org.jaudiotagger.tag.FieldKey;
 public class MainActivity extends AppCompatActivity {
 
   private static final String ROOT_DIR_TITLE = "storage";
+  
+  // Define constants from AudioManager available in the source but not in the SDK
   private static final String VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION";
   private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
   
@@ -252,7 +254,6 @@ public class MainActivity extends AppCompatActivity {
     super.onResume();
     bindPlayerService();
     if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) playerService.resetService();
-    if (playerService != null) playerService.registerHeadphonesReceiver();
     validateCurrentDir();
   }
   
@@ -260,7 +261,6 @@ public class MainActivity extends AppCompatActivity {
   protected void onPause() {
     logd("MainActivity.onPause()");
     super.onPause();
-    if (playerService != null) playerService.unregisterHeadphonesReceiver();
   }
   
   @Override

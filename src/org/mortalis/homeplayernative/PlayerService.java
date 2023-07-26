@@ -121,10 +121,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     super.onDestroy();
 
     unregisterReceiver(playerServiceReceiver);
-    try {
-      unregisterReceiver(headphonesPlugReceiver);
-    }
-    catch (Exception e) {}
+    unregisterReceiver(headphonesPlugReceiver);
     
     removeAudioFocus();
     EngineNative.stopEngine();
