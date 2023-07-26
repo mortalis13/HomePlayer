@@ -543,6 +543,10 @@ public class EqualizerView extends View {
     this.changeListener = changeListener;
   }
   
+  public float getMainGain() {
+    return this.mainGain;
+  }
+  
   public int getBandsCount() {
     return this.bandsCount;
   }

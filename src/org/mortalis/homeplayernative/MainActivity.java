@@ -698,6 +698,7 @@ public class MainActivity extends AppCompatActivity {
       
       public void mainGainChanged(float gain) {
         EngineNative.setGain(gain);
+        updateVolumeText();
       }
       
       public void gainChanged(int band, float gain) {
@@ -1811,16 +1812,26 @@ public class MainActivity extends AppCompatActivity {
     textPlayingFolderTime.setText("00:00:00");
   }
   
-  private void updateVolumeLevel() {
-    logd("updateVolumeLevel()");
+  private void updateVolumeText() {
     int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     float volumePercent = (float) volume / maxVolume * 100;
-   
-    String volumeLevel = String.format("%d%%", (int) volumePercent);
-    textVolumeLevel.setText(volumeLevel);
     
+    float equalizerGain = equalizerView.getMainGain();
+    String gainAdjustment = "";
+    if (equalizerGain != 0) {
+      gainAdjustment = String.format("%+.1f dB ", equalizerGain);
+    }
+    
+    String volumeLevel = String.format("%s%d%%", gainAdjustment, (int) volumePercent);
+    textVolumeLevel.setText(volumeLevel);
+  }
+  
+  private void updateVolumeLevel() {
+    logd("updateVolumeLevel()");
+    int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     volumeSlider.setProgress(volume);
+    updateVolumeText();
   }
   
   private void updateWaveform(String audioPath) {
