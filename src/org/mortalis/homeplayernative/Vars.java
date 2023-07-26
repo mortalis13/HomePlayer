@@ -27,6 +27,7 @@ public class Vars {
   public static final int EQ_BANDS = 8;
   
   public static final boolean SHOW_TIME_MS = false;
+  public static final boolean KEEP_SCREEN_ON = false;
   
   public static final String[] AUDIO_EXTS = new String[] {
     "flac",
