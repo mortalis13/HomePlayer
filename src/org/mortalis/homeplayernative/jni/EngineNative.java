@@ -10,6 +10,7 @@ public class EngineNative {
   public static native int playAudio();
   public static native int pauseAudio();
   public static native int resumeAudio();
+  public static native void setGain(float gain);
   
   public static native int getDuration();
   public static native int getCurrentPosition();

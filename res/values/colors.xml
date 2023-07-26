@@ -71,6 +71,8 @@
   <color name="eq_band_progress_background">#bca7c9</color>
   <color name="eq_band_center_background">#999</color>
   <color name="eq_band_text_color">#111</color>
+  <color name="eq_main_gain_progress_background">#33709f92</color>
+  <color name="eq_main_gain_text_color">#111</color>
   
   <color name="volume_slider_background_color">@color/transparent</color>
   <color name="volume_slider_progress_color">#aec6b4</color>
@@ -133,6 +135,8 @@
   <color name="eq_band_progress_background_dark">#62536b</color>
   <color name="eq_band_center_background_dark">#aaa</color>
   <color name="eq_band_text_color_dark">#fff</color>
+  <color name="eq_main_gain_progress_background_dark">#33acf8e3</color>
+  <color name="eq_main_gain_text_color_dark">#eee</color>
   
   <color name="volume_slider_progress_color_dark">#526556</color>
   <color name="volume_slider_progress_medium_color_dark">#b27e5e</color>

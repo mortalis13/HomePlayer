@@ -94,6 +94,11 @@ bool FilePlayer::restartStream() {
   return result;
 }
 
+void FilePlayer::setGain(float gainDb) {
+  this->gain = pow(10, gainDb / 20);
+  LOGD("setGain(): %.1f dB => %f", gainDb, gain);
+}
+
 
 // ==> Decoder
 void FilePlayer::initDecoder() {
@@ -246,6 +251,14 @@ string FilePlayer::getCodecName() {
 }
 
 
+void FilePlayer::processAudio(float* stream, int32_t numFrames, int8_t channels) {
+  if (this->gain == 1.0f) return;
+
+  for (int i = 0; i < numFrames * channels; ++i) {
+    stream[i] = this->gain * stream[i];
+  }
+}
+
 void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) {
   for (int i = 0; i < numFrames; ++i) {
     for (int ch = 0; ch < channels; ++ch) {
@@ -262,9 +275,10 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
 
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
   if (this->isFilterEnabled) {
-    this->filterAudio((float*) stream, numFrames, this->audioStream->getChannelCount());
+    this->filterAudio((float*) stream, numFrames, audioStream->getChannelCount());
   }
-
+  
+  this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
   auto result = audioStream->write(stream, numFrames, 100);
   
   if (!result) {

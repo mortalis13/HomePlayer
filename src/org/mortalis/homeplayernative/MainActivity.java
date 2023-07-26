@@ -367,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
         serviceBound = true;
         
         if (lastAudio != null) {
-          log(String.format("lastAudio: %s; %d", lastAudio, lastAudioTime));
+          log("lastAudio: %s; %d", lastAudio, lastAudioTime);
           preloadAudio(lastAudio, lastAudioTime);
         }
       }
@@ -694,6 +694,10 @@ public class MainActivity extends AppCompatActivity {
         }
       }
       
+      public void mainGainChanged(float gain) {
+        EngineNative.setGain(gain);
+      }
+      
       public void gainChanged(int band, float gain) {
         Fun.saveSharedPref(context, "PREF_EQ_GAIN_BAND_" + band, gain);
         EngineNative.setFilterGain(band, gain);
@@ -814,7 +818,7 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
-    logd(String.format("playAudio(), time: %d, \"%s\"", time, filePath));
+    logd("playAudio(), time: %d, \"%s\"", time, filePath);
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
@@ -1030,7 +1034,7 @@ public class MainActivity extends AppCompatActivity {
       String lastFileName = new File(lastFile).getName();
       int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + dir.getPath());
       
-      log(String.format("Last played file in dir '%s': '%s', Time: %d", dir, lastFileName, lastTime));
+      log("Last played file in dir '%s': '%s', Time: %d", dir, lastFileName, lastTime);
       filesAdapter.markLastPlayedItem(lastFile);
     }
   }
@@ -1332,7 +1336,7 @@ public class MainActivity extends AppCompatActivity {
         log("Directory changed");
         
         Fun.saveSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + currentAudioParent, lastAudioTime);
-        log(String.format("Saved %d to TIME_%s", lastAudioTime, currentAudioParent));
+        log("Saved %d to TIME_%s", lastAudioTime, currentAudioParent);
         
         cachePlayingList(newAudioFile.getParentFile());
         resetPlayingDirTime();
@@ -1356,7 +1360,7 @@ public class MainActivity extends AppCompatActivity {
         String file = (String) pref.getValue();
         
         if (!Fun.fileExists(dir) || !Fun.fileExists(file)) {
-          log(String.format("Removing prefs for dir '%s', as dir or file doesn't exist", dir));
+          log("Removing prefs for dir '%s', as dir or file doesn't exist", dir);
           
           Fun.removeSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + dir);
           Fun.removeSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + dir);
@@ -1416,7 +1420,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void updatePlayingTime(int playingTime, int totalTime) {
     if (playingTime == -1 || totalTime == -1) {
-      loge(String.format("updatePlayingTime(): time is -1, playingTime: %d, totalTime: %d", playingTime, totalTime));
+      loge("updatePlayingTime(): time is -1, playingTime: %d, totalTime: %d", playingTime, totalTime);
       return;
     }
     
@@ -1480,7 +1484,7 @@ public class MainActivity extends AppCompatActivity {
       metadata.release();
     }
     catch (Exception e) {
-      loge(String.format("Could not get audio metadata for: %s => %s", filePath, e));
+      loge("Could not get audio metadata for: %s => %s", filePath, e);
     }
     
     try {
@@ -1493,7 +1497,7 @@ public class MainActivity extends AppCompatActivity {
       mediaExtractor.release();
     }
     catch (Exception e) {
-      loge(String.format("Could not get audio parameters for: %s => %s", filePath, e));
+      loge("Could not get audio parameters for: %s => %s", filePath, e);
     }
     
     extraInfoIsForCurrentFile = (playerService != null && playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
@@ -1819,7 +1823,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateWaveform(String audioPath) {
     if (currentWaveformFile != null && currentWaveformFile.equals(audioPath)) {
-      log(String.format("The waveform is already built for the audio %s", audioPath));
+      log("The waveform is already built for the audio %s", audioPath);
       return;
     }
     
@@ -1827,11 +1831,11 @@ public class MainActivity extends AppCompatActivity {
     int sliderHeight = progressSlider.getWaveformHeight();
     
     if (sliderWidth <= 0 || sliderHeight <= 0) {
-      loge(String.format("Incorrect values for waveform %d x %d", sliderWidth, sliderHeight));
+      loge("Incorrect values for waveform %d x %d", sliderWidth, sliderHeight);
       return;
     }
     
-    log(String.format("Updating waveform for \"%s\" and size %d x %d", audioPath, sliderWidth, sliderHeight));
+    log("Updating waveform for \"%s\" and size %d x %d", audioPath, sliderWidth, sliderHeight);
     
     DecoderNative.stopDecoding();
     if (waveformDecodeThread != null) waveformDecodeThread.interrupt();

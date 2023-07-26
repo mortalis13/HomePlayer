@@ -68,6 +68,7 @@
     <item name="eqBandProgressBackground">@color/eq_band_progress_background</item>
     <item name="eqBandCenterBackground">@color/eq_band_center_background</item>
     <item name="eqBandTextColor">@color/eq_band_text_color</item>
+    <item name="eqMainGainProgressBackground">@color/eq_main_gain_progress_background</item>
     
     <item name="volumeSliderProgressColor">@color/volume_slider_progress_color</item>
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color</item>
@@ -129,6 +130,7 @@
     <item name="eqBandProgressBackground">@color/eq_band_progress_background_dark</item>
     <item name="eqBandCenterBackground">@color/eq_band_center_background_dark</item>
     <item name="eqBandTextColor">@color/eq_band_text_color_dark</item>
+    <item name="eqMainGainProgressBackground">@color/eq_main_gain_progress_background_dark</item>
     
     <item name="volumeSliderProgressColor">@color/volume_slider_progress_color_dark</item>
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color_dark</item>
