@@ -137,6 +137,8 @@ public class Fun {
     
     String result;
     
+    if (h > 0) withHours = true;
+    
     if (withHours && withMs) {
       String format = sign + "%02d:%02d:%02d.%03d";
       result = String.format(format, h, m % 60, s, ms);
