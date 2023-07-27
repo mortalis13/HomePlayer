@@ -287,7 +287,6 @@ public class EqualizerView extends View {
         onGainChanged(i);
       }
     }
-    invalidate();
   }
   
   private void onMainGainChanged() {
@@ -406,20 +405,18 @@ public class EqualizerView extends View {
     }
     
     else if (action == MotionEvent.ACTION_UP) {
-      if (this.resetPressed &&
-          x > this.resetButtonRect.left &&
-          x < this.resetButtonRect.right &&
-          y > this.resetButtonRect.top &&
-          y < this.resetButtonRect.bottom)
-      {
-        this.resetPressed = false;
-        onResetButton();
-        return true;
-      }
-      
       if (this.resetPressed) {
+        if (x > this.resetButtonRect.left &&
+            x < this.resetButtonRect.right &&
+            y > this.resetButtonRect.top &&
+            y < this.resetButtonRect.bottom)
+        {
+          onResetButton();
+        }
+        
         this.resetPressed = false;
         invalidate();
+        return true;
       }
       
       if (this.mainGainSelected) {
@@ -437,6 +434,9 @@ public class EqualizerView extends View {
         
         this.mainGainSelected = false;
         this.mainGainCenterSelected = false;
+        this.startX = -1;
+        this.startGain = -1;
+        return true;
       }
       
       if (this.bandSelected) {
@@ -456,10 +456,10 @@ public class EqualizerView extends View {
         this.bandSelected = false;
         this.bandCenterSelected = false;
         this.currentBand = -1;
+        this.startX = -1;
+        this.startGain = -1;
+        return true;
       }
-      
-      this.startX = -1;
-      this.startGain = -1;
     }
     
     return true;
