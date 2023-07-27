@@ -25,6 +25,7 @@ public class Vars {
   public static final int MAX_TRIM = 300;  // s
   
   public static final int EQ_BANDS = 8;
+  public static final float EQ_Q_FACTOR = 1.0f;
   
   public static final boolean SHOW_TIME_MS = false;
   public static final boolean KEEP_SCREEN_ON = false;

@@ -8,7 +8,6 @@ FilePlayer::FilePlayer() {
   this->filters = new PeakingFilter[FILTER_BANDS_NUMBER];
   for (int band = 0; band < FILTER_BANDS_NUMBER; ++band) {
     this->filters[band].setSampleRate(STREAM_SAMPLE_RATE);
-    this->filters[band].setQFactor(1.0);
   }
 }
 
@@ -221,6 +220,13 @@ void FilePlayer::setFilterGain(int band, float gain) {
   LOGD("setFilterGain(): %d [%.0f Hz] => %+.1f dB", band, frequency, gain);
   if (band < 1 || band > FILTER_BANDS_NUMBER) return;
   this->filters[band-1].setGainDb(gain);
+}
+
+void FilePlayer::setFilterQ(float q) {
+  LOGD("setFilterQ(): %.1f", q);
+  for (int band = 0; band < FILTER_BANDS_NUMBER; ++band) {
+    this->filters[band].setQFactor(q);
+  }
 }
 
 

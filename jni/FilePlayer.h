@@ -61,6 +61,7 @@ public:
   
   void setFilterFrequency(int band, float frequency);
   void setFilterGain(int band, float gain);
+  void setFilterQ(float q);
   
   // Audio params
   int getChannels();

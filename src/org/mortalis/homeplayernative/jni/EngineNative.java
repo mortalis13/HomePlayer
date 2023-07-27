@@ -24,6 +24,7 @@ public class EngineNative {
   public static native void disableFilter();
   public static native void setFilterFrequency(int band, float frequency);
   public static native void setFilterGain(int band, float gain);
+  public static native void setFilterQ(float q);
   
   public static native int getChannels();
   public static native int getSampleRate();
