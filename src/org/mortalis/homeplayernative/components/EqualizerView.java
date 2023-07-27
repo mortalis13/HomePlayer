@@ -513,14 +513,14 @@ public class EqualizerView extends View {
   
   private void fillBandFrequencies() {
     if (bands.size() == 8) {
-      bands.get(0).frequency = 50f;
-      bands.get(1).frequency = 200f;
-      bands.get(2).frequency = 400f;
-      bands.get(3).frequency = 900f;
-      bands.get(4).frequency = 1500f;
-      bands.get(5).frequency = 4000f;
-      bands.get(6).frequency = 10000f;
-      bands.get(7).frequency = 18000f;
+      bands.get(0).frequency = 31f;
+      bands.get(1).frequency = 73f;
+      bands.get(2).frequency = 174f;
+      bands.get(3).frequency = 415f;
+      bands.get(4).frequency = 987f;
+      bands.get(5).frequency = 2348f;
+      bands.get(6).frequency = 5583f;
+      bands.get(7).frequency = 13280f;
     }
   }
   
