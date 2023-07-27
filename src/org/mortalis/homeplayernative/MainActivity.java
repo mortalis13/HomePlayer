@@ -751,8 +751,11 @@ public class MainActivity extends AppCompatActivity {
       EngineNative.startEngine();
       log("Audio engine started");
       
+      EngineNative.setFilterQ(Vars.EQ_Q_FACTOR);
       for (int band = 0; band < equalizerView.getBandsCount(); band++) {
         EngineNative.setFilterFrequency(band + 1, equalizerView.getBandFrequency(band));
+      }
+      for (int band = 0; band < equalizerView.getBandsCount(); band++) {
         float gain = equalizerView.getBandGain(band);
         if (gain != 0) EngineNative.setFilterGain(band + 1, gain);
       }

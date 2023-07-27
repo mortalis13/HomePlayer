@@ -130,6 +130,11 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFi
   player.setFilterGain(band, gain);
 }
 
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setFilterQ(JNIEnv *env, jclass obj, jfloat q) {
+  LOGD(__func__);
+  player.setFilterQ(q);
+}
+
 
 // Audio params
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getChannels(JNIEnv *env, jclass obj) {
