@@ -280,11 +280,12 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
 }
 
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
+  this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
+  
   if (this->isFilterEnabled) {
     this->filterAudio((float*) stream, numFrames, audioStream->getChannelCount());
   }
   
-  this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
   auto result = audioStream->write(stream, numFrames, 100);
   
   if (!result) {
