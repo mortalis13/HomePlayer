@@ -357,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.exitAction = () -> exitApp();
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
+        playerService.timeInitAction = (time, timeTotal) -> onPlayingTimeSetup(time, timeTotal);
         playerService.timeUpdateAction = (time, timeTotal) -> onPlayedTimeChanged(time, timeTotal);
         playerService.onPlayerPreloadedAction = () -> onPlayerPreloaded();
         playerService.onPlayerStartedAction = () -> onPlayerStarted();
@@ -1122,15 +1123,20 @@ public class MainActivity extends AppCompatActivity {
   
   boolean preloaded;
   
+  private void onPlayingTimeSetup(int playingTime, int totalTime) {  // time in ms
+    updatePlayingTime(playingTime, totalTime);
+  }
+  
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
     
-    // if (!preloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200) {
-    //   File currentFile = new File(playerService.getAudioPath());
-    //   File file = getNextPlaylistFile(currentFile);
-    //   log("preloading next file: " + file);
-    //   preloaded = EngineNative.preloadAudio(file.getPath()) == 0;
-    // }
+    if (!preloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200) {
+      File currentFile = new File(playerService.getAudioPath());
+      File file = getNextPlaylistFile(currentFile);
+      log("preloading next file: " + file);
+      preloaded = EngineNative.preloadAudio(file.getPath()) == 0;
+      log("preload result: " + preloaded);
+    }
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
       if (isPlayingLastFile()) {

@@ -78,6 +78,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public SimpleAction exitAction = () -> {};
   public Action<Integer> progressSetupAction = (arg) -> {};
   public Action<Integer> progressUpdateAction = (arg) -> {};
+  public DoubleAction<Integer> timeInitAction = (arg1, arg2) -> {};
   public DoubleAction<Integer> timeUpdateAction = (arg1, arg2) -> {};
   public SimpleAction onPlayerPreloadedAction = () -> {};
   public SimpleAction onPlayerStartedAction = () -> {};
@@ -281,9 +282,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
 
   private void loadAudio(String audioPath) {
-    logd("loadAudio()");
-    stopped = false;
-
+    logd("loadAudio() " + audioPath);
     try {
       if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
         log("Stream closed. Restarting");
@@ -308,7 +307,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
             changePlayPosition(audioTime);
           }
 
-          sendUpdatePlayingTime();
+          sendInitPlayingTime();
           sendInitProgress();
           sendUpdateProgress();
           playerLoaded = true;
@@ -464,6 +463,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private void sendUpdateStoppedTime() {
     timeUpdateAction.execute(getTotalTime(), getTotalTime());
     progressUpdateAction.execute(getTotalTime());
+  }
+  
+  private void sendInitPlayingTime() {
+    timeInitAction.execute(getPlayingTime(), getTotalTime());
   }
   
   private void sendUpdatePlayingTime() {

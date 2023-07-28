@@ -370,11 +370,13 @@ void FilePlayer::playWithPreloadedDecoder() {
 }
 
 void FilePlayer::waitDec() {
+  // lock_guard<mutex> guard(decoderWaitMutex);
+  
   LOGI("--> wait for ended");
   bool eof = this->decoder->waitRun();
   LOGI("--> ended");
   
-  this->playing = false;
+  // this->playing = false;
   
   if (eof) {
     this->playWithPreloadedDecoder();

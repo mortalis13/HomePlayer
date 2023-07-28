@@ -2,6 +2,7 @@
 #define FILE_PLAYER_H
 
 #include <string>
+#include <mutex>
 
 #include "oboe/Oboe.h"
 
@@ -107,6 +108,8 @@ private:
 
   PeakingFilter* filters;
   bool isFilterEnabled = false;
+  
+  mutex decoderWaitMutex;
 
 };
 #endif //FILE_PLAYER_H
