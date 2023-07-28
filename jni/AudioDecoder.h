@@ -22,9 +22,8 @@ class AudioDecoder {
 static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
 
 public:
-  AudioDecoder(AudioStreamWriter* streamWriter, DecoderEndListener* endListener) {
+  AudioDecoder(AudioStreamWriter* streamWriter) {
     this->streamWriter = streamWriter;
-    this->endListener = endListener;
   }
   
   ~AudioDecoder();
@@ -121,7 +120,6 @@ private:
   future<void> runThread;
   
   AudioStreamWriter* streamWriter = NULL;
-  DecoderEndListener* endListener = NULL;
   
 };
 #endif //AUDIO_DECODER_H

@@ -79,8 +79,6 @@ void AudioDecoder::run() {
     LOGI("File decoding completed after EOF");
   }
   LOGI("Decoder thread ended");
-  
-  // if (endListener) endListener->decoderEnded();
 }
 
 
@@ -423,6 +421,9 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("===END Codec params===");
   LOGD("");
 }
+
+
+
 
 bool AudioDecoder::waitRun() {
   LOGI("--> valid: %d", runThread.valid());

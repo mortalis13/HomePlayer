@@ -14,7 +14,7 @@ using namespace std;
 using namespace oboe;
 
 
-class FilePlayer : public AudioStreamWriter, public DecoderEndListener {
+class FilePlayer : public AudioStreamWriter {
 
 static const AudioFormat STREAM_SAMPLE_FORMAT = AudioFormat::Float;
 static const int STREAM_CHANNELS = 2;
@@ -76,10 +76,7 @@ public:
   string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
-  virtual void decoderEnded();
   
-  void assignNextDecoder();
-
 
 private:
   bool restartStream();

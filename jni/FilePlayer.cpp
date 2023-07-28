@@ -106,7 +106,7 @@ void FilePlayer::initDecoder() {
     this->decoder->stop();
   }
 
-  this->decoder = make_shared<AudioDecoder>(this, this);
+  this->decoder = make_shared<AudioDecoder>(this);
   this->decoder->setChannelCount(audioStream->getChannelCount());
   this->decoder->setSampleRate(audioStream->getSampleRate());
 }
@@ -114,7 +114,7 @@ void FilePlayer::initDecoder() {
 bool FilePlayer::preloadAudio(string audioPath) {
   LOGD("preloadNextAudio()");
 
-  nextDecoder = make_shared<AudioDecoder>(this, this);
+  nextDecoder = make_shared<AudioDecoder>(this);
   nextDecoder->setChannelCount(audioStream->getChannelCount());
   nextDecoder->setSampleRate(audioStream->getSampleRate());
   int result = nextDecoder->loadFile(audioPath);
@@ -334,18 +334,7 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
 }
 
 
-
-void FilePlayer::assignNextDecoder() {
-  LOGI("assignNextDecoder()");
-  // if (loadAudio("dummy")) startAudio();
-  // LOGI("--after load-start");
-}
-
-void FilePlayer::decoderEnded() {
-  LOGI("decode ended");
-  // std::async(&FilePlayer::assignNextDecoder, this);
-}
-
+// ----------
 
 void FilePlayer::playWithPreloadedDecoder() {
   if (!nextPreloaded || !nextDecoder) {
