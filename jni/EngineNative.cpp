@@ -58,18 +58,17 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* pVM, void* reserved) {
 
 
 class ChangeListener : public EngineChangeListener {
-public:
   virtual void audioEnded() {
-    LOGI("audio ended");
-    JNIEnv *env;
-    bool result = GetJniEnv(gvm, &env);
-    LOGI("JNI env attached: %d", result);
+    LOGD("audioEnded()");
     
-    if (result) {
+    JNIEnv *env;
+    bool thread_attached = GetJniEnv(gvm, &env);
+    LOGI("JNI env attached to the current thread: %d", thread_attached);
+    
+    if (thread_attached) {
       if (EngineClass && MethodID) {
         env->CallStaticVoidMethod(EngineClass, MethodID);
       }
-      
       gvm->DetachCurrentThread();
     }
   }
@@ -78,6 +77,7 @@ public:
 
 // Engine
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_initEngine(JNIEnv *env, jclass obj) {
+  LOGD(__func__);
   player.engineChangeListener = new ChangeListener();
   
   if (!EngineClass) {

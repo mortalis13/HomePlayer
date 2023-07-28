@@ -224,10 +224,10 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     
-    // if (Vars.KEEP_SCREEN_ON) {
-    //   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    // }
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    if (Vars.KEEP_SCREEN_ON) {
+      logd("Enabling flag to keep screen on");
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
     
     context = this;
     
@@ -853,7 +853,7 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
-    playerIntent.putExtra(Vars.EXTRA_NEXT_PRELOADED, preloaded);
+    playerIntent.putExtra(Vars.EXTRA_NEXT_PRELOADED, nextFilePreloaded);
     
     startService(playerIntent);
     
@@ -1077,7 +1077,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerPreloaded() {
-    preloaded = false;
+    nextFilePreloaded = false;
     
     progressSlider.enable();
     updatePlayingStats();
@@ -1121,7 +1121,7 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
   }
   
-  boolean preloaded;
+  boolean nextFilePreloaded;
   
   private void onPlayingTimeSetup(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
@@ -1130,12 +1130,12 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
     
-    if (!preloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200 && !isPlayingLastFile()) {
+    if (!nextFilePreloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200 && !isPlayingLastFile()) {
       File currentFile = new File(playerService.getAudioPath());
       File file = getNextPlaylistFile(currentFile);
       log("preloading next file: " + file);
-      preloaded = EngineNative.preloadAudio(file.getPath()) == 0;
-      log("preload result: " + preloaded);
+      nextFilePreloaded = EngineNative.preloadAudio(file.getPath()) == 0;
+      log("preload result: " + nextFilePreloaded);
     }
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
@@ -1340,7 +1340,7 @@ public class MainActivity extends AppCompatActivity {
           }
         }
         
-        preloaded = false;
+        nextFilePreloaded = false;
         playAudio(item.path, time, true);
       }
     }

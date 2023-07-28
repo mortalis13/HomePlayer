@@ -341,9 +341,7 @@ void FilePlayer::playWithPreloadedDecoder() {
     nextPreloaded = false;
     return;
   }
-  
   LOGD("playWithPreloadedDecoder()");
-  
   nextPreloaded = false;
   
   this->decoder.swap(nextDecoder);
