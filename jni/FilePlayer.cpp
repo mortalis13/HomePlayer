@@ -112,7 +112,7 @@ void FilePlayer::initDecoder() {
 }
 
 bool FilePlayer::preloadAudio(string audioPath) {
-  LOGD("preloadNextAudio()");
+  LOGD("preloadNextAudio() => %s", audioPath.c_str());
 
   nextDecoder = make_shared<AudioDecoder>(this);
   nextDecoder->setChannelCount(audioStream->getChannelCount());
