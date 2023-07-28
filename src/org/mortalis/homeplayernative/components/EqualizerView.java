@@ -32,7 +32,7 @@ public class EqualizerView extends View {
   
   public static final float SIDE_MARGIN = Fun.dpToPx(8);
   public static final float CENTRAL_MARK_WIDTH = Fun.dpToPx(4);
-  public static final float GAIN_ZERO_GAP = Fun.dpToPx(20);
+  public static final float GAIN_ZERO_GAP = Fun.dpToPx(4);
   public static final float BAND_ZERO_GAP = Fun.dpToPx(32);
   
   private boolean enabled;
@@ -355,7 +355,9 @@ public class EqualizerView extends View {
         this.startX = x;
         this.startGain = mainGain;
         
-        if (x >= this.mainGainRect.centerX() - GAIN_ZERO_GAP && x <= this.mainGainRect.centerX() + GAIN_ZERO_GAP) {
+        if (x >= this.mainGainRect.centerX() - GAIN_ZERO_GAP &&
+            x <= this.mainGainRect.centerX() + GAIN_ZERO_GAP)
+        {
           this.mainGainCenterSelected = true;
         }
         return true;
