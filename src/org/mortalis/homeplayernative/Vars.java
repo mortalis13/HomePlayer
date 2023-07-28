@@ -16,6 +16,7 @@ public class Vars {
   public static final String EXTRA_AUDIO_TIME = "extra_audio_time";  // ms
   public static final String EXTRA_START_PLAYBACK = "extra_start_playback";
   public static final String EXTRA_PLAYBACK_REPEAT = "extra_playback_repeat";
+  public static final String EXTRA_NEXT_PRELOADED = "extra_next_preloaded";
   
   public static final String PREFS_FILE = "home_player_prefs";
   public static final String PREF_LAST_FILE_IN_FOLDER = "PREF_LAST_FILE_";
@@ -28,7 +29,7 @@ public class Vars {
   public static final float EQ_Q_FACTOR = 1.0f;
   
   public static final boolean SHOW_TIME_MS = false;
-  public static final boolean KEEP_SCREEN_ON = false;
+  public static final boolean KEEP_SCREEN_ON = true;
   
   public static final String[] AUDIO_EXTS = new String[] {
     "flac",

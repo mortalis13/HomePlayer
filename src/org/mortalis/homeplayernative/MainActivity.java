@@ -224,9 +224,10 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     
-    if (Vars.KEEP_SCREEN_ON) {
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    }
+    // if (Vars.KEEP_SCREEN_ON) {
+    //   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    // }
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     
     context = this;
     
@@ -748,6 +749,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void initEngine() {
     new Thread(() -> {
+      EngineNative.initEngine();
       EngineNative.startEngine();
       log("Audio engine started");
       
@@ -850,6 +852,7 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
+    playerIntent.putExtra(Vars.EXTRA_NEXT_PRELOADED, preloaded);
     
     startService(playerIntent);
     
@@ -1073,6 +1076,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerPreloaded() {
+    preloaded = false;
+    
     progressSlider.enable();
     updatePlayingStats();
     
@@ -1115,8 +1120,17 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
   }
   
+  boolean preloaded;
+  
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
+    
+    // if (!preloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200) {
+    //   File currentFile = new File(playerService.getAudioPath());
+    //   File file = getNextPlaylistFile(currentFile);
+    //   log("preloading next file: " + file);
+    //   preloaded = EngineNative.preloadAudio(file.getPath()) == 0;
+    // }
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
       if (isPlayingLastFile()) {
@@ -1320,6 +1334,7 @@ public class MainActivity extends AppCompatActivity {
           }
         }
         
+        preloaded = false;
         playAudio(item.path, time, true);
       }
     }

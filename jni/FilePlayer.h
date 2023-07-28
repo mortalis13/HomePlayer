@@ -13,7 +13,7 @@ using namespace std;
 using namespace oboe;
 
 
-class FilePlayer : public AudioStreamWriter {
+class FilePlayer : public AudioStreamWriter, public DecoderEndListener {
 
 static const AudioFormat STREAM_SAMPLE_FORMAT = AudioFormat::Float;
 static const int STREAM_CHANNELS = 2;
@@ -25,6 +25,8 @@ public:
   ~FilePlayer() {
     delete[] this->filters;
   }
+  
+  EngineChangeListener* engineChangeListener = NULL;
   
   // Engine
   bool init();
@@ -41,6 +43,8 @@ public:
   
   // Decoder
   bool loadAudio(string audioPath);
+  bool preloadAudio(string audioPath);
+  bool fileChanged(string audioPath);
   bool startAudio();
   void pause();
   bool resume();
@@ -71,6 +75,9 @@ public:
   string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
+  virtual void decoderEnded();
+  
+  void assignNextDecoder();
 
 
 private:
@@ -82,16 +89,21 @@ private:
   void processAudio(float* stream, int32_t numFrames, int8_t channels);
   void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
+  void waitDec();
+  void playWithPreloadedDecoder();
+
 private:
   
   bool playing = false;
   bool seeking = false;
   bool restarting = false;
+  bool nextPreloaded = false;
   
   float gain = 1.0f;
 
   shared_ptr<AudioStream> audioStream;
   shared_ptr<AudioDecoder> decoder;
+  shared_ptr<AudioDecoder> nextDecoder;
 
   PeakingFilter* filters;
   bool isFilterEnabled = false;

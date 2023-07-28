@@ -102,13 +102,26 @@ void FilePlayer::setGain(float gainDb) {
 // ==> Decoder
 void FilePlayer::initDecoder() {
   LOGD("initDecoder()");
-  if (this->decoder) {
+  if (this->decoder && !this->decoder->isStopped()) {
     this->decoder->stop();
   }
-  
-  this->decoder = make_shared<AudioDecoder>(this);
+
+  this->decoder = make_shared<AudioDecoder>(this, this);
   this->decoder->setChannelCount(audioStream->getChannelCount());
   this->decoder->setSampleRate(audioStream->getSampleRate());
+}
+
+bool FilePlayer::preloadAudio(string audioPath) {
+  LOGD("preloadNextAudio()");
+
+  nextDecoder = make_shared<AudioDecoder>(this, this);
+  nextDecoder->setChannelCount(audioStream->getChannelCount());
+  nextDecoder->setSampleRate(audioStream->getSampleRate());
+  int result = nextDecoder->loadFile(audioPath);
+  nextPreloaded = true;
+  
+  if (result < 0) return false;
+  return true;
 }
 
 bool FilePlayer::loadAudio(string audioPath) {
@@ -116,7 +129,14 @@ bool FilePlayer::loadAudio(string audioPath) {
   this->playing = false;
   this->initDecoder();
   
-  int result = this->decoder->loadFile(audioPath);
+  int result = 0;
+  if (!this->decoder->isLoaded()) {
+    result = this->decoder->loadFile(audioPath);
+  }
+  else {
+    LOGI("decoder is already loaded");
+  }
+
   if (result < 0) return false;
   return true;
 }
@@ -129,7 +149,13 @@ bool FilePlayer::startAudio() {
     return false;
   }
   
+  LOGI("Start playback for %s", this->decoder->getAudioPath().c_str());
+  
   this->decoder->start();
+  
+  std::thread t(&FilePlayer::waitDec, this);
+  t.detach();
+  
   this->playing = true;
   return true;
 }
@@ -153,6 +179,14 @@ bool FilePlayer::resume() {
   
   this->playing = true;
   return true;
+}
+
+bool FilePlayer::fileChanged(string audioPath) {
+  bool result = this->decoder->getAudioPath().compare(audioPath) != 0;
+  if (result) {
+    LOGW("-- file changed: %s => %s", this->decoder->getAudioPath().c_str(), audioPath.c_str());
+  }
+  return result;
 }
 
 bool FilePlayer::isStopped() {
@@ -297,4 +331,55 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
       }
     }
   }
+}
+
+
+
+void FilePlayer::assignNextDecoder() {
+  LOGI("assignNextDecoder()");
+  // if (loadAudio("dummy")) startAudio();
+  // LOGI("--after load-start");
+}
+
+void FilePlayer::decoderEnded() {
+  LOGI("decode ended");
+  // std::async(&FilePlayer::assignNextDecoder, this);
+}
+
+
+void FilePlayer::playWithPreloadedDecoder() {
+  if (!nextPreloaded || !nextDecoder) {
+    nextPreloaded = false;
+    return;
+  }
+  
+  LOGD("playWithPreloadedDecoder()");
+  
+  nextPreloaded = false;
+  this->playing = false;
+  
+  this->decoder.swap(nextDecoder);
+  nextDecoder.reset();
+  
+  if (!this->decoder->isLoaded()) {
+    LOGW("nextDecoder not loaded yet, waiting 100 ms...");
+    this_thread::sleep_for(chrono::milliseconds(100));
+  }
+  
+  startAudio();
+}
+
+void FilePlayer::waitDec() {
+  LOGI("--> wait for ended");
+  bool eof = this->decoder->waitRun();
+  LOGI("--> ended");
+  
+  this->playing = false;
+  
+  if (eof) {
+    this->playWithPreloadedDecoder();
+    if (engineChangeListener) engineChangeListener->audioEnded();
+  }
+  
+  nextPreloaded = false;
 }

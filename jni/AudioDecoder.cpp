@@ -23,7 +23,7 @@ void AudioDecoder::start() {
   this->stopped = false;
   this->ended = false;
   
-  runThread = std::async(&AudioDecoder::run, this);
+  runThread = std::async(launch::async, &AudioDecoder::run, this);
   LOGI("Decoder thread started");
 }
 
@@ -31,6 +31,10 @@ void AudioDecoder::start() {
 void AudioDecoder::stop() {
   LOGD("stop()");
   this->playing = false;
+  if (stopped) {
+    LOGI("--already stopped");
+    return;
+  }
   this->stopped = true;
   
   if (runThread.valid()) {
@@ -75,6 +79,8 @@ void AudioDecoder::run() {
     LOGI("File decoding completed after EOF");
   }
   LOGI("Decoder thread ended");
+  
+  // if (endListener) endListener->decoderEnded();
 }
 
 
@@ -204,6 +210,7 @@ void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
 
 int AudioDecoder::loadFile(string filePath) {
   LOGI("loadFile => %s", filePath.c_str());
+  this->audioPath = filePath;
   int result = -1;
   
   this->loaded = false;
@@ -415,4 +422,10 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Codec ID: %s", avcodec_get_name(codecParams->codec_id));
   LOGD("===END Codec params===");
   LOGD("");
+}
+
+bool AudioDecoder::waitRun() {
+  LOGI("--> valid: %d", runThread.valid());
+  if (runThread.valid()) runThread.wait();
+  return this->ended;
 }

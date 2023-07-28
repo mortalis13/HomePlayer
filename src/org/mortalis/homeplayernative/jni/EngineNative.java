@@ -1,6 +1,10 @@
 package org.mortalis.homeplayernative.jni;
 
+import static org.mortalis.homeplayernative.Fun.logd;
+
+
 public class EngineNative {
+  public static native void initEngine();
   public static native int startEngine();
   public static native int stopEngine();
   public static native boolean isStreamClosed();
@@ -11,6 +15,9 @@ public class EngineNative {
   public static native int pauseAudio();
   public static native int resumeAudio();
   public static native void setGain(float gain);
+  
+  public static native int preloadAudio(String audioPath);
+  public static native boolean fileChanged(String audioPath);
   
   public static native int getDuration();
   public static native int getCurrentPosition();
@@ -31,4 +38,15 @@ public class EngineNative {
   public static native String getSampleFormat();
   public static native int getBitrate();
   public static native String getCodecName();
+  
+  public static NativeChangeListener changeListener;
+  
+  public static void notifyAudioStopped() {
+    logd("notifyAudioStopped()");
+    if (changeListener != null) changeListener.onAudioStopped();
+  }
+  
+  public interface NativeChangeListener {
+    public void onAudioStopped();
+  }
 }

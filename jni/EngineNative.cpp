@@ -5,6 +5,7 @@
 #include <string>
 
 #include "utils/logging.h"
+#include "defs.h"
 #include "FilePlayer.h"
 
 #ifdef __cplusplus
@@ -14,10 +15,78 @@ extern "C" {
 using namespace std;
 
 
+static JavaVM* gvm;
+static jclass EngineClass;
+static jmethodID MethodID;
+
 static FilePlayer player;
 
 
+bool GetJniEnv(JavaVM *vm, JNIEnv **env) {
+  LOGD("GetJniEnv()");
+  if (!vm) {
+    LOGE("VM instance is NULL");
+    return false;
+  }
+  
+  bool did_attach_thread = false;
+  *env = nullptr;
+
+  // Check if the current thread is attached to the VM
+  auto get_env_result = vm->GetEnv((void**)env, JNI_VERSION_1_6);
+  if (get_env_result == JNI_EDETACHED) {
+    if (vm->AttachCurrentThread(env, NULL) == JNI_OK) {
+      did_attach_thread = true;
+    }
+    else {
+      LOGE("Failed to attach thread");
+    }
+  }
+  else if (get_env_result == JNI_EVERSION) {
+    LOGE("Unsupported JNI version");
+  }
+  
+  return did_attach_thread;
+}
+
+
+JNIEXPORT jint JNI_OnLoad(JavaVM* pVM, void* reserved) {
+  LOGD("JNI_OnLoad()");
+  gvm = pVM;
+  return JNI_VERSION_1_6;
+}
+
+
+class ChangeListener : public EngineChangeListener {
+public:
+  virtual void audioEnded() {
+    LOGI("audio ended");
+    JNIEnv *env;
+    bool result = GetJniEnv(gvm, &env);
+    LOGI("JNI env attached: %d", result);
+    
+    if (result) {
+      if (EngineClass && MethodID) {
+        env->CallStaticVoidMethod(EngineClass, MethodID);
+      }
+      
+      gvm->DetachCurrentThread();
+    }
+  }
+};
+
+
 // Engine
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_initEngine(JNIEnv *env, jclass obj) {
+  player.engineChangeListener = new ChangeListener();
+  
+  if (!EngineClass) {
+    EngineClass = (jclass) env->NewGlobalRef(obj);
+    LOGI("EngineClass: %x", EngineClass);
+    MethodID = env->GetStaticMethodID(EngineClass, "notifyAudioStopped", "()V");
+  }
+}
+
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_startEngine(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.init();
@@ -57,6 +126,29 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_loadA
     LOGE("Could not properly load audio file. Check the previous logs.");
   }
   return result ? 0: -1;
+}
+
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_preloadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
+  LOGD(__func__);
+  const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
+  string audioPath(audioPathBytes);
+  env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
+  
+  bool result = player.preloadAudio(audioPath);
+  
+  if (!result) {
+    LOGE("Could not properly load audio file. Check the previous logs.");
+  }
+  return result ? 0: -1;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_fileChanged(JNIEnv *env, jclass obj, jstring jaudioPath) {
+  const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
+  string audioPath(audioPathBytes);
+  env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
+  
+  bool result = player.fileChanged(audioPath);
+  return result;
 }
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {

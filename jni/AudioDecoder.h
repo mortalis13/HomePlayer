@@ -22,8 +22,9 @@ class AudioDecoder {
 static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
 
 public:
-  AudioDecoder(AudioStreamWriter* streamWriter) {
+  AudioDecoder(AudioStreamWriter* streamWriter, DecoderEndListener* endListener) {
     this->streamWriter = streamWriter;
+    this->endListener = endListener;
   }
   
   ~AudioDecoder();
@@ -69,7 +70,10 @@ public:
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
+  
+  string getAudioPath() {return audioPath;}
 
+  bool waitRun();
 
 public:
   AudioParams audioParams;
@@ -106,6 +110,8 @@ private:
   bool seekPending = false;
   int64_t seekTimestamp = 0;
   
+  string audioPath;
+  
   int audioStreamIndex = -1;
   
   AVFormatContext* formatContext = NULL;
@@ -115,6 +121,7 @@ private:
   future<void> runThread;
   
   AudioStreamWriter* streamWriter = NULL;
+  DecoderEndListener* endListener = NULL;
   
 };
 #endif //AUDIO_DECODER_H

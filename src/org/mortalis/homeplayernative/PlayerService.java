@@ -35,8 +35,12 @@ import static org.mortalis.homeplayernative.Fun.loge;
 import java.io.File;
 
 
-public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
-
+public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener, EngineNative.NativeChangeListener {
+  
+  public void onAudioStopped() {
+    stopped = true;
+  }
+  
   public static final String ACTION_PLAY = "org.mortalis.homeplayernative.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
   public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
@@ -60,9 +64,11 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private int audioTime;
   private boolean startPlayback;
   private boolean repeat;
+  private boolean nextPreloaded;
 
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
+  private boolean stopped;
 
   private int totalTime;
 
@@ -102,7 +108,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
-      repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
+      repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, false);
+      nextPreloaded = intent.getBooleanExtra(Vars.EXTRA_NEXT_PRELOADED, false);
 
       progressHandler.removeCallbacks(progressRunnable);
 
@@ -195,6 +202,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
       new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
     };
+    
+    EngineNative.changeListener = this;
   }
 
 
@@ -273,6 +282,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   private void loadAudio(String audioPath) {
     logd("loadAudio()");
+    stopped = false;
 
     try {
       if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
@@ -281,7 +291,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       }
       
       if (Fun.fileExists(audioPath)) {
-        int result = EngineNative.loadAudio(audioPath);
+        int result = 0;
+        if (!nextPreloaded) {
+          result = EngineNative.loadAudio(audioPath);
+        }
 
         if (result != 0) {
           onLoadError();
@@ -303,7 +316,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           if (startPlayback) {
             enableUpdateTime();
             startProgress();
-            play();
+            if (!nextPreloaded) play();
             sendPlayerStarted();
           }
           else {
@@ -326,7 +339,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.removeCallbacks(progressRunnable);
 
     progressRunnable = () -> {
+      // if (isStopped() || EngineNative.fileChanged(audioPath)) {
       if (isStopped()) {
+        stopped = false;
         onCompleted();
         return;
       }
@@ -344,7 +359,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("onCompleted()");
     sendUpdateStoppedTime();
     updateNotification(ACTION_PLAY_ID);
-
+    
     playerLoaded = false;
     stopSelf();
     sendPlayerStopped();
@@ -513,7 +528,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public boolean isStopped() {
-    return EngineNative.isStopped();
+    // return EngineNative.isStopped();
+    return stopped;
   }
   
   public boolean hasAudio() {
