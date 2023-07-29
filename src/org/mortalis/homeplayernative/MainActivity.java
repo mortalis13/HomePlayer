@@ -1129,16 +1129,24 @@ public class MainActivity extends AppCompatActivity {
       setPlayButtonDefault();
     }
     else {
-      nextFilePreloaded = false;
-      String filePath = EngineNative.getAudioPath();
-      if (filePath.equals(playerService.getAudioPath())) {
-        // The audio is ended but did not change to the next one in the backend (maybe it's too short so the next file is not preloaded)
-        // The next file needs to be manually selected
-        log("Decoder audio is the same as the current audio. Advancing to the next file.");
-        playNextFile(true);
+      boolean forceLoadNext = true;
+      
+      // Multiple conditions for preloading,global setting enabled, file previously preloaded and current backend audio path is not the same as the current audio in the player service
+      if (Vars.ENABLE_NEXT_FILE_PRELOADING && nextFilePreloaded) {
+        nextFilePreloaded = false;
+        String filePath = EngineNative.getAudioPath();
+        
+        if (!filePath.equals(playerService.getAudioPath())) {
+          forceLoadNext = false;
+          syncNextFile(filePath);
+        }
       }
-      else {
-        syncNextFile(filePath);
+      
+      if (forceLoadNext) {
+        // The audio is ended but did not change automatically to the next one in the backend
+        // (maybe it's too short so the next file is not preloaded)
+        // The next file needs to be manually selected
+        playNextFile(true);
       }
     }
   }
@@ -1157,7 +1165,8 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
     
-    if (!nextFilePreloaded && !playbackShuffle) {
+    // Preload file when 10s or less is left until the current audio end
+    if (Vars.ENABLE_NEXT_FILE_PRELOADING && !nextFilePreloaded && !playbackShuffle) {
       int timeLeft = totalTime - playingTime;
       boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
       
@@ -1166,7 +1175,6 @@ public class MainActivity extends AppCompatActivity {
         File file = getNextPlaylistFile(currentFile);
         log("preloading next file: " + file);
         nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
-        log("preload result: " + nextFilePreloaded);
       }
     }
     
