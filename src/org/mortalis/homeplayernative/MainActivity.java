@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
   private int lastAudioTime;
   private Set<String> favoritesList;
   private boolean playbackRepeat;
+  private boolean nextFilePreloaded;
   
   private boolean playbackShuffle;
   private List<File> shuffleList;
@@ -1121,8 +1122,6 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
   }
   
-  boolean nextFilePreloaded;
-  
   private void onPlayingTimeSetup(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
   }
@@ -1130,12 +1129,16 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
     
-    if (!nextFilePreloaded && totalTime - playingTime < 10000 && totalTime - playingTime > 200 && !isPlayingLastFile()) {
-      File currentFile = new File(playerService.getAudioPath());
-      File file = getNextPlaylistFile(currentFile);
-      log("preloading next file: " + file);
-      nextFilePreloaded = EngineNative.preloadAudio(file.getPath()) == 0;
-      log("preload result: " + nextFilePreloaded);
+    if (!nextFilePreloaded) {
+      int timeLeft = totalTime - playingTime;
+      boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
+      if (nearAudioEnd) {
+        File currentFile = new File(playerService.getAudioPath());
+        File file = getNextPlaylistFile(currentFile);
+        log("preloading next file: " + file);
+        nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+        log("preload result: " + nextFilePreloaded);
+      }
     }
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {

@@ -27,8 +27,6 @@ public:
     delete[] this->filters;
   }
   
-  EngineChangeListener* engineChangeListener = NULL;
-  
   // Engine
   bool init();
   bool destroy();
@@ -38,14 +36,14 @@ public:
   bool startStream();
   bool stopStream();
   bool closeStream();
+  
   bool isStreamClosed();
   bool isRestarting();
   void setGain(float gainDb);
   
   // Decoder
   bool loadAudio(string audioPath);
-  bool preloadAudio(string audioPath);
-  bool fileChanged(string audioPath);
+  bool bufferNextAudio(string audioPath);
   bool startAudio();
   void pause();
   bool resume();
@@ -54,7 +52,6 @@ public:
   int getCurrentPosition();
   void seekTo(int time_ms);
   
-  bool isStopped();
   bool isPlaying();
   
   void setRepeat(bool repeat);
@@ -77,31 +74,31 @@ public:
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
   
+  EngineChangeListener* engineChangeListener = NULL;
+
 
 private:
   bool restartStream();
 
-  void initDecoder();
-  bool loadFile(string audioPath);
-  
   void processAudio(float* stream, int32_t numFrames, int8_t channels);
   void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
-  void waitDec();
-  void playWithPreloadedDecoder();
+  void waitDecoderThread();
+  void startBufferedDecoder();
 
 private:
   
   bool playing = false;
   bool seeking = false;
   bool restarting = false;
-  bool nextPreloaded = false;
+  
+  bool nextAudioBuffered = false;
   
   float gain = 1.0f;
 
   shared_ptr<AudioStream> audioStream;
   shared_ptr<AudioDecoder> decoder;
-  shared_ptr<AudioDecoder> nextDecoder;
+  shared_ptr<AudioDecoder> bufferedDecoder;
 
   PeakingFilter* filters;
   bool isFilterEnabled = false;

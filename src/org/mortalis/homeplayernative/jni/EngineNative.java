@@ -16,15 +16,13 @@ public class EngineNative {
   public static native int resumeAudio();
   public static native void setGain(float gain);
   
-  public static native int preloadAudio(String audioPath);
-  public static native boolean fileChanged(String audioPath);
+  public static native boolean bufferNextAudio(String audioPath);
   
   public static native int getDuration();
   public static native int getCurrentPosition();
   public static native void seekTo(int time);
   
   public static native boolean isPlaying();
-  public static native boolean isStopped();
   public static native void setRepeat(boolean repeat);
   
   public static native void enableFilter();

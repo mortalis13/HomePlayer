@@ -66,6 +66,15 @@ bool AudioDecoder::isRepeat() {
 }
 
 
+bool AudioDecoder::waitDecoderThread() {
+  // --> Decoder wait thread
+  // Returns true if thread ended after eof, not forced
+  LOGD("--> waitDecoderThread() -start");
+  if (runThread.valid()) runThread.wait();
+  LOGD("--> waitDecoderThread() -end, EOF reached: %d", this->ended);
+  return this->ended;
+}
+
 void AudioDecoder::run() {
   // --> Decoder thread
   LOGD("run()");
@@ -80,7 +89,6 @@ void AudioDecoder::run() {
   }
   LOGI("Decoder thread ended");
 }
-
 
 int AudioDecoder::decodeFrames() {
   // --> Decoder thread
@@ -362,6 +370,11 @@ int AudioDecoder::getCurrentTime() {
 }
 
 int AudioDecoder::getDuration() {
+  if (!formatContext) {
+    LOGE("getDuration() :: formatContext is NULL");
+    return -1;
+  }
+  
   int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
   LOGI("Context duration: %d, duration: %d ms", (int) formatContext->duration, (int) duration_ms);
   return duration_ms;
@@ -420,13 +433,4 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Codec ID: %s", avcodec_get_name(codecParams->codec_id));
   LOGD("===END Codec params===");
   LOGD("");
-}
-
-
-
-
-bool AudioDecoder::waitRun() {
-  LOGI("--> valid: %d", runThread.valid());
-  if (runThread.valid()) runThread.wait();
-  return this->ended;
 }

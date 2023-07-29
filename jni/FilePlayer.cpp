@@ -32,15 +32,6 @@ bool FilePlayer::destroy() {
   return true;
 }
 
-bool FilePlayer::isStreamClosed() {
-  if (!this->audioStream) return true;
-  return this->audioStream->getState() == StreamState::Closed;
-}
-
-bool FilePlayer::isRestarting() {
-  return this->restarting;
-}
-
 
 // ==> Audio stream
 bool FilePlayer::openStream() {
@@ -93,6 +84,15 @@ bool FilePlayer::restartStream() {
   return result;
 }
 
+bool FilePlayer::isStreamClosed() {
+  if (!this->audioStream) return true;
+  return this->audioStream->getState() == StreamState::Closed;
+}
+
+bool FilePlayer::isRestarting() {
+  return this->restarting;
+}
+
 void FilePlayer::setGain(float gainDb) {
   this->gain = pow(10, gainDb / 20);
   LOGD("setGain(): %.1f dB => %f", gainDb, gain);
@@ -100,8 +100,10 @@ void FilePlayer::setGain(float gainDb) {
 
 
 // ==> Decoder
-void FilePlayer::initDecoder() {
-  LOGD("initDecoder()");
+bool FilePlayer::loadAudio(string audioPath) {
+  LOGD("loadAudio() => %s", audioPath.c_str());
+  this->playing = false;
+  
   if (this->decoder && !this->decoder->isStopped()) {
     this->decoder->stop();
   }
@@ -109,39 +111,37 @@ void FilePlayer::initDecoder() {
   this->decoder = make_shared<AudioDecoder>(this);
   this->decoder->setChannelCount(audioStream->getChannelCount());
   this->decoder->setSampleRate(audioStream->getSampleRate());
-}
-
-bool FilePlayer::preloadAudio(string audioPath) {
-  LOGD("preloadNextAudio() => %s", audioPath.c_str());
-
-  nextDecoder = make_shared<AudioDecoder>(this);
-  nextDecoder->setChannelCount(audioStream->getChannelCount());
-  nextDecoder->setSampleRate(audioStream->getSampleRate());
-  int result = nextDecoder->loadFile(audioPath);
-  nextPreloaded = true;
-  
-  if (result < 0) return false;
-  return true;
-}
-
-bool FilePlayer::loadAudio(string audioPath) {
-  LOGD("loadAudio()");
-  this->playing = false;
-  this->initDecoder();
   
   int result = 0;
   if (!this->decoder->isLoaded()) {
     result = this->decoder->loadFile(audioPath);
   }
   else {
-    LOGI("decoder is already loaded");
+    LOGI("Decoder is already loaded");
   }
 
   if (result < 0) return false;
   return true;
 }
 
+bool FilePlayer::bufferNextAudio(string audioPath) {
+  LOGD("bufferNextAudio() => %s", audioPath.c_str());
+  
+  // Temp decoder used to preload audio that would be played next
+  // it will be assigned to the main decoder when the current audio ends normally, with EOF
+  bufferedDecoder = make_shared<AudioDecoder>(this);
+  bufferedDecoder->setChannelCount(audioStream->getChannelCount());
+  bufferedDecoder->setSampleRate(audioStream->getSampleRate());
+  int result = bufferedDecoder->loadFile(audioPath);
+  
+  nextAudioBuffered = true;
+  
+  if (result < 0) return false;
+  return true;
+}
+
 bool FilePlayer::startAudio() {
+  // --> Main thread || Decoder wait thread
   LOGD("startAudio()");
   if (!this->decoder) return false;
   if (!this->decoder->isLoaded()) {
@@ -150,11 +150,10 @@ bool FilePlayer::startAudio() {
   }
   
   LOGI("Start playback for %s", this->decoder->getAudioPath().c_str());
-  
   this->decoder->start();
   
-  std::thread t(&FilePlayer::waitDec, this);
-  t.detach();
+  // Wait for thread end to notify the client
+  (new std::thread(&FilePlayer::waitDecoderThread, this))->detach();
   
   this->playing = true;
   return true;
@@ -179,21 +178,6 @@ bool FilePlayer::resume() {
   
   this->playing = true;
   return true;
-}
-
-bool FilePlayer::fileChanged(string audioPath) {
-  bool result = this->decoder->getAudioPath().compare(audioPath) != 0;
-  if (result) {
-    LOGW("-- file changed: %s => %s", this->decoder->getAudioPath().c_str(), audioPath.c_str());
-  }
-  return result;
-}
-
-bool FilePlayer::isStopped() {
-  if (!this->decoder) return true;
-  bool decoderEnded = this->decoder->isEnded();
-  if (decoderEnded) this->playing = false;
-  return decoderEnded;
 }
 
 bool FilePlayer::isPlaying() {
@@ -313,6 +297,7 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
   }
 }
 
+// virtual AudioStreamWriter
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
   this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
   
@@ -334,40 +319,38 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
 }
 
 
-// ----------
-
-void FilePlayer::playWithPreloadedDecoder() {
-  if (!nextPreloaded || !nextDecoder) {
-    nextPreloaded = false;
+void FilePlayer::startBufferedDecoder() {
+  // --> Decoder wait thread
+  LOGD("startBufferedDecoder()");
+  if (!nextAudioBuffered || !bufferedDecoder) {
+    nextAudioBuffered = false;
     return;
   }
-  LOGD("playWithPreloadedDecoder()");
-  nextPreloaded = false;
+  nextAudioBuffered = false;
   
-  this->decoder.swap(nextDecoder);
-  nextDecoder.reset();
+  LOGI("Changing to buffered decoder and freeing the old decoder");
+  this->decoder.swap(bufferedDecoder);
+  bufferedDecoder.reset();
   
   if (!this->decoder->isLoaded()) {
-    LOGW("nextDecoder not loaded yet, waiting 100 ms...");
+    LOGW("Buffered decoder not loaded yet, waiting 100 ms...");
     this_thread::sleep_for(chrono::milliseconds(100));
   }
   
   startAudio();
 }
 
-void FilePlayer::waitDec() {
+void FilePlayer::waitDecoderThread() {
+  // --> Decoder wait thread
   lock_guard<mutex> guard(decoderWaitMutex);
   
-  LOGI("--> wait for ended");
-  bool eof = this->decoder->waitRun();
-  LOGI("--> ended");
-  
+  bool isEndedOnEOF = this->decoder->waitDecoderThread();
   this->playing = false;
   
-  if (eof) {
-    this->playWithPreloadedDecoder();
+  if (isEndedOnEOF) {
+    this->startBufferedDecoder();
     if (engineChangeListener) engineChangeListener->audioEnded();
   }
   
-  nextPreloaded = false;
+  nextAudioBuffered = false;
 }

@@ -16,8 +16,8 @@ using namespace std;
 
 
 static JavaVM* gvm;
-static jclass EngineClass;
-static jmethodID MethodID;
+static jclass EngineClassRef;
+static jmethodID NotifyAudioStopMethodID;
 
 static FilePlayer player;
 
@@ -29,14 +29,14 @@ bool GetJniEnv(JavaVM *vm, JNIEnv **env) {
     return false;
   }
   
-  bool did_attach_thread = false;
+  bool thread_attached = false;
   *env = nullptr;
 
   // Check if the current thread is attached to the VM
   auto get_env_result = vm->GetEnv((void**)env, JNI_VERSION_1_6);
   if (get_env_result == JNI_EDETACHED) {
     if (vm->AttachCurrentThread(env, NULL) == JNI_OK) {
-      did_attach_thread = true;
+      thread_attached = true;
     }
     else {
       LOGE("Failed to attach thread");
@@ -46,7 +46,7 @@ bool GetJniEnv(JavaVM *vm, JNIEnv **env) {
     LOGE("Unsupported JNI version");
   }
   
-  return did_attach_thread;
+  return thread_attached;
 }
 
 
@@ -59,6 +59,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* pVM, void* reserved) {
 
 class ChangeListener : public EngineChangeListener {
   virtual void audioEnded() {
+    // --> Decoder wait thread
     LOGD("audioEnded()");
     
     JNIEnv *env;
@@ -66,8 +67,8 @@ class ChangeListener : public EngineChangeListener {
     LOGI("JNI env attached to the current thread: %d", thread_attached);
     
     if (thread_attached) {
-      if (EngineClass && MethodID) {
-        env->CallStaticVoidMethod(EngineClass, MethodID);
+      if (EngineClassRef && NotifyAudioStopMethodID) {
+        env->CallStaticVoidMethod(EngineClassRef, NotifyAudioStopMethodID);
       }
       gvm->DetachCurrentThread();
     }
@@ -80,10 +81,9 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_initE
   LOGD(__func__);
   player.engineChangeListener = new ChangeListener();
   
-  if (!EngineClass) {
-    EngineClass = (jclass) env->NewGlobalRef(obj);
-    LOGI("EngineClass: %x", EngineClass);
-    MethodID = env->GetStaticMethodID(EngineClass, "notifyAudioStopped", "()V");
+  if (!EngineClassRef) {
+    EngineClassRef = (jclass) env->NewGlobalRef(obj);
+    NotifyAudioStopMethodID = env->GetStaticMethodID(EngineClassRef, "notifyAudioStopped", "()V");
   }
 }
 
@@ -128,26 +128,17 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_loadA
   return result ? 0: -1;
 }
 
-JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_preloadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
+JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_bufferNextAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
   LOGD(__func__);
   const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
   string audioPath(audioPathBytes);
   env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
   
-  bool result = player.preloadAudio(audioPath);
+  bool result = player.bufferNextAudio(audioPath);
   
   if (!result) {
     LOGE("Could not properly load audio file. Check the previous logs.");
   }
-  return result ? 0: -1;
-}
-
-JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_fileChanged(JNIEnv *env, jclass obj, jstring jaudioPath) {
-  const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
-  string audioPath(audioPathBytes);
-  env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
-  
-  bool result = player.fileChanged(audioPath);
   return result;
 }
 
@@ -177,10 +168,6 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setGa
 // Decoder
 JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
   return player.isPlaying();
-}
-
-JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isStopped(JNIEnv *env, jclass obj) {
-  return player.isStopped();
 }
 
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRepeat(JNIEnv *env, jclass obj, jboolean repeat) {

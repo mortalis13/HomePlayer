@@ -338,7 +338,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.removeCallbacks(progressRunnable);
 
     progressRunnable = () -> {
-      // if (isStopped() || EngineNative.fileChanged(audioPath)) {
       if (isStopped()) {
         stopped = false;
         onCompleted();

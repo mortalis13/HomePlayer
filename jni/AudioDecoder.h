@@ -70,9 +70,11 @@ public:
   int getCurrentTime();
   int getDuration();
   
-  string getAudioPath() {return audioPath;}
+  string getAudioPath() {
+    return audioPath;
+  }
 
-  bool waitRun();
+  bool waitDecoderThread();
 
 public:
   AudioParams audioParams;
