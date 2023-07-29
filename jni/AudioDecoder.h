@@ -94,13 +94,12 @@ private:
   void fillAudioParams(AVCodecParameters* codecParams);
 
 private:
-  bool loaded = false;
-  bool stopped = true;
-  bool playing = false;
-  bool ended = false;
-  bool is_eof = false;
+  atomic<bool> loaded = false;  // File is loaded in the decoder and format context, codec context and resampler are created
+  atomic<bool> stopped = true;  // Decoder is stopped, after finishing decoding or was forces to stop from outside
+  atomic<bool> playing = false; // Decoder is decoding the current file and writes samples to the output stream
+  atomic<bool> ended = false;   // Decoding reached EOF and doesn't have more data to decode from the current file
   
-  bool repeat = false;
+  atomic<bool> repeat = false;
   
   int32_t outChannelCount = 0;
   int32_t outSampleRate = 0;
