@@ -862,10 +862,29 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
-    markLastPlayedFile(currentPath);
+    filesAdapter.markLastPlayedItem(filePath);
     selectItem(filePath);
     
     if (!startPlayback) setPlayButtonDefault();
+  }
+  
+  private void syncNextFile(String filePath) {
+    logd("syncNextFile(), \"%s\"", filePath);
+    if (filePath == null || filePath.length() == 0) return;
+    nextFilePreloaded = false;
+    
+    File playingFile = new File(filePath);
+    
+    Intent playerIntent = new Intent(this, PlayerService.class);
+    playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
+    playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
+    startService(playerIntent);
+    
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
+    Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
+
+    filesAdapter.markLastPlayedItem(filePath);
+    selectItem(filePath);
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -917,25 +936,6 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void syncNextFile(String filePath) {
-    logd("syncNextFile(), \"%s\"", filePath);
-    if (filePath == null || filePath.length() == 0) return;
-    nextFilePreloaded = false;
-    
-    File playingFile = new File(filePath);
-    
-    Intent playerIntent = new Intent(this, PlayerService.class);
-    playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
-    playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
-    startService(playerIntent);
-    
-    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
-    Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
-
-    markLastPlayedFile(currentPath);
-    selectItem(filePath);
-  }
-  
   
   // ------------------------------ Navigation ------------------------------
   private void changeDir(File path, boolean scrollTop) {
@@ -984,7 +984,7 @@ public class MainActivity extends AppCompatActivity {
     selectPlayingDirOrFile();
     resetCurrentDirTime();
 
-    markLastPlayedFile(currentPath);
+    markLastPlayedFileInDir(currentPath);
     markFavorites();
     updateFavoritesStats();
     
@@ -1056,7 +1056,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void markLastPlayedFile(File dir) {
+  private void markLastPlayedFileInDir(File dir) {
     String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + dir.getPath());
     
     if (lastFile != null) {
