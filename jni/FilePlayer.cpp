@@ -344,7 +344,7 @@ void FilePlayer::startBufferedDecoder() {
   
   LOGI("Changing to buffered decoder and freeing the old decoder");
   this->decoder.swap(bufferedDecoder);
-  bufferedDecoder.reset();
+  // bufferedDecoder.reset();
   
   if (!this->decoder->isLoaded()) {
     LOGW("Buffered decoder not loaded yet, waiting 100 ms...");

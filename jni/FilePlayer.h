@@ -106,6 +106,9 @@ private:
   bool isFilterEnabled = false;
   
   mutex decoderWaitMutex;
+  
+  shared_future<void> waitTask;
+  shared_future<void> waitTask2;
 
 };
 #endif //FILE_PLAYER_H

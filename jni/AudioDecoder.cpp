@@ -23,7 +23,10 @@ void AudioDecoder::start() {
   this->stopped = false;
   this->ended = false;
   
+  flag = false;
+  
   runThread = std::async(launch::async, &AudioDecoder::run, this);
+  // waitThread = runThread;
   LOGI("Decoder thread started");
 }
 
@@ -70,7 +73,18 @@ bool AudioDecoder::waitDecoderThread() {
   // --> Decoder wait thread
   // Returns true if thread ended after eof, not forced
   LOGD("--> waitDecoderThread() -start-");
-  if (runThread.valid()) runThread.wait();
+  
+  // if (runThread.valid()) runThread.wait();
+  // if (runThread.valid()) runThread.get();
+  // if (waitThread.valid()) waitThread.wait();
+  
+  // unique_lock<mutex> lk(m);
+  // cv.wait(lk);
+  
+  // while (!flag) {}
+  
+  p->get_future().wait();
+  
   LOGD("--> waitDecoderThread() -end-, EOF reached: %d", this->ended);
   return this->ended;
 }
@@ -87,7 +101,15 @@ void AudioDecoder::run() {
     this->ended = true;
     LOGI("File decoding completed after EOF");
   }
+  
   LOGI("Decoder thread ended");
+  
+  // cv.notify_one();
+  // cv.notify_all();
+  
+  // flag = true;
+  
+  p->set_value();
 }
 
 int AudioDecoder::decodeFrames() {

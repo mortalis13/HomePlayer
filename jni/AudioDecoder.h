@@ -11,6 +11,7 @@ extern "C" {
 #include <string>
 #include <future>
 #include <fstream>
+#include <atomic>
 
 #include "defs.h"
 
@@ -24,6 +25,7 @@ static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
 public:
   AudioDecoder(AudioStreamWriter* streamWriter) {
     this->streamWriter = streamWriter;
+    p = new promise<void>();
   }
   
   ~AudioDecoder();
@@ -120,6 +122,15 @@ private:
   SwrContext* swrContext = NULL;
   
   future<void> runThread;
+  // shared_future<void> runThread;
+  // shared_future<void> waitThread;
+  
+  condition_variable cv;
+  mutex m;
+  
+  atomic<bool> flag = false;
+  
+  promise<void> *p;
   
   AudioStreamWriter* streamWriter = NULL;
   
