@@ -123,6 +123,8 @@ private:
   future<void> runThread;
   promise<void> *threadEndSignal;
   
+  atomic<bool> thread_end_flag = false;
+  
   AudioStreamWriter* streamWriter = NULL;
   
 };
