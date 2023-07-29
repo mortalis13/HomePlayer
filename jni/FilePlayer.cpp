@@ -13,14 +13,15 @@ FilePlayer::FilePlayer() {
 
 
 bool FilePlayer::init() {
-  LOGD("init()");
+  LOGD("init() -start-");
   if (!this->openStream()) return false;
   if (!this->startStream()) return false;
+  LOGD("init() -end-");
   return true;
 }
 
 bool FilePlayer::destroy() {
-  LOGD("destroy()");
+  LOGD("destroy() -start-");
   this->playing = false;
   
   if (this->decoder) {
@@ -29,6 +30,8 @@ bool FilePlayer::destroy() {
   
   this->stopStream();
   this->closeStream();
+  
+  LOGD("destroy() -end-");
   return true;
 }
 
@@ -101,7 +104,7 @@ void FilePlayer::setGain(float gainDb) {
 
 // ==> Decoder
 bool FilePlayer::loadAudio(string audioPath) {
-  LOGD("loadAudio()");
+  LOGD("loadAudio() -start- => %s", audioPath.c_str());
   this->playing = false;
   
   if (this->decoder && !this->decoder->isStopped()) {
@@ -122,11 +125,12 @@ bool FilePlayer::loadAudio(string audioPath) {
   }
 
   if (result < 0) return false;
+  LOGD("loadAudio() -end- => %s", audioPath.c_str());
   return true;
 }
 
 bool FilePlayer::bufferNextAudio(string audioPath) {
-  LOGD("bufferNextAudio()");
+  LOGD("bufferNextAudio() -start- => %s", audioPath.c_str());
   
   // Temp decoder used to preload audio that would be played next
   // it will be assigned to the main decoder when the current audio ends normally, with EOF
@@ -139,11 +143,13 @@ bool FilePlayer::bufferNextAudio(string audioPath) {
   nextAudioBuffered = true;
   
   if (result < 0) return false;
+  LOGD("bufferNextAudio() -end- => %s", audioPath.c_str());
   return true;
 }
 
 bool FilePlayer::startAudio() {
   // --> Main thread || Decoder wait thread
+  LOGD("startAudio() -start-");
   if (!this->decoder) return false;
   if (!this->decoder->isLoaded()) {
     LOGE("Trying to start decoder without loading audio first");
@@ -157,6 +163,7 @@ bool FilePlayer::startAudio() {
   (new std::thread(&FilePlayer::waitDecoderThread, this))->detach();
   
   this->playing = true;
+  LOGD("startAudio() -end-");
   return true;
 }
 
@@ -167,7 +174,7 @@ void FilePlayer::pause() {
 }
 
 bool FilePlayer::resume() {
-  LOGD("resume()");
+  LOGD("resume() -start-");
   if (!this->decoder) return false;
   
   if (this->decoder->isStopped()) {
@@ -178,6 +185,7 @@ bool FilePlayer::resume() {
   }
   
   this->playing = true;
+  LOGD("resume() -end-");
   return true;
 }
 
