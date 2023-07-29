@@ -14,6 +14,7 @@ AudioDecoder::~AudioDecoder() {
     stop();
   }
   this->cleanup();
+  delete threadEndSignal;
 }
 
 
@@ -68,9 +69,10 @@ bool AudioDecoder::isRepeat() {
 
 bool AudioDecoder::waitDecoderThread() {
   // --> Decoder wait thread
-  // Returns true if thread ended after eof, not forced
+  // Returns true if decoding thread was ended after eof, not forced
   LOGD("--> waitDecoderThread() -start-");
-  if (runThread.valid()) runThread.wait();
+  // Block until set_value is called
+  threadEndSignal->get_future().wait();
   LOGD("--> waitDecoderThread() -end-, EOF reached: %d", this->ended);
   return this->ended;
 }
@@ -87,7 +89,10 @@ void AudioDecoder::run() {
     this->ended = true;
     LOGI("File decoding completed after EOF");
   }
+  
   LOGI("Decoder thread ended");
+  // Notify about decoding thread end
+  threadEndSignal->set_value();
 }
 
 int AudioDecoder::decodeFrames() {
