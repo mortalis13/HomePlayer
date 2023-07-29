@@ -829,6 +829,7 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     logd("playAudio(), time: %d, \"%s\"", time, filePath);
+    nextFilePreloaded = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
@@ -869,6 +870,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void syncNextFile(String filePath) {
     logd("syncNextFile(), \"%s\"", filePath);
+    nextFilePreloaded = false;
     if (filePath == null || filePath.length() == 0) return;
     
     File playingFile = new File(filePath);
@@ -1175,6 +1177,7 @@ public class MainActivity extends AppCompatActivity {
         File file = getNextPlaylistFile(currentFile);
         log("preloading next file: " + file);
         nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+        log("preloading result: " + nextFilePreloaded);
       }
     }
     

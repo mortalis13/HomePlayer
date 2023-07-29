@@ -98,6 +98,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     logd("PlayerService.onStartCommand()");
+    
+    stopped = false;
 
     if (intent == null) {
       loge("intent is null");
