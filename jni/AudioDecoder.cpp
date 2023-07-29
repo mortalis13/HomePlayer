@@ -73,7 +73,7 @@ bool AudioDecoder::waitDecoderThread() {
   LOGD("--> waitDecoderThread() -start-");
   // Block until set_value is called
   threadEndSignal->get_future().wait();
-  LOGD("--> waitDecoderThread() -end-, EOF reached: %d", this->ended);
+  LOGD("--> waitDecoderThread() -end-, EOF %sreached", this->ended ? "": "not ");
   return this->ended;
 }
 
@@ -99,7 +99,7 @@ int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
 
-  this->is_eof = false;
+  bool is_eof = false;
   this->delayedSamples = 0;
   
   AVPacket* audioPacket;
@@ -122,7 +122,7 @@ int AudioDecoder::decodeFrames() {
   while (!this->stopped) {
     if (this->seekPending) {
       this->seekPending = false;
-      this->is_eof = false;
+      is_eof = false;
 
       int seek_result = avformat_seek_file(formatContext, -1, 0, this->seekTimestamp, INT64_MAX, 0);
       if (seek_result >= 0) {
@@ -142,7 +142,7 @@ int AudioDecoder::decodeFrames() {
     if (result < 0) {
       LOGW("av_read_frame error: %s", av_err2str(result));
       if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
-        this->is_eof = true;
+        is_eof = true;
         avcodec_send_packet(codecContext, audioPacket);
         av_packet_unref(audioPacket);
         
@@ -214,6 +214,7 @@ end:
 void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
   // --> Decoder thread
   if (this->streamWriter) {
+    // Pass the samples outside
     streamWriter->writeAudio(buffer, numFrames);
   }
 }
