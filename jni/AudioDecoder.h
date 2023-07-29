@@ -24,6 +24,7 @@ static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
 public:
   AudioDecoder(AudioStreamWriter* streamWriter) {
     this->streamWriter = streamWriter;
+    threadEndSignal = new promise<void>();
   }
   
   ~AudioDecoder();
@@ -120,6 +121,7 @@ private:
   SwrContext* swrContext = NULL;
   
   future<void> runThread;
+  promise<void> *threadEndSignal;
   
   AudioStreamWriter* streamWriter = NULL;
   
