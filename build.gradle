@@ -39,9 +39,14 @@ android {
     
     resValue "string", "app_version", versionName
     
+    packagingOptions {
+      doNotStrip '**.so'
+    }
+    
     externalNativeBuild {
       cmake {
         arguments "-DANDROID_STL=c++_shared"
+        cppFlags "-g"
       }
     }
   }
