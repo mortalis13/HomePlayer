@@ -122,7 +122,7 @@ bool FilePlayer::loadAudio(string audioPath) {
 }
 
 bool FilePlayer::startAudio() {
-  LOGD("startAudio()");
+  // --> Main thread || Decoder wait thread
   if (!this->decoder) return false;
   if (!this->decoder->isLoaded()) {
     LOGE("Trying to start decoder without loading audio first");
@@ -130,6 +130,10 @@ bool FilePlayer::startAudio() {
   }
   
   this->decoder->start();
+  
+  // Wait for thread end to notify the client
+  (new std::thread(&FilePlayer::waitDecoderThread, this))->detach();
+  
   this->playing = true;
   return true;
 }
@@ -153,13 +157,6 @@ bool FilePlayer::resume() {
   
   this->playing = true;
   return true;
-}
-
-bool FilePlayer::isStopped() {
-  if (!this->decoder) return true;
-  bool decoderEnded = this->decoder->isEnded();
-  if (decoderEnded) this->playing = false;
-  return decoderEnded;
 }
 
 bool FilePlayer::isPlaying() {
@@ -297,4 +294,18 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
       }
     }
   }
+}
+void FilePlayer::waitDecoderThread() {
+  // --> Decoder wait thread
+  lock_guard<mutex> guard(decoderWaitMutex);
+  LOGD("waitDecoderThread() -start-");
+  
+  bool isEndedOnEOF = this->decoder->waitDecoderThread();
+  this->playing = false;
+  
+  if (isEndedOnEOF) {
+    if (engineChangeListener) engineChangeListener->audioEnded();
+  }
+  
+  LOGD("waitDecoderThread() -end-");
 }

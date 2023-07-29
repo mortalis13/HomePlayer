@@ -70,6 +70,7 @@ public:
   int getCurrentTime();
   int getDuration();
 
+  bool waitDecoderThread();
 
 public:
   AudioParams audioParams;

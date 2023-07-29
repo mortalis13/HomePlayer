@@ -5,6 +5,7 @@
 #include <string>
 
 #include "utils/logging.h"
+#include "defs.h"
 #include "FilePlayer.h"
 
 #ifdef __cplusplus
@@ -14,10 +15,78 @@ extern "C" {
 using namespace std;
 
 
+static JavaVM* gvm;
+static jclass EngineClassRef;
+static jmethodID NotifyAudioStopMethodID;
+
 static FilePlayer player;
 
 
+bool GetJniEnv(JavaVM *vm, JNIEnv **env) {
+  LOGD("GetJniEnv()");
+  if (!vm) {
+    LOGE("VM instance is NULL");
+    return false;
+  }
+  
+  bool thread_attached = false;
+  *env = nullptr;
+
+  // Check if the current thread is attached to the VM
+  auto get_env_result = vm->GetEnv((void**)env, JNI_VERSION_1_6);
+  if (get_env_result == JNI_EDETACHED) {
+    if (vm->AttachCurrentThread(env, NULL) == JNI_OK) {
+      thread_attached = true;
+    }
+    else {
+      LOGE("Failed to attach thread");
+    }
+  }
+  else if (get_env_result == JNI_EVERSION) {
+    LOGE("Unsupported JNI version");
+  }
+  
+  return thread_attached;
+}
+
+
+JNIEXPORT jint JNI_OnLoad(JavaVM* pVM, void* reserved) {
+  LOGD("JNI_OnLoad()");
+  gvm = pVM;
+  return JNI_VERSION_1_6;
+}
+
+
+class ChangeListener : public EngineChangeListener {
+  virtual void audioEnded() {
+    // --> Decoder wait thread
+    LOGD("audioEnded()");
+    
+    JNIEnv *env;
+    bool thread_attached = GetJniEnv(gvm, &env);
+    LOGI("JNI env attached to the current thread: %d", thread_attached);
+    
+    if (thread_attached) {
+      if (EngineClassRef && NotifyAudioStopMethodID) {
+        env->CallStaticVoidMethod(EngineClassRef, NotifyAudioStopMethodID);
+      }
+      gvm->DetachCurrentThread();
+    }
+  }
+};
+
+
 // Engine
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_initEngine(JNIEnv *env, jclass obj) {
+  LOGD(__func__);
+  player.engineChangeListener = new ChangeListener();
+  
+  if (!EngineClassRef) {
+    EngineClassRef = (jclass) env->NewGlobalRef(obj);
+    NotifyAudioStopMethodID = env->GetStaticMethodID(EngineClassRef, "notifyAudioStopped", "()V");
+  }
+}
+
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_startEngine(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.init();
@@ -85,10 +154,6 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setGa
 // Decoder
 JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
   return player.isPlaying();
-}
-
-JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isStopped(JNIEnv *env, jclass obj) {
-  return player.isStopped();
 }
 
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRepeat(JNIEnv *env, jclass obj, jboolean repeat) {
