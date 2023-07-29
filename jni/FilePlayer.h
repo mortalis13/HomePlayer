@@ -2,6 +2,7 @@
 #define FILE_PLAYER_H
 
 #include <string>
+#include <mutex>
 
 #include "oboe/Oboe.h"
 
@@ -49,7 +50,6 @@ public:
   int getCurrentPosition();
   void seekTo(int time_ms);
   
-  bool isStopped();
   bool isPlaying();
   
   void setRepeat(bool repeat);
@@ -71,6 +71,8 @@ public:
   string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
+  
+  EngineChangeListener* engineChangeListener = NULL;
 
 
 private:
@@ -82,6 +84,7 @@ private:
   void processAudio(float* stream, int32_t numFrames, int8_t channels);
   void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
+  void waitDecoderThread();
 private:
   
   bool playing = false;
@@ -95,6 +98,8 @@ private:
 
   PeakingFilter* filters;
   bool isFilterEnabled = false;
+  
+  mutex decoderWaitMutex;
 
 };
 #endif //FILE_PLAYER_H

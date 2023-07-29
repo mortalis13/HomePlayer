@@ -748,6 +748,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void initEngine() {
     new Thread(() -> {
+      EngineNative.initEngine();
       EngineNative.startEngine();
       log("Audio engine started");
       

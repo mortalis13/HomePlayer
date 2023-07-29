@@ -62,6 +62,15 @@ bool AudioDecoder::isRepeat() {
 }
 
 
+bool AudioDecoder::waitDecoderThread() {
+  // --> Decoder wait thread
+  // Returns true if thread ended after eof, not forced
+  LOGD("--> waitDecoderThread() -start-");
+  if (runThread.valid()) runThread.wait();
+  LOGD("--> waitDecoderThread() -end-, EOF reached: %d", this->ended);
+  return this->ended;
+}
+
 void AudioDecoder::run() {
   // --> Decoder thread
   LOGD("run()");

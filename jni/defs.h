@@ -22,4 +22,9 @@ public:
   virtual void writeAudio(uint8_t* stream, int32_t numFrames) = 0;
 };
 
+class EngineChangeListener {
+public:
+  virtual void audioEnded() = 0;
+};
+
 #endif //DEFS_H

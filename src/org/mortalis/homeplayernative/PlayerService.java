@@ -35,8 +35,12 @@ import static org.mortalis.homeplayernative.Fun.loge;
 import java.io.File;
 
 
-public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
-
+public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener, EngineNative.NativeChangeListener {
+  
+  public void onAudioStopped() {
+    stopped = true;
+  }
+  
   public static final String ACTION_PLAY = "org.mortalis.homeplayernative.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
   public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
@@ -63,6 +67,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
+  private boolean stopped;
 
   private int totalTime;
 
@@ -195,6 +200,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
       new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
     };
+    
+    EngineNative.changeListener = this;
   }
 
 
@@ -326,7 +333,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressHandler.removeCallbacks(progressRunnable);
 
     progressRunnable = () -> {
+      // Stopped on EOF
       if (isStopped()) {
+        stopped = false;
         onCompleted();
         return;
       }
@@ -513,7 +522,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public boolean isStopped() {
-    return EngineNative.isStopped();
+    // return EngineNative.isStopped();
+    return stopped;
   }
   
   public boolean hasAudio() {
