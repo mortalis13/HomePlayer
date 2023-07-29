@@ -15,7 +15,6 @@ public class Vars {
   public static final String EXTRA_AUDIO_PATH = "extra_audio_path";
   public static final String EXTRA_AUDIO_TIME = "extra_audio_time";  // ms
   public static final String EXTRA_START_PLAYBACK = "extra_start_playback";
-  public static final String EXTRA_PLAYBACK_REPEAT = "extra_playback_repeat";
   
   public static final String PREFS_FILE = "home_player_prefs";
   public static final String PREF_LAST_FILE_IN_FOLDER = "PREF_LAST_FILE_";
