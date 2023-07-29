@@ -128,6 +128,25 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_loadA
   return result ? 0: -1;
 }
 
+JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_bufferNextAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
+  LOGD(__func__);
+  const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
+  string audioPath(audioPathBytes);
+  env->ReleaseStringUTFChars(jaudioPath, audioPathBytes);
+  
+  bool result = player.bufferNextAudio(audioPath);
+  
+  if (!result) {
+    LOGE("Could not properly load audio file. Check the previous logs.");
+  }
+  return result;
+}
+
+JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getAudioPath(JNIEnv *env, jclass obj) {
+  string audioPath = player.getAudioPath();
+  return env->NewStringUTF(audioPath.c_str());
+}
+
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.startAudio();

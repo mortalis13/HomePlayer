@@ -23,7 +23,7 @@ void AudioDecoder::start() {
   this->stopped = false;
   this->ended = false;
   
-  runThread = std::async(&AudioDecoder::run, this);
+  runThread = std::async(launch::async, &AudioDecoder::run, this);
   LOGI("Decoder thread started");
 }
 
@@ -31,6 +31,10 @@ void AudioDecoder::start() {
 void AudioDecoder::stop() {
   LOGD("stop()");
   this->playing = false;
+  if (stopped) {
+    LOGI("--already stopped");
+    return;
+  }
   this->stopped = true;
   
   if (runThread.valid()) {
@@ -85,7 +89,6 @@ void AudioDecoder::run() {
   }
   LOGI("Decoder thread ended");
 }
-
 
 int AudioDecoder::decodeFrames() {
   // --> Decoder thread
@@ -213,6 +216,7 @@ void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
 
 int AudioDecoder::loadFile(string filePath) {
   LOGI("loadFile => %s", filePath.c_str());
+  this->audioPath = filePath;
   int result = -1;
   
   this->loaded = false;
@@ -366,6 +370,11 @@ int AudioDecoder::getCurrentTime() {
 }
 
 int AudioDecoder::getDuration() {
+  if (!formatContext) {
+    LOGE("getDuration() :: formatContext is NULL");
+    return -1;
+  }
+  
   int64_t duration_ms = 1000 * formatContext->duration / AV_TIME_BASE;
   LOGI("Context duration: %d, duration: %d ms", (int) formatContext->duration, (int) duration_ms);
   return duration_ms;
