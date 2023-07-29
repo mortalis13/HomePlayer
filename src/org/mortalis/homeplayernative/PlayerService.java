@@ -63,6 +63,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private String audioPath;
   private int audioTime;
   private boolean startPlayback;
+  private boolean action_SyncAudioFile;
 
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
@@ -76,6 +77,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public SimpleAction exitAction = () -> {};
   public Action<Integer> progressSetupAction = (arg) -> {};
   public Action<Integer> progressUpdateAction = (arg) -> {};
+  public DoubleAction<Integer> timeInitAction = (arg1, arg2) -> {};
   public DoubleAction<Integer> timeUpdateAction = (arg1, arg2) -> {};
   public SimpleAction onPlayerPreloadedAction = () -> {};
   public SimpleAction onPlayerStartedAction = () -> {};
@@ -96,6 +98,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     logd("PlayerService.onStartCommand()");
+    
+    stopped = false;
 
     if (intent == null) {
       loge("intent is null");
@@ -103,13 +107,19 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
 
     try {
+      action_SyncAudioFile = intent.getBooleanExtra(Vars.EXTRA_SYNC_FILE, false);
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
-      audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
-      startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
 
       progressHandler.removeCallbacks(progressRunnable);
 
-      loadAudio(audioPath);
+      if (action_SyncAudioFile) {
+        syncAudioFile(audioPath);
+      }
+      else {
+        audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
+        startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
+        loadAudio(audioPath);
+      }
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -260,13 +270,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public void fastRewind(int s) {
-    EngineNative.seekTo(getPlayingTime() - s * 1000);
+    changePlayPosition(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
 
   public void fastForward(int s) {
-    EngineNative.seekTo(getPlayingTime() + s * 1000);
+    changePlayPosition(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
@@ -277,8 +287,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
 
   private void loadAudio(String audioPath) {
-    logd("loadAudio()");
-
+    logd("loadAudio() " + audioPath);
+    
     try {
       if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
         log("Stream closed. Restarting");
@@ -299,7 +309,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
             changePlayPosition(audioTime);
           }
 
-          sendUpdatePlayingTime();
+          sendInitPlayingTime();
           sendInitProgress();
           sendUpdateProgress();
           playerLoaded = true;
@@ -314,6 +324,30 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
             sendPlayerPreloaded();
           }
         }
+
+        var notification = buildPlayerNotification();
+        if (notification == null) return;
+        startForeground(Vars.NOTIFICATION_ID, notification);
+      }
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  private void syncAudioFile(String audioPath) {
+    logd("syncAudioFile() " + audioPath);
+    
+    try {
+      if (Fun.fileExists(audioPath)) {
+        totalTime = EngineNative.getDuration();
+
+        sendInitProgress();
+        playerLoaded = true;
+
+        enableUpdateTime();
+        startProgress();
+        sendPlayerStarted();
 
         var notification = buildPlayerNotification();
         if (notification == null) return;
@@ -350,7 +384,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("onCompleted()");
     sendUpdateStoppedTime();
     updateNotification(ACTION_PLAY_ID);
-
+    
     playerLoaded = false;
     stopSelf();
     sendPlayerStopped();
@@ -457,6 +491,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     progressUpdateAction.execute(getTotalTime());
   }
   
+  private void sendInitPlayingTime() {
+    timeInitAction.execute(getPlayingTime(), getTotalTime());
+  }
+  
   private void sendUpdatePlayingTime() {
     timeUpdateAction.execute(getPlayingTime(), getTotalTime());
   }
@@ -498,11 +536,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     updateTimeEnabled = false;
   }
   
-  public void changePlayPosition(int time) {
+  public void changePlayPosition(int time) {  // ms
+    logd("changePlayPosition() " + time);
     EngineNative.seekTo(time);
   }
   
   public void seekToEnd() {
+    logd("seekToEnd() " + totalTime);
     EngineNative.seekTo(totalTime);
   }
   

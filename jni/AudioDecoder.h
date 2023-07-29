@@ -69,6 +69,10 @@ public:
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
+  
+  string getAudioPath() {
+    return audioPath;
+  }
 
   bool waitDecoderThread();
 
@@ -106,6 +110,8 @@ private:
   
   bool seekPending = false;
   int64_t seekTimestamp = 0;
+  
+  string audioPath;
   
   int audioStreamIndex = -1;
   

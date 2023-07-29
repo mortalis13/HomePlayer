@@ -36,18 +36,21 @@ public:
   bool startStream();
   bool stopStream();
   bool closeStream();
+  
   bool isStreamClosed();
   bool isRestarting();
   void setGain(float gainDb);
   
   // Decoder
   bool loadAudio(string audioPath);
+  bool bufferNextAudio(string audioPath);
   bool startAudio();
   void pause();
   bool resume();
   
   int getDuration();
   int getCurrentPosition();
+  string getAudioPath();
   void seekTo(int time_ms);
   
   bool isPlaying();
@@ -78,13 +81,12 @@ public:
 private:
   bool restartStream();
 
-  void initDecoder();
-  bool loadFile(string audioPath);
-  
   void processAudio(float* stream, int32_t numFrames, int8_t channels);
   void filterAudio(float* stream, int32_t numFrames, int8_t channels);
 
   void waitDecoderThread();
+  void startBufferedDecoder();
+
 private:
   
   bool playing = false;
@@ -92,10 +94,13 @@ private:
   bool restarting = false;
   bool repeat = false;
   
+  bool nextAudioBuffered = false;
+  
   float gain = 1.0f;
 
   shared_ptr<AudioStream> audioStream;
   shared_ptr<AudioDecoder> decoder;
+  shared_ptr<AudioDecoder> bufferedDecoder;
 
   PeakingFilter* filters;
   bool isFilterEnabled = false;
