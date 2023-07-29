@@ -63,7 +63,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private String audioPath;
   private int audioTime;
   private boolean startPlayback;
-  private boolean repeat;
 
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
@@ -107,7 +106,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
       audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
       startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
-      repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, true);
 
       progressHandler.removeCallbacks(progressRunnable);
 
@@ -294,7 +292,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           onLoadError();
         }
         else {
-          setRepeat(this.repeat);
           totalTime = EngineNative.getDuration();
 
           if (audioTime > 0 && audioTime != getTotalTime()) {
