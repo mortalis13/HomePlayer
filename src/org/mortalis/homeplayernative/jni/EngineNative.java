@@ -20,6 +20,7 @@ public class EngineNative {
   
   public static native int getDuration();
   public static native int getCurrentPosition();
+  public static native String getAudioPath();
   public static native void seekTo(int time);
   
   public static native boolean isPlaying();

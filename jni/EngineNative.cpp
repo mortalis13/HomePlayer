@@ -142,6 +142,11 @@ JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_b
   return result;
 }
 
+JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getAudioPath(JNIEnv *env, jclass obj) {
+  string audioPath = player.getAudioPath();
+  return env->NewStringUTF(audioPath.c_str());
+}
+
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.startAudio();

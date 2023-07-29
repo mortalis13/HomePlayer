@@ -64,7 +64,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private int audioTime;
   private boolean startPlayback;
   private boolean repeat;
-  private boolean nextPreloaded;
+  private boolean action_syncAudioFile;
 
   private boolean updateTimeEnabled;
   private boolean playerLoaded;
@@ -106,15 +106,20 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
 
     try {
+      action_syncAudioFile = intent.getBooleanExtra(Vars.EXTRA_SYNC_FILE, false);
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
-      audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
-      startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
-      repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, false);
-      nextPreloaded = intent.getBooleanExtra(Vars.EXTRA_NEXT_PRELOADED, false);
 
       progressHandler.removeCallbacks(progressRunnable);
 
-      loadAudio(audioPath);
+      if (action_syncAudioFile) {
+        syncAudioFile(audioPath);
+      }
+      else {
+        audioTime = intent.getIntExtra(Vars.EXTRA_AUDIO_TIME, 0);  // ms
+        startPlayback = intent.getBooleanExtra(Vars.EXTRA_START_PLAYBACK, true);
+        repeat = intent.getBooleanExtra(Vars.EXTRA_PLAYBACK_REPEAT, false);
+        loadAudio(audioPath);
+      }
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -283,6 +288,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   private void loadAudio(String audioPath) {
     logd("loadAudio() " + audioPath);
+    
     try {
       if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
         log("Stream closed. Restarting");
@@ -290,10 +296,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       }
       
       if (Fun.fileExists(audioPath)) {
-        int result = 0;
-        if (!nextPreloaded) {
-          result = EngineNative.loadAudio(audioPath);
-        }
+        int result = EngineNative.loadAudio(audioPath);
 
         if (result != 0) {
           onLoadError();
@@ -315,7 +318,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           if (startPlayback) {
             enableUpdateTime();
             startProgress();
-            if (!nextPreloaded) play();
+            play();
             sendPlayerStarted();
           }
           else {
@@ -333,11 +336,36 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
   }
   
+  private void syncAudioFile(String audioPath) {
+    logd("syncAudioFile() " + audioPath);
+    
+    try {
+      if (Fun.fileExists(audioPath)) {
+        totalTime = EngineNative.getDuration();
+
+        sendInitProgress();
+        playerLoaded = true;
+
+        enableUpdateTime();
+        startProgress();
+        sendPlayerStarted();
+
+        var notification = buildPlayerNotification();
+        if (notification == null) return;
+        startForeground(Vars.NOTIFICATION_ID, notification);
+      }
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
   private void startProgress() {
     logd("startProgress()");
     progressHandler.removeCallbacks(progressRunnable);
 
     progressRunnable = () -> {
+      // Stopped on EOF
       if (isStopped()) {
         stopped = false;
         onCompleted();

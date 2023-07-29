@@ -50,6 +50,7 @@ public:
   
   int getDuration();
   int getCurrentPosition();
+  string getAudioPath();
   void seekTo(int time_ms);
   
   bool isPlaying();

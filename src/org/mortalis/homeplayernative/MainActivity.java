@@ -854,7 +854,6 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
-    playerIntent.putExtra(Vars.EXTRA_NEXT_PRELOADED, nextFilePreloaded);
     
     startService(playerIntent);
     
@@ -916,6 +915,25 @@ public class MainActivity extends AppCompatActivity {
     else {
       loge("Previous file is null");
     }
+  }
+  
+  private void syncNextFile() {
+    String filePath = EngineNative.getAudioPath();
+    logd("syncNextFile(), \"%s\"", filePath);
+    if (filePath == null || filePath.length() == 0) return;
+    
+    File playingFile = new File(filePath);
+    
+    Intent playerIntent = new Intent(this, PlayerService.class);
+    playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
+    playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
+    startService(playerIntent);
+    
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
+    Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
+
+    markLastPlayedFile(currentPath);
+    selectItem(filePath);
   }
   
   
@@ -1111,7 +1129,8 @@ public class MainActivity extends AppCompatActivity {
       setPlayButtonDefault();
     }
     else {
-      playNextFile(true);
+      // playNextFile(true);
+      syncNextFile();
     }
   }
   

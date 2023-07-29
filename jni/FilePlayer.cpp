@@ -195,14 +195,18 @@ bool FilePlayer::isRepeat() {
 }
 
 
+int FilePlayer::getDuration() {
+  if (!this->decoder) return -1;
+  return this->decoder->getDuration();
+}
+
 int FilePlayer::getCurrentPosition() {
   if (!this->decoder) return -1;
   return this->decoder->getCurrentTime();
 }
 
-int FilePlayer::getDuration() {
-  if (!this->decoder) return -1;
-  return this->decoder->getDuration();
+string FilePlayer::getAudioPath() {
+  return this->decoder->getAudioPath();
 }
 
 void FilePlayer::seekTo(int time_ms) {
