@@ -27,6 +27,8 @@ public class Vars {
   public static final int EQ_BANDS = 8;
   public static final float EQ_Q_FACTOR = 1.0f;
   
+  public static final boolean ENABLE_NEXT_FILE_PRELOADING = true;
+  
   public static final boolean SHOW_TIME_MS = false;
   public static final boolean KEEP_SCREEN_ON = false;
   
