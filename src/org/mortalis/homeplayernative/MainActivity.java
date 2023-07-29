@@ -225,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
     setContentView(R.layout.activity_main);
     
     if (Vars.KEEP_SCREEN_ON) {
+      logd("Enabling flag to keep screen on");
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
     
@@ -858,7 +859,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
-    markLastPlayedFile(currentPath);
+    filesAdapter.markLastPlayedItem(filePath);
     selectItem(filePath);
     
     if (!startPlayback) setPlayButtonDefault();
@@ -961,7 +962,7 @@ public class MainActivity extends AppCompatActivity {
     selectPlayingDirOrFile();
     resetCurrentDirTime();
 
-    markLastPlayedFile(currentPath);
+    markLastPlayedFileInDir(currentPath);
     markFavorites();
     updateFavoritesStats();
     
@@ -1033,7 +1034,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void markLastPlayedFile(File dir) {
+  private void markLastPlayedFileInDir(File dir) {
     String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + dir.getPath());
     
     if (lastFile != null) {
