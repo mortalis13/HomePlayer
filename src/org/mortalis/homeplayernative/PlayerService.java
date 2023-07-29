@@ -268,13 +268,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public void fastRewind(int s) {
-    EngineNative.seekTo(getPlayingTime() - s * 1000);
+    changePlayPosition(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
 
   public void fastForward(int s) {
-    EngineNative.seekTo(getPlayingTime() + s * 1000);
+    changePlayPosition(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
@@ -534,11 +534,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     updateTimeEnabled = false;
   }
   
-  public void changePlayPosition(int time) {
+  public void changePlayPosition(int time) {  // ms
+    logd("changePlayPosition() " + time);
     EngineNative.seekTo(time);
   }
   
   public void seekToEnd() {
+    logd("seekToEnd() " + totalTime);
     EngineNative.seekTo(totalTime);
   }
   

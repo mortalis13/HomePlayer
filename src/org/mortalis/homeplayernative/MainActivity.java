@@ -1091,11 +1091,13 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Events ------------------------------
   private void onPlayerStarted() {
+    logd("onPlayerStarted()");
     onPlayerPreloaded();
     setPlayButtonAsPause();
   }
   
   private void onPlayerPreloaded() {
+    logd("onPlayerPreloaded()");
     progressSlider.enable();
     updatePlayingStats();
     
@@ -1122,6 +1124,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerStopped() {
+    logd("onPlayerStopped()");
     if (!playbackShuffle && isPlayingLastFile()) {
       progressSlider.disable();
       setPlayButtonDefault();
@@ -1352,6 +1355,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void itemClick(ListItem item) {
+    logd("itemClick() " + item.path);
+    
     try {
       File clickedFile = new File(item.path);
       if (clickedFile.isDirectory()) {
