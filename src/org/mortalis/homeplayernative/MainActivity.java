@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
   private int lastAudioTime;
   private Set<String> favoritesList;
   private boolean playbackRepeat;
+  private boolean nextFilePreloaded;
   
   private boolean playbackShuffle;
   private List<File> shuffleList;
@@ -357,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.exitAction = () -> exitApp();
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
+        playerService.timeInitAction = (time, timeTotal) -> onPlayingTimeSetup(time, timeTotal);
         playerService.timeUpdateAction = (time, timeTotal) -> onPlayedTimeChanged(time, timeTotal);
         playerService.onPlayerPreloadedAction = () -> onPlayerPreloaded();
         playerService.onPlayerStartedAction = () -> onPlayerStarted();
@@ -865,6 +867,24 @@ public class MainActivity extends AppCompatActivity {
     if (!startPlayback) setPlayButtonDefault();
   }
   
+  private void syncNextFile(String filePath) {
+    logd("syncNextFile(), \"%s\"", filePath);
+    if (filePath == null || filePath.length() == 0) return;
+    
+    File playingFile = new File(filePath);
+    
+    Intent playerIntent = new Intent(this, PlayerService.class);
+    playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
+    playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
+    startService(playerIntent);
+    
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
+    Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
+
+    filesAdapter.markLastPlayedItem(filePath);
+    selectItem(filePath);
+  }
+  
   private void playAudio(String filePath, boolean startPlayback) {
     playAudio(filePath, 0, startPlayback);
   }
@@ -1069,11 +1089,13 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Events ------------------------------
   private void onPlayerStarted() {
+    logd("onPlayerStarted()");
     onPlayerPreloaded();
     setPlayButtonAsPause();
   }
   
   private void onPlayerPreloaded() {
+    logd("onPlayerPreloaded()");
     progressSlider.enable();
     updatePlayingStats();
     
@@ -1100,12 +1122,24 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerStopped() {
+    logd("onPlayerStopped()");
+    
     if (!playbackShuffle && isPlayingLastFile()) {
       progressSlider.disable();
       setPlayButtonDefault();
     }
     else {
-      playNextFile(true);
+      nextFilePreloaded = false;
+      String filePath = EngineNative.getAudioPath();
+      if (filePath.equals(playerService.getAudioPath())) {
+        // The audio is ended but did not change to the next one in the backend (maybe it's too short so the next file is not preloaded)
+        // The next file needs to be manually selected
+        log("Decoder audio is the same as the current audio. Advancing to the next file.");
+        playNextFile(true);
+      }
+      else {
+        syncNextFile(filePath);
+      }
     }
   }
   
@@ -1116,8 +1150,25 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.markError(playerService.getAudioPath());
   }
   
+  private void onPlayingTimeSetup(int playingTime, int totalTime) {  // time in ms
+    updatePlayingTime(playingTime, totalTime);
+  }
+  
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
+    
+    if (!nextFilePreloaded && !playbackShuffle) {
+      int timeLeft = totalTime - playingTime;
+      boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
+      
+      if (nearAudioEnd) {
+        File currentFile = new File(playerService.getAudioPath());
+        File file = getNextPlaylistFile(currentFile);
+        log("preloading next file: " + file);
+        nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+        log("preload result: " + nextFilePreloaded);
+      }
+    }
     
     if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
       if (isPlayingLastFile()) {
@@ -1304,6 +1355,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void itemClick(ListItem item) {
+    logd("itemClick() " + item.path);
+    
     try {
       File clickedFile = new File(item.path);
       if (clickedFile.isDirectory()) {

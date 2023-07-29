@@ -100,23 +100,44 @@ void FilePlayer::setGain(float gainDb) {
 
 
 // ==> Decoder
-void FilePlayer::initDecoder() {
-  LOGD("initDecoder()");
-  if (this->decoder) {
-    this->decoder->stop();
-  }
-  
-  this->decoder = make_shared<AudioDecoder>(this);
-  this->decoder->setChannelCount(audioStream->getChannelCount());
-  this->decoder->setSampleRate(audioStream->getSampleRate());
-}
-
 bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio()");
   this->playing = false;
-  this->initDecoder();
   
-  int result = this->decoder->loadFile(audioPath);
+  if (this->decoder && !this->decoder->isStopped()) {
+    this->decoder->stop();
+  }
+
+  this->decoder = make_shared<AudioDecoder>(this);
+  this->decoder->setChannelCount(audioStream->getChannelCount());
+  this->decoder->setSampleRate(audioStream->getSampleRate());
+  this->decoder->setRepeat(this->repeat);
+  
+  int result = 0;
+  if (!this->decoder->isLoaded()) {
+    result = this->decoder->loadFile(audioPath);
+  }
+  else {
+    LOGI("Decoder is already loaded");
+  }
+
+  if (result < 0) return false;
+  return true;
+}
+
+bool FilePlayer::bufferNextAudio(string audioPath) {
+  LOGD("bufferNextAudio()");
+  
+  // Temp decoder used to preload audio that would be played next
+  // it will be assigned to the main decoder when the current audio ends normally, with EOF
+  bufferedDecoder = make_shared<AudioDecoder>(this);
+  bufferedDecoder->setChannelCount(audioStream->getChannelCount());
+  bufferedDecoder->setSampleRate(audioStream->getSampleRate());
+  bufferedDecoder->setRepeat(repeat);
+
+  int result = bufferedDecoder->loadFile(audioPath);
+  nextAudioBuffered = true;
+  
   if (result < 0) return false;
   return true;
 }
@@ -129,6 +150,7 @@ bool FilePlayer::startAudio() {
     return false;
   }
   
+  LOGI("Start playback for %s", this->decoder->getAudioPath().c_str());
   this->decoder->start();
   
   // Wait for thread end to notify the client
@@ -174,14 +196,18 @@ bool FilePlayer::isRepeat() {
 }
 
 
+int FilePlayer::getDuration() {
+  if (!this->decoder) return -1;
+  return this->decoder->getDuration();
+}
+
 int FilePlayer::getCurrentPosition() {
   if (!this->decoder) return -1;
   return this->decoder->getCurrentTime();
 }
 
-int FilePlayer::getDuration() {
-  if (!this->decoder) return -1;
-  return this->decoder->getDuration();
+string FilePlayer::getAudioPath() {
+  return this->decoder->getAudioPath();
 }
 
 void FilePlayer::seekTo(int time_ms) {
@@ -276,6 +302,7 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
   }
 }
 
+// virtual AudioStreamWriter
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
   this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
   
@@ -295,6 +322,31 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
     }
   }
 }
+
+
+void FilePlayer::startBufferedDecoder() {
+  // --> Decoder wait thread
+  LOGD("startBufferedDecoder() -start-");
+  if (!nextAudioBuffered || !bufferedDecoder) {
+    LOGI("No buffered decoder");
+    nextAudioBuffered = false;
+    return;
+  }
+  nextAudioBuffered = false;
+  
+  LOGI("Changing to buffered decoder and freeing the old decoder");
+  this->decoder.swap(bufferedDecoder);
+  bufferedDecoder.reset();
+  
+  if (!this->decoder->isLoaded()) {
+    LOGW("Buffered decoder not loaded yet, waiting 100 ms...");
+    this_thread::sleep_for(chrono::milliseconds(100));
+  }
+  
+  startAudio();
+  LOGD("startBufferedDecoder() -end-");
+}
+
 void FilePlayer::waitDecoderThread() {
   // --> Decoder wait thread
   lock_guard<mutex> guard(decoderWaitMutex);
@@ -304,8 +356,10 @@ void FilePlayer::waitDecoderThread() {
   this->playing = false;
   
   if (isEndedOnEOF) {
+    this->startBufferedDecoder();
     if (engineChangeListener) engineChangeListener->audioEnded();
   }
   
+  nextAudioBuffered = false;
   LOGD("waitDecoderThread() -end-");
 }
