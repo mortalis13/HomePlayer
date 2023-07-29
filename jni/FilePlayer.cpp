@@ -32,15 +32,6 @@ bool FilePlayer::destroy() {
   return true;
 }
 
-bool FilePlayer::isStreamClosed() {
-  if (!this->audioStream) return true;
-  return this->audioStream->getState() == StreamState::Closed;
-}
-
-bool FilePlayer::isRestarting() {
-  return this->restarting;
-}
-
 
 // ==> Audio stream
 bool FilePlayer::openStream() {
@@ -91,6 +82,15 @@ bool FilePlayer::restartStream() {
   
   this->restarting = false;
   return result;
+}
+
+bool FilePlayer::isStreamClosed() {
+  if (!this->audioStream) return true;
+  return this->audioStream->getState() == StreamState::Closed;
+}
+
+bool FilePlayer::isRestarting() {
+  return this->restarting;
 }
 
 void FilePlayer::setGain(float gainDb) {
@@ -164,13 +164,13 @@ bool FilePlayer::isPlaying() {
 }
 
 void FilePlayer::setRepeat(bool repeat) {
+  this->repeat = repeat;
   if (!this->decoder) return;
   this->decoder->setRepeat(repeat);
 }
 
 bool FilePlayer::isRepeat() {
-  if (!this->decoder) return false;
-  return this->decoder->isRepeat();
+  return this->repeat;
 }
 
 
