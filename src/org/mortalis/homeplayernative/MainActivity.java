@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
   private Set<String> favoritesList;
   private boolean playbackRepeat;
   private boolean nextFilePreloaded;
+  private boolean updateTimeEnabled;
   
   private boolean playbackShuffle;
   private List<File> shuffleList;
@@ -829,12 +830,16 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     logd("playAudio(), time: %d, \"%s\"", time, filePath);
+    updateTimeEnabled = false;
     nextFilePreloaded = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
+      nextFilePreloaded = false;
       return;
     }
+    
+    playerService.stopProgress();
     
     File playingFile = new File(filePath);
     if (!playingFile.exists()) {
@@ -856,6 +861,9 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     
     startService(playerIntent);
+    log("playerService started");
+    
+    updateTimeEnabled = true;
     
     removeFromShuffleList(playingFile);
     
@@ -1165,6 +1173,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
+    if (!updateTimeEnabled) return;
     updatePlayingTime(playingTime, totalTime);
     
     // Preload file when 10s or less is left until the current audio end
@@ -1176,8 +1185,13 @@ public class MainActivity extends AppCompatActivity {
         File currentFile = new File(playerService.getAudioPath());
         File file = getNextPlaylistFile(currentFile);
         log("preloading next file: " + file);
-        nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
-        log("preloading result: " + nextFilePreloaded);
+        if (file != null) {
+          nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+          log("preloading result: " + nextFilePreloaded);
+        }
+        else {
+          logw("Next file is null. Cannot preload it");
+        }
       }
     }
     

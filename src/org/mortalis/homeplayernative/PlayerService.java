@@ -37,10 +37,6 @@ import java.io.File;
 
 public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener, EngineNative.NativeChangeListener {
   
-  public void onAudioStopped() {
-    stopped = true;
-  }
-  
   public static final String ACTION_PLAY = "org.mortalis.homeplayernative.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
   public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
@@ -88,6 +84,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public SimpleAction onHeadphonesUnplugAction = () -> {};
   public SimpleAction onHeadphonesPlugAction = () -> {};
 
+
   @Override
   public void onCreate() {
     logd("PlayerService.onCreate()");
@@ -98,7 +95,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     logd("PlayerService.onStartCommand()");
-    
     stopped = false;
 
     if (intent == null) {
@@ -110,7 +106,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       action_SyncAudioFile = intent.getBooleanExtra(Vars.EXTRA_SYNC_FILE, false);
       audioPath = intent.getStringExtra(Vars.EXTRA_AUDIO_PATH);
 
-      progressHandler.removeCallbacks(progressRunnable);
+      stopProgress();
 
       if (action_SyncAudioFile) {
         syncAudioFile(audioPath);
@@ -184,7 +180,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
         pause();
       }
       public void onMsgExit() {
-        progressHandler.removeCallbacks(progressRunnable);
+        stopProgress();
         exitAction.execute();
       }
     });
@@ -244,8 +240,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     }
 
     if (!progressHandler.hasCallbacks(progressRunnable)) {
-      enableUpdateTime();
       startProgress();
+      enableUpdateTime();
     }
 
     updateNotification(ACTION_PAUSE_ID);
@@ -254,7 +250,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public void stop() {
-    progressHandler.removeCallbacks(progressRunnable);
+    stopProgress();
     sendUpdateStoppedTime();
 
     EngineNative.stopEngine();
@@ -315,8 +311,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           playerLoaded = true;
 
           if (startPlayback) {
-            enableUpdateTime();
             startProgress();
+            enableUpdateTime();
             play();
             sendPlayerStarted();
           }
@@ -345,8 +341,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
         sendInitProgress();
         playerLoaded = true;
 
-        enableUpdateTime();
         startProgress();
+        enableUpdateTime();
         sendPlayerStarted();
 
         var notification = buildPlayerNotification();
@@ -361,7 +357,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   private void startProgress() {
     logd("startProgress()");
-    progressHandler.removeCallbacks(progressRunnable);
+    stopProgress();
 
     progressRunnable = () -> {
       // Stopped on EOF
@@ -378,6 +374,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     };
 
     progressHandler.post(progressRunnable);
+  }
+  
+  public void stopProgress() {
+    logd("stopProgress()");
+    disableUpdateTime();
+    progressHandler.removeCallbacks(progressRunnable);
   }
 
   private void onCompleted() {
@@ -529,10 +531,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   
   public void enableUpdateTime() {
+    logd("enableUpdateTime()");
     updateTimeEnabled = true;
   }
   
   public void disableUpdateTime() {
+    logd("disableUpdateTime()");
     updateTimeEnabled = false;
   }
   
@@ -623,6 +627,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public void unregisterHeadphonesReceiver() {
     logd("unregisterHeadphonesReceiver()");
     unregisterReceiver(headphonesPlugReceiver);
+  }
+  
+  
+  // --> EngineNative.NativeChangeListener
+  @Override
+  public void onAudioStopped() {
+    stopped = true;
   }
   
   
