@@ -215,7 +215,7 @@ void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
 
 
 int AudioDecoder::loadFile(string filePath) {
-  LOGI("loadFile => %s", filePath.c_str());
+  LOGD("loadFile() -start- => %s", filePath.c_str());
   this->audioPath = filePath;
   int result = -1;
   
@@ -325,6 +325,8 @@ int AudioDecoder::loadFile(string filePath) {
   findDelayedSamples();
   
   this->loaded = true;
+  LOGD("loadFile() -end- => %s", filePath.c_str());
+  
   return 0;
 }
 
@@ -381,7 +383,7 @@ int AudioDecoder::getDuration() {
 }
 
 void AudioDecoder::seekTo(int time_ms) {
-  LOGI("seeking to %d ms", time_ms);
+  LOGD("seekTo() => %d ms", time_ms);
   if (time_ms < 0) time_ms = 0;
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
   this->seekPending = true;
