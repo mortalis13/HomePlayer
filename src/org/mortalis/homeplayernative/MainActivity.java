@@ -829,6 +829,7 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     logd("playAudio(), time: %d, \"%s\"", time, filePath);
+    nextFilePreloaded = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
@@ -853,7 +854,6 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
-    playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat);
     
     startService(playerIntent);
     
@@ -917,10 +917,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void syncNextFile() {
-    String filePath = EngineNative.getAudioPath();
+  private void syncNextFile(String filePath) {
     logd("syncNextFile(), \"%s\"", filePath);
     if (filePath == null || filePath.length() == 0) return;
+    nextFilePreloaded = false;
     
     File playingFile = new File(filePath);
     
@@ -1096,8 +1096,6 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayerPreloaded() {
-    nextFilePreloaded = false;
-    
     progressSlider.enable();
     updatePlayingStats();
     
@@ -1129,8 +1127,16 @@ public class MainActivity extends AppCompatActivity {
       setPlayButtonDefault();
     }
     else {
-      // playNextFile(true);
-      syncNextFile();
+      String filePath = EngineNative.getAudioPath();
+      if (filePath.equals(playerService.getAudioPath())) {
+        // The audio is ended but did not change to the next one in the backend (maybe it's too short so the next file is not preloaded)
+        // The next file needs to be manually selected
+        log("Decoder audio is the same as the current audio. Advancing to the next file.");
+        playNextFile(true);
+      }
+      else {
+        syncNextFile(filePath);
+      }
     }
   }
   
@@ -1148,9 +1154,10 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
     updatePlayingTime(playingTime, totalTime);
     
-    if (!nextFilePreloaded) {
+    if (!nextFilePreloaded && !playbackShuffle) {
       int timeLeft = totalTime - playingTime;
       boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
+      
       if (nearAudioEnd) {
         File currentFile = new File(playerService.getAudioPath());
         File file = getNextPlaylistFile(currentFile);
@@ -1362,7 +1369,6 @@ public class MainActivity extends AppCompatActivity {
           }
         }
         
-        nextFilePreloaded = false;
         playAudio(item.path, time, true);
       }
     }

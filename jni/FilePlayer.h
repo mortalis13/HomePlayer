@@ -92,6 +92,7 @@ private:
   bool playing = false;
   bool seeking = false;
   bool restarting = false;
+  bool repeat = false;
   
   bool nextAudioBuffered = false;
   
