@@ -964,6 +964,8 @@ public class MainActivity extends AppCompatActivity {
     Stream.of(files).sorted(Fun.nocaseComp)
       .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true)));
     
+    markVisitedFolders();
+    
     filesAdapter.resetSelection();
     filesAdapter.notifyDataSetChanged();
 
@@ -1082,6 +1084,17 @@ public class MainActivity extends AppCompatActivity {
     fileList.stream()
       .filter(item -> favoritesList.contains(item.path))
       .forEach(item -> filesAdapter.markAsFavorite(item.path));
+  }
+  
+  private void markVisitedFolders() {
+    if (fileList == null) return;
+    
+    fileList.stream()
+      .filter(item -> !item.isFile)
+      .forEach(item -> {
+        String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + item.path);
+        item.isVisited = lastFile != null;
+      });
   }
   
   private void updateFavoritesStats() {

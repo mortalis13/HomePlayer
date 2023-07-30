@@ -213,7 +213,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   public class ItemViewHolder extends RecyclerView.ViewHolder {
     ImageView itemIcon;
-    IconOverlayView itemIndicator;
+    IconOverlayView itemIconOverlay;
     TextView itemText;
     TextView itemTime;
     FrameLayout iconContainer;
@@ -230,7 +230,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       super(rootView);
       
       itemIcon = rootView.findViewById(R.id.itemIcon);
-      itemIndicator = rootView.findViewById(R.id.itemIndicator);
+      itemIconOverlay = rootView.findViewById(R.id.itemIconOverlay);
       itemText = rootView.findViewById(R.id.itemText);
       itemTime = rootView.findViewById(R.id.itemTime);
       iconContainer = rootView.findViewById(R.id.iconContainer);
@@ -241,7 +241,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       
       iconContainer.setOnClickListener(v -> {
         this.item.isFavorite = !this.item.isFavorite;
-        itemIndicator.setVisibility(this.item.isFavorite ? View.VISIBLE: View.GONE);
+        itemIconOverlay.setShowIndicator(this.item.isFavorite);
         iconClickAction.execute(this.item);
       });
       
@@ -348,7 +348,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       if (item == null) return;
       
       iconContainer.setClickable(true);
-      itemIndicator.setVisibility(item.isFavorite ? View.VISIBLE: View.GONE);
+      itemIconOverlay.setShowIndicator(item.isFavorite);
+      itemIconOverlay.setShowIcon(!item.isFile && item.isVisited);
       
       itemText.setText(item.text);
       int textColor = item.hasError ? text_color_error: text_color_default;

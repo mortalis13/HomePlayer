@@ -10,6 +10,7 @@ public class ListItem {
   boolean isFile;
   boolean isLastPlayed;
   boolean isFavorite;
+  boolean isVisited;
   
   boolean hasError;
 

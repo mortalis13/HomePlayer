@@ -33,11 +33,10 @@
         android:tint="?listItemIconColor"
       />
       <org.mortalis.homeplayernative.components.IconOverlayView
-        android:id="@+id/itemIndicator"
+        android:id="@+id/itemIconOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
-        android:visibility="gone"
       />
     </FrameLayout>
     
