@@ -11,6 +11,10 @@ FilePlayer::FilePlayer() {
   }
 }
 
+FilePlayer::~FilePlayer() {
+  delete[] this->filters;
+}
+
 
 bool FilePlayer::init() {
   LOGD("init() -start-");

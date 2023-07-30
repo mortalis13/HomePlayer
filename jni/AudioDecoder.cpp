@@ -8,6 +8,11 @@
 #include "utils/logging.h"
 
 
+AudioDecoder::AudioDecoder(AudioStreamWriter* streamWriter) {
+  this->streamWriter = streamWriter;
+  threadEndSignal = new promise<void>();
+}
+
 AudioDecoder::~AudioDecoder() {
   LOGD("~AudioDecoder()");
   if (!isStopped()) {
@@ -417,7 +422,6 @@ void AudioDecoder::fillAudioParams(AVCodecParameters* codecParams) {
   this->audioParams.codec_name = string(avcodec_get_name(codecParams->codec_id));
 }
 
-
 void AudioDecoder::printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat) {
   LOGD("===Resampler params===");
   LOGD("Channels: %d => %d", codecParams->ch_layout.nb_channels, outChannelLayout.nb_channels);
@@ -436,7 +440,7 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Sample format: %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format));
   LOGD("Is planar: %d", av_sample_fmt_is_planar((AVSampleFormat) codecParams->format));
   LOGD("Bytes per sample: %d", av_get_bytes_per_sample((AVSampleFormat) codecParams->format));
-  LOGD("Bitrate: %d", codecParams->bit_rate / 1000);
+  LOGD("Bitrate: %d", (int) (codecParams->bit_rate / 1000));
   LOGD("Codec type: %s", av_get_media_type_string(codecParams->codec_type));
   LOGD("Codec ID: %s", avcodec_get_name(codecParams->codec_id));
   LOGD("===END Codec params===");

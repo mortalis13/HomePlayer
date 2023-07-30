@@ -23,9 +23,7 @@ static const int FILTER_BANDS_NUMBER = 8;
 
 public:
   FilePlayer();
-  ~FilePlayer() {
-    delete[] this->filters;
-  }
+  ~FilePlayer();
   
   // Engine
   bool init();
@@ -74,7 +72,8 @@ public:
   string getCodecName();
 
   virtual void writeAudio(uint8_t* stream, int32_t numFrames);
-  
+
+public:
   EngineChangeListener* engineChangeListener = NULL;
 
 
@@ -88,9 +87,7 @@ private:
   void startBufferedDecoder();
 
 private:
-  
   bool playing = false;
-  bool seeking = false;
   bool restarting = false;
   bool repeat = false;
   
