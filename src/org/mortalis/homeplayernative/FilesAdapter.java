@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayernative.actions.Action;
-import org.mortalis.homeplayernative.components.SimplePaintView;
+import org.mortalis.homeplayernative.components.IconOverlayView;
 import static org.mortalis.homeplayernative.Fun.log;
 
 
@@ -213,7 +213,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   public class ItemViewHolder extends RecyclerView.ViewHolder {
     ImageView itemIcon;
-    SimplePaintView itemIndicator;
+    IconOverlayView itemIndicator;
     TextView itemText;
     TextView itemTime;
     FrameLayout iconContainer;

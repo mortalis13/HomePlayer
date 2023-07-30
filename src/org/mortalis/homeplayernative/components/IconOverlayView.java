@@ -13,7 +13,7 @@ import com.google.android.material.color.MaterialColors;
 import org.mortalis.homeplayernative.R;
 
 
-public class SimplePaintView extends AppCompatImageView {
+public class IconOverlayView extends AppCompatImageView {
   
   private Paint canvasPaint;
   
@@ -22,11 +22,11 @@ public class SimplePaintView extends AppCompatImageView {
   private float itemWidth;
   private float itemHeight;
   
-  public SimplePaintView(Context context) {
+  public IconOverlayView(Context context) {
     this(context, null);
   }
   
-  public SimplePaintView(Context context, AttributeSet attrs) {
+  public IconOverlayView(Context context, AttributeSet attrs) {
     super(context, attrs, 0);
     init();
   }
