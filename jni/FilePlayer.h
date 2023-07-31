@@ -37,6 +37,8 @@ public:
   
   bool isStreamClosed();
   bool isRestarting();
+  bool isPlaying();
+  bool isRepeat();
   void setGain(float gainDb);
   
   // Decoder
@@ -50,11 +52,7 @@ public:
   int getCurrentPosition();
   string getAudioPath();
   void seekTo(int time_ms);
-  
-  bool isPlaying();
-  
   void setRepeat(bool repeat);
-  bool isRepeat();
   
   // Filter
   void enableFilter();
@@ -89,7 +87,6 @@ private:
 private:
   bool playing = false;
   bool restarting = false;
-  bool repeat = false;
   
   bool nextAudioBuffered = false;
   

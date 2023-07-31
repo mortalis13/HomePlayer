@@ -37,6 +37,10 @@
     <item name="listItemButtonBackgroundPressed">@color/list_item_button_background_pressed</item>
     <item name="listItemButtonBackgroundDefault">@color/list_item_button_background_default</item>
     
+    <item name="itemToggleButtonBackgroundPressed">@color/item_toggle_button_background_pressed</item>
+    <item name="itemToggleButtonBackgroundSelected">@color/item_toggle_button_background_selected</item>
+    <item name="itemToggleButtonBackgroundDefault">@color/item_toggle_button_background_default</item>
+    
     <item name="listItemTextColorError">@color/list_item_text_color_error</item>
     <item name="listItemIconColor">@color/list_item_icon_color</item>
     <item name="listItemIconColorHighlight">@color/list_item_icon_color_highlight</item>
@@ -104,6 +108,10 @@
     
     <item name="listItemButtonBackgroundPressed">@color/list_item_button_background_pressed_dark</item>
     <item name="listItemButtonBackgroundDefault">@color/list_item_button_background_default_dark</item>
+    
+    <item name="itemToggleButtonBackgroundPressed">@color/item_toggle_button_background_pressed_dark</item>
+    <item name="itemToggleButtonBackgroundSelected">@color/item_toggle_button_background_selected_dark</item>
+    <item name="itemToggleButtonBackgroundDefault">@color/item_toggle_button_background_default_dark</item>
     
     <item name="listItemTextColorError">@color/list_item_text_color_error_dark</item>
     <item name="listItemIconColor">@color/list_item_icon_color_dark</item>

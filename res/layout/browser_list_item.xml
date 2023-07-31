@@ -54,18 +54,38 @@
       android:focusable="true"
     />
     
-    <TextView
-      android:id="@+id/itemTime"
+    <FrameLayout
       android:layout_width="wrap_content"
       android:layout_height="match_parent"
-      android:minWidth="50dp"
-      android:paddingRight="6dp"
-      android:gravity="center_vertical"
-      android:textColor="?primaryTextColor"
-      android:textSize="16dp"
-      android:focusable="true"
-      android:visibility="gone"
-    />
+      android:gravity="center"
+    >
+      <TextView
+        android:id="@+id/itemTime"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:minWidth="50dp"
+        android:paddingRight="6dp"
+        android:gravity="center_vertical"
+        android:textColor="?primaryTextColor"
+        android:textSize="16dp"
+        android:focusable="true"
+        android:visibility="gone"
+      />
+      
+      <ImageView
+        android:id="@+id/fileRepeatIcon"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_gravity="right"
+        android:gravity="right"
+        android:tint="?extraIconTintColor"
+        android:src="@drawable/round_repeat_black_24"
+        android:visibility="gone"
+      />
+    </FrameLayout>
+    
   </LinearLayout>
 
 
@@ -89,7 +109,7 @@
   </RelativeLayout>
   
   
-  <!-- =========== File menu =========== -->
+  <!-- =========== Item menu =========== -->
   <RelativeLayout
     android:id="@+id/itemMenuPanel"
     android:layout_width="match_parent"
@@ -118,6 +138,15 @@
       android:src="@drawable/outline_info_black_24"
       android:tint="?secondaryTextColor"
       android:background="@color/list_item_button_background"
+      android:layout_toLeftOf="@+id/bRepeatFile"
+    />
+    <ImageButton
+      android:id="@+id/bRepeatFile"
+      android:layout_width="70dp"
+      android:layout_height="match_parent"
+      android:src="@drawable/round_repeat_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/list_item_toggle_button_background"
       android:layout_alignParentRight="true"
     />
   </RelativeLayout>

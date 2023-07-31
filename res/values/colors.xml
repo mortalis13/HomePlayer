@@ -32,6 +32,10 @@
   <color name="list_item_button_background_pressed">#eee</color>
   <color name="list_item_button_background_default">#e5e5e5</color>
   
+  <color name="item_toggle_button_background_pressed">#bfd0d7</color>
+  <color name="item_toggle_button_background_selected">#bacad1</color>
+  <color name="item_toggle_button_background_default">#e5e5e5</color>
+  
   <color name="list_item_text_color_error">#922</color>
   <color name="list_item_icon_color">#888</color>
   <color name="list_item_icon_color_highlight">#a45353</color>
@@ -109,6 +113,10 @@
 
   <color name="list_item_button_background_pressed_dark">#111</color>
   <color name="list_item_button_background_default_dark">#2c2c2c</color>
+
+  <color name="item_toggle_button_background_pressed_dark">#4b585e</color>
+  <color name="item_toggle_button_background_selected_dark">#516066</color>
+  <color name="item_toggle_button_background_default_dark">#2c2c2c</color>
 
   <color name="list_item_text_color_error_dark">#e17070</color>
   <color name="list_item_icon_color_dark">#999</color>

@@ -28,6 +28,10 @@
   <attr name="listItemButtonBackgroundPressed" format="color"/>
   <attr name="listItemButtonBackgroundDefault" format="color"/>
   
+  <attr name="itemToggleButtonBackgroundPressed" format="color"/>
+  <attr name="itemToggleButtonBackgroundSelected" format="color"/>
+  <attr name="itemToggleButtonBackgroundDefault" format="color"/>
+  
   <attr name="listItemIconColor" format="color"/>
   <attr name="listItemIconColorHighlight" format="color"/>
   <attr name="listItemTextColorError" format="color"/>

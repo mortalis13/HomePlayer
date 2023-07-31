@@ -118,7 +118,6 @@ bool FilePlayer::loadAudio(string audioPath) {
   this->decoder = make_shared<AudioDecoder>(this);
   this->decoder->setChannelCount(audioStream->getChannelCount());
   this->decoder->setSampleRate(audioStream->getSampleRate());
-  this->decoder->setRepeat(this->repeat);
   
   int result = 0;
   if (!this->decoder->isLoaded()) {
@@ -141,7 +140,6 @@ bool FilePlayer::bufferNextAudio(string audioPath) {
   bufferedDecoder = make_shared<AudioDecoder>(this);
   bufferedDecoder->setChannelCount(audioStream->getChannelCount());
   bufferedDecoder->setSampleRate(audioStream->getSampleRate());
-  bufferedDecoder->setRepeat(repeat);
 
   int result = bufferedDecoder->loadFile(audioPath);
   nextAudioBuffered = true;
@@ -198,13 +196,9 @@ bool FilePlayer::isPlaying() {
 }
 
 void FilePlayer::setRepeat(bool repeat) {
-  this->repeat = repeat;
+  LOGD("setRepeat() => %d", repeat);
   if (!this->decoder) return;
   this->decoder->setRepeat(repeat);
-}
-
-bool FilePlayer::isRepeat() {
-  return this->repeat;
 }
 
 

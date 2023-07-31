@@ -7,23 +7,23 @@ public class EngineNative {
   public static native void initEngine();
   public static native int startEngine();
   public static native int stopEngine();
+  
   public static native boolean isStreamClosed();
   public static native boolean isStreamRestarting();
+  public static native boolean isPlaying();
+  public static native void setGain(float gain);
 
   public static native int loadAudio(String audioPath);
+  public static native boolean bufferNextAudio(String audioPath);
   public static native int playAudio();
   public static native int pauseAudio();
   public static native int resumeAudio();
-  public static native void setGain(float gain);
-  
-  public static native boolean bufferNextAudio(String audioPath);
   
   public static native int getDuration();
   public static native int getCurrentPosition();
   public static native String getAudioPath();
-  public static native void seekTo(int time);
   
-  public static native boolean isPlaying();
+  public static native void seekTo(int time);
   public static native void setRepeat(boolean repeat);
   
   public static native void enableFilter();

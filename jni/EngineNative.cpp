@@ -102,6 +102,8 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_stopE
   player.destroy();
 }
 
+
+// Stream
 JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isStreamClosed(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   return player.isStreamClosed();
@@ -112,8 +114,16 @@ JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_i
   return player.isRestarting();
 }
 
+JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
+  return player.isPlaying();
+}
 
-// Stream
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setGain(JNIEnv *env, jclass obj, jfloat gain) {
+  player.setGain(gain);
+}
+
+
+// Decoder
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_loadAudio(JNIEnv *env, jclass obj, jstring jaudioPath) {
   LOGD(__func__);
   const char* audioPathBytes = env->GetStringUTFChars(jaudioPath, 0);
@@ -142,11 +152,6 @@ JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_b
   return result;
 }
 
-JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getAudioPath(JNIEnv *env, jclass obj) {
-  string audioPath = player.getAudioPath();
-  return env->NewStringUTF(audioPath.c_str());
-}
-
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_playAudio(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   bool result = player.startAudio();
@@ -165,21 +170,6 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_resum
   return result ? 0: -1;
 }
 
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setGain(JNIEnv *env, jclass obj, jfloat gain) {
-  player.setGain(gain);
-}
-
-
-// Decoder
-JNIEXPORT bool JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_isPlaying(JNIEnv *env, jclass obj) {
-  return player.isPlaying();
-}
-
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRepeat(JNIEnv *env, jclass obj, jboolean repeat) {
-  LOGD(__func__);
-  player.setRepeat(repeat);
-}
-
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getDuration(JNIEnv *env, jclass obj) {
   LOGD(__func__);
   return player.getDuration();
@@ -189,9 +179,18 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getCu
   return player.getCurrentPosition();
 }
 
+JNIEXPORT jstring JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_getAudioPath(JNIEnv *env, jclass obj) {
+  string audioPath = player.getAudioPath();
+  return env->NewStringUTF(audioPath.c_str());
+}
+
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_seekTo(JNIEnv *env, jclass obj, jint time) {
   LOGD(__func__);
   player.seekTo(time);
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRepeat(JNIEnv *env, jclass obj, jboolean repeat) {
+  player.setRepeat(repeat);
 }
 
 

@@ -26,7 +26,6 @@ import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.HorizontalScrollView;
@@ -67,6 +66,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Stream;
 
 import org.jaudiotagger.audio.AudioFile;
@@ -128,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
   private int trimmedProgressColor;
   
   private boolean extraInfoIsForCurrentFile;
+  
+  private Set<String> repeatableFiles;
   
   // -- Views
   private HorizontalScrollView titleScroller;
@@ -386,6 +388,8 @@ public class MainActivity extends AppCompatActivity {
     };
     
     bindPlayerService();
+    
+    repeatableFiles = new HashSet<>();
   }
   
   private void configUI() {
@@ -485,6 +489,7 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
     filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
     filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
+    filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
     filesAdapter.itemBeforeBindAction = (position) -> {
       if (!itemsQueue.contains(position)) {
         itemsQueue.add(position);
@@ -822,8 +827,10 @@ public class MainActivity extends AppCompatActivity {
     
     playExtraIconRepeat.setVisibility(playbackRepeat ? View.VISIBLE: View.GONE);
     
-    if (playerService == null || !playerService.isPlayerLoaded()) return;
-    playerService.setRepeat(playbackRepeat);
+    if (playerService == null || !playerService.hasAudio()) return;
+
+    boolean fileRepeat = repeatableFiles.contains(playerService.getAudioPath());
+    EngineNative.setRepeat(playbackRepeat || fileRepeat);
   }
   
   
@@ -860,6 +867,9 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
     playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
     
+    boolean fileRepeat = repeatableFiles.contains(filePath);
+    playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat || fileRepeat);
+    
     startService(playerIntent);
     log("playerService started");
     
@@ -887,6 +897,9 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
     startService(playerIntent);
+    
+    boolean fileRepeat = repeatableFiles.contains(filePath);
+    EngineNative.setRepeat(playbackRepeat || fileRepeat);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
@@ -965,6 +978,7 @@ public class MainActivity extends AppCompatActivity {
       .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true)));
     
     markVisitedFolders();
+    markRepeatFiles();
     
     filesAdapter.resetSelection();
     filesAdapter.notifyDataSetChanged();
@@ -1094,6 +1108,16 @@ public class MainActivity extends AppCompatActivity {
       .forEach(item -> {
         String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + item.path);
         item.isVisited = lastFile != null;
+      });
+  }
+  
+  private void markRepeatFiles() {
+    if (fileList == null) return;
+    
+    fileList.stream()
+      .filter(item -> item.isFile)
+      .forEach(item -> {
+        item.repeat = repeatableFiles.contains(item.path);
       });
   }
   
@@ -1491,6 +1515,21 @@ public class MainActivity extends AppCompatActivity {
     }
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
     updateFavoritesStats();
+  }
+  
+  private void updateFileRepeat(String filePath, boolean repeat) {
+    logd("updateFileRepeat(): '%s' => %b", filePath, repeat);
+    if (repeat) {
+      repeatableFiles.add(filePath);
+    }
+    else {
+      repeatableFiles.remove(filePath);
+    }
+    
+    if (playerService == null || !playerService.hasAudio()) return;
+    if (filePath.equals(playerService.getAudioPath())) {
+      EngineNative.setRepeat(repeat || playbackRepeat);
+    }
   }
   
   private void updatePlayingStats() {

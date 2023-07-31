@@ -11,7 +11,7 @@ public class ListItem {
   boolean isLastPlayed;
   boolean isFavorite;
   boolean isVisited;
-  
+  boolean repeat;
   boolean hasError;
 
   ListItem(String text, String path, boolean isFile) {

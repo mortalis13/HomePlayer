@@ -29,7 +29,6 @@ import static org.mortalis.homeplayernative.Fun.log;
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
   
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
-  private static final int ITEM_MENU_BUTTONS = 2;
   
   private List<ListItem> fileList;
   private RecyclerView recyclerView;
@@ -51,6 +50,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   Action<ListItem> iconClickAction;
   Action<String> afterFileRemovedAction;
   Action<String> infoClickAction;
+  Action<ListItem> repeatSelectAction;
   Action<Integer> itemBeforeBindAction;
   
   
@@ -62,7 +62,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     text_color_default = MaterialColors.getColor(context, R.attr.primaryTextColor, Color.TRANSPARENT);
     text_color_error = MaterialColors.getColor(context, R.attr.listItemTextColorError, Color.TRANSPARENT);
     
-    itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width) * ITEM_MENU_BUTTONS;
+    itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width);
   }
   
   @Override
@@ -71,7 +71,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     LayoutInflater inflater = LayoutInflater.from(context);
     
     View rootView = inflater.inflate(ITEM_LAYOUT, parent, false);
-    
     ItemViewHolder viewHolder = new ItemViewHolder(rootView);
     return viewHolder;
   }
@@ -212,15 +211,17 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   
   public class ItemViewHolder extends RecyclerView.ViewHolder {
+    FrameLayout iconContainer;
     ImageView itemIcon;
     IconOverlayView itemIconOverlay;
     TextView itemText;
     TextView itemTime;
-    FrameLayout iconContainer;
+    ImageView fileRepeatIcon;
     RelativeLayout itemMenuPanel;
     
     ImageButton bRemoveFile;
     ImageButton bFileInfo;
+    ImageButton bRepeatFile;
     
     ListItem item;
     
@@ -229,15 +230,17 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     public ItemViewHolder(View rootView) {
       super(rootView);
       
+      iconContainer = rootView.findViewById(R.id.iconContainer);
       itemIcon = rootView.findViewById(R.id.itemIcon);
       itemIconOverlay = rootView.findViewById(R.id.itemIconOverlay);
       itemText = rootView.findViewById(R.id.itemText);
       itemTime = rootView.findViewById(R.id.itemTime);
-      iconContainer = rootView.findViewById(R.id.iconContainer);
+      fileRepeatIcon = rootView.findViewById(R.id.fileRepeatIcon);
       
       itemMenuPanel = rootView.findViewById(R.id.itemMenuPanel);
       bRemoveFile = rootView.findViewById(R.id.bRemoveFile);
       bFileInfo = rootView.findViewById(R.id.bFileInfo);
+      bRepeatFile = rootView.findViewById(R.id.bRepeatFile);
       
       iconContainer.setOnClickListener(v -> {
         this.item.isFavorite = !this.item.isFavorite;
@@ -262,6 +265,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       bFileInfo.setOnClickListener(v -> {
         infoClickAction.execute(this.item.path);
         hideItemMenu();
+      });
+      
+      bRepeatFile.setOnClickListener(v -> {
+        v.setSelected(!v.isSelected());
+        item.repeat = !item.repeat;
+        repeatSelectAction.execute(item);
       });
       
       itemView.setOnTouchListener((View view, MotionEvent event) -> {
@@ -314,7 +323,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     private void showItemMenu() {
       if (itemMenuPanel == null || itemMenuPanel.getVisibility() == View.VISIBLE) return;
-
+      bRepeatFile.setSelected(item.isFile && item.repeat);
       resetRemoveState();
       itemMenuPanel.setVisibility(View.VISIBLE);
       
@@ -357,6 +366,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       
       itemTime.setText(item.time);
       itemTime.setVisibility(item.isFile ? View.VISIBLE: View.GONE);
+      
+      fileRepeatIcon.setVisibility(item.isFile && item.repeat ? View.VISIBLE: View.GONE);
+      bRepeatFile.setSelected(item.isFile && item.repeat);
       
       int iconColor = item_icon_color_default;
       if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
