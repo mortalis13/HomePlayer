@@ -16,7 +16,7 @@ import static org.mortalis.homeplayernative.Fun.log;
 
 public class TrimSliderView extends View {
   
-  private final static int SLIDER_SENSITIVITY = 100;
+  private static final int SLIDER_SENSITIVITY = 100;
   
   private boolean sliderEnabled;
   

@@ -17,7 +17,7 @@ import static org.mortalis.homeplayernative.Fun.log;
 
 public class VolumeSliderView extends View {
   
-  private final static int SLIDER_SENSITIVITY = 130;
+  private static final int SLIDER_SENSITIVITY = 130;
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   
   private Paint canvasPaint;

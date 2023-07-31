@@ -41,9 +41,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public static final String ACTION_PAUSE = "org.mortalis.homeplayernative.action.PAUSE";
   public static final String ACTION_EXIT = "org.mortalis.homeplayernative.action.EXIT";
 
-  public static final int ACTION_PLAY_ID = 0;
-  public static final int ACTION_PAUSE_ID = 1;
-  public static final int ACTION_EXIT_ID = 2;
+  private static final int ACTION_PLAY_ID = 0;
+  private static final int ACTION_PAUSE_ID = 1;
+  private static final int ACTION_EXIT_ID = 2;
 
   private final IBinder binder = new PlayerBinder();
   private final HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();

@@ -9,8 +9,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.TextPaint;
 import android.graphics.RectF;
-import android.graphics.Picture;
-import android.graphics.BlendMode;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,15 +23,15 @@ import static org.mortalis.homeplayernative.Fun.loge;
 
 public class EqualizerView extends View {
   
-  public static final int MIN_BANDS = 6;
-  public static final int MAX_BANDS = 10;
-  public static final float MAX_MAIN_GAIN = 20f;  // 20dB
-  public static final float MAX_UNITS = 20f;  // 20dB
+  private static final int MIN_BANDS = 6;
+  private static final int MAX_BANDS = 10;
+  private static final float MAX_MAIN_GAIN = 20f;  // 20dB
+  private static final float MAX_UNITS = 20f;  // 20dB
   
-  public static final float SIDE_MARGIN = Fun.dpToPx(8);
-  public static final float CENTRAL_MARK_WIDTH = Fun.dpToPx(4);
-  public static final float GAIN_ZERO_GAP = Fun.dpToPx(4);
-  public static final float BAND_ZERO_GAP = Fun.dpToPx(32);
+  private static final float SIDE_MARGIN = Fun.dpToPx(8);
+  private static final float CENTRAL_MARK_WIDTH = Fun.dpToPx(4);
+  private static final float GAIN_ZERO_GAP = Fun.dpToPx(4);
+  private static final float BAND_ZERO_GAP = Fun.dpToPx(32);
   
   private boolean enabled;
   
