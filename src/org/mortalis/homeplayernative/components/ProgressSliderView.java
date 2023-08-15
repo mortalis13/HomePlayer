@@ -27,13 +27,11 @@ public class ProgressSliderView extends View {
   private boolean touchEnabled;
   
   private Paint canvasPaint;
-  private Paint borderPaint;
   private Paint progressPaint;
   private Paint waveformPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
-  private RectF borderRect;
   
   private boolean showLoop;
   private Paint loopPaint;
@@ -46,10 +44,6 @@ public class ProgressSliderView extends View {
   private int canvasWidth;
   private int canvasHeight;
   
-  private int workingWidth;
-  private int workingHeight;
-  
-  private int borderWidth;
   private float snapPosX;
   private int progressColor;
   
@@ -72,7 +66,6 @@ public class ProgressSliderView extends View {
   
   
   private void init() {
-    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.slider_border_width));
     this.snapPosX = (int) getResources().getDimension(R.dimen.slider_left_right_snap_size);
     this.progressColor = MaterialColors.getColor(this, R.attr.sliderProgressColor);
     
@@ -94,14 +87,8 @@ public class ProgressSliderView extends View {
     // this.waveformPaint.setBlendMode(BlendMode.PLUS);
     this.waveformPaint.setBlendMode(BlendMode.SCREEN);
     
-    this.borderPaint = new Paint();
-    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.sliderBorderColor));
-    this.borderPaint.setStrokeWidth(this.borderWidth);
-    this.borderPaint.setStyle(Paint.Style.STROKE);
-    
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
-    this.borderRect = new RectF();
     this.loopStartRect = new RectF();
     this.loopEndRect = new RectF();
     this.loopProgressRect = new RectF();
@@ -132,15 +119,7 @@ public class ProgressSliderView extends View {
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    if (this.borderWidth != 0) {
-      float left   = (float) this.borderWidth / 2;
-      float top    = (float) this.borderWidth / 2;
-      float right  = this.canvasWidth  - (float) this.borderWidth / 2;
-      float bottom = this.canvasHeight - (float) this.borderWidth / 2;
-      this.borderRect.set(left, top, right, bottom);
-    }
-    
-    if (this.maxValue == 0) setMax(this.workingWidth);
+    if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
     rebuildProgess();
@@ -148,12 +127,12 @@ public class ProgressSliderView extends View {
   }
   
   private void rebuildProgess() {
-    float _progress = (float) this.progress * this.workingWidth / this.maxValue;
+    float _progress = (float) this.progress * this.canvasWidth / this.maxValue;
     
-    float left   = this.borderWidth;
-    float top    = this.borderWidth;
+    float left   = 0;
+    float top    = 0;
     float right  = left + _progress;
-    float bottom = this.canvasHeight - this.borderWidth;
+    float bottom = this.canvasHeight;
     this.progressRect.set(left, top, right, bottom);
   }
   
@@ -163,14 +142,14 @@ public class ProgressSliderView extends View {
     if (!this.sliderEnabled) return true;
     
     int action = event.getAction();
-    int x = (int) event.getX() - this.borderWidth;
-    int y = (int) event.getY() - this.borderWidth;
+    int x = (int) event.getX();
+    int y = (int) event.getY();
     
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
       if (!this.touchEnabled) return true;
       
       if (x < this.snapPosX) x = 0;
-      if (x > this.workingWidth - this.snapPosX) x = this.workingWidth;
+      if (x > this.canvasWidth - this.snapPosX) x = this.canvasWidth;
       
       // Detect if vertical offset is greater than max and reset the position
       int outerVerticalOffset = (y < 0) ? Math.abs(y): y - this.canvasHeight;
@@ -180,7 +159,7 @@ public class ProgressSliderView extends View {
         return true;
       }
       
-      int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
+      int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
       setProgress(_progress);
       
       sendPosition(this.progress);
@@ -203,15 +182,12 @@ public class ProgressSliderView extends View {
     if (w == 0 || h == 0) return;
     this.canvasWidth = w;
     this.canvasHeight = h;
-    this.workingWidth = this.canvasWidth - this.borderWidth * 2;
-    this.workingHeight = this.canvasHeight - this.borderWidth * 2;
     rebuildUI();
   }
   
   @Override
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
-    canvas.drawRect(this.borderRect, this.borderPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
     drawWaveform(canvas);
     
@@ -280,7 +256,7 @@ public class ProgressSliderView extends View {
     for (int i = 0; i < samples.length; i++) {
       float h = samples[i];
 
-      float x = this.borderWidth + i;
+      float x = i;
       float y0 = center - h;
       float y1 = center + h + 1;
       
@@ -308,14 +284,14 @@ public class ProgressSliderView extends View {
     loopEndRect.set(0, 0, 0, 0);
     
     if (this.showLoop) {
-      float loopStartPx = (float) loopStart * this.workingWidth / this.maxValue;
+      float loopStartPx = (float) loopStart * this.canvasWidth / this.maxValue;
       if (loopStart != 0) {
-        loopStartRect.set(loopStartPx - LOOP_EDGE_WIDTH_05, 0, loopStartPx + LOOP_EDGE_WIDTH_05, this.workingHeight);
+        loopStartRect.set(loopStartPx - LOOP_EDGE_WIDTH_05, 0, loopStartPx + LOOP_EDGE_WIDTH_05, this.canvasHeight);
       }
       
       if (loopEnd != this.maxValue) {
-        float loopEndPx = (float) loopEnd * this.workingWidth / this.maxValue;
-        loopEndRect.set(loopEndPx - LOOP_EDGE_WIDTH_05, 0, loopEndPx + LOOP_EDGE_WIDTH_05, this.workingHeight);
+        float loopEndPx = (float) loopEnd * this.canvasWidth / this.maxValue;
+        loopEndRect.set(loopEndPx - LOOP_EDGE_WIDTH_05, 0, loopEndPx + LOOP_EDGE_WIDTH_05, this.canvasHeight);
       }
     }
     
@@ -328,7 +304,7 @@ public class ProgressSliderView extends View {
     if (this.showLoop && this.progressRect.right > loopStartRect.left) {
       float right = this.progressRect.right;
       if (right > loopEndRect.left && loopEndRect.left != 0) right = loopEndRect.left;
-      loopProgressRect.set(loopStartRect.left, 0, right, this.workingHeight);
+      loopProgressRect.set(loopStartRect.left, 0, right, this.canvasHeight);
     }
   }
   
@@ -351,11 +327,11 @@ public class ProgressSliderView extends View {
   }
   
   public int getWaveformWidth() {
-    return this.workingWidth;
+    return this.canvasWidth;
   }
   
   public int getWaveformHeight() {
-    return this.workingHeight - WAVEFORM_PAD;
+    return this.canvasHeight - WAVEFORM_PAD;
   }
   
 

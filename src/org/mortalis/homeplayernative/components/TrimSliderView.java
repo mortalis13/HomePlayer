@@ -21,20 +21,13 @@ public class TrimSliderView extends View {
   private boolean sliderEnabled;
   
   private Paint canvasPaint;
-  private Paint borderPaint;
   private Paint progressPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
-  private RectF borderRect;
   
   private int canvasWidth;
   private int canvasHeight;
-  
-  private int workingWidth;
-  private int workingHeight;
-  
-  private int borderWidth;
   
   private int maxValue;
   private int progress;
@@ -58,8 +51,6 @@ public class TrimSliderView extends View {
   
   
   private void init(Context context) {
-    this.borderWidth = (int) Math.ceil(getResources().getDimension(R.dimen.trim_slider_border_width));
-    
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
     this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBackgroundColor));
@@ -70,15 +61,8 @@ public class TrimSliderView extends View {
     this.progressPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderProgressColor));
     this.progressPaint.setStyle(Paint.Style.FILL);
     
-    this.borderPaint = new Paint();
-    this.borderPaint.setAntiAlias(true);
-    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.trimSliderBorderColor));
-    this.borderPaint.setStrokeWidth(this.borderWidth);
-    this.borderPaint.setStyle(Paint.Style.STROKE);
-    
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
-    this.borderRect = new RectF();
   }
   
   
@@ -98,13 +82,7 @@ public class TrimSliderView extends View {
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = (float) this.borderWidth / 2;
-    float top    = (float) this.borderWidth / 2;
-    float right  = this.canvasWidth  - (float) this.borderWidth / 2;
-    float bottom = this.canvasHeight - (float) this.borderWidth / 2;
-    this.borderRect.set(left, top, right, bottom);
-    
-    if (this.maxValue == 0) setMax(this.workingWidth);
+    if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
     rebuildProgess();
@@ -112,13 +90,13 @@ public class TrimSliderView extends View {
   }
 
   private void rebuildProgess() {
-    this.progressStep = (float) this.workingWidth / this.maxValue;
+    this.progressStep = (float) this.canvasWidth / this.maxValue;
     float progressPx = this.progress * this.progressStep;
     
-    float left   = this.borderWidth;
-    float top    = this.borderWidth;
+    float left   = 0;
+    float top    = 0;
     float right  = left + progressPx;
-    float bottom = this.canvasHeight - this.borderWidth;
+    float bottom = this.canvasHeight;
     this.progressRect.set(left, top, right, bottom);
   }
   
@@ -128,8 +106,8 @@ public class TrimSliderView extends View {
     if (!this.sliderEnabled) return true;
     
     int action = event.getAction();
-    int x = (int) event.getX() - this.borderWidth;
-    int y = (int) event.getY() - this.borderWidth;
+    int x = (int) event.getX();
+    int y = (int) event.getY();
     
     if (action == MotionEvent.ACTION_DOWN) {
       this.moveStartX = x;
@@ -155,7 +133,7 @@ public class TrimSliderView extends View {
     
     if (action == MotionEvent.ACTION_UP) {
       if (!this.hasMoved) {
-        int _progress = (int) ((float) x * this.maxValue / this.workingWidth);
+        int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
         setProgress(_progress);
         sendPosition(this.progress);
       }
@@ -172,8 +150,6 @@ public class TrimSliderView extends View {
     if (w == 0 || h == 0) return;
     this.canvasWidth = w;
     this.canvasHeight = h;
-    this.workingWidth = this.canvasWidth - this.borderWidth * 2;
-    this.workingHeight = this.canvasHeight - this.borderWidth * 2;
     rebuildUI();
   }
   
@@ -181,7 +157,6 @@ public class TrimSliderView extends View {
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
-    canvas.drawRect(this.borderRect, this.borderPaint);
   }
   
   @Override

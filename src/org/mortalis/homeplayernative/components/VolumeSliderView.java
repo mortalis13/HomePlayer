@@ -21,19 +21,13 @@ public class VolumeSliderView extends View {
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   
   private Paint canvasPaint;
-  private Paint borderPaint;
   private Paint progressPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
-  private RectF borderRect;
   
   private int canvasWidth;
   private int canvasHeight;
-  
-  private float borderWidth;
-  private float leftOffset;
-  private float topOffset;
   
   private int mediumLevel;
   private int highLevel;
@@ -63,16 +57,12 @@ public class VolumeSliderView extends View {
   
   
   private void init(Context context) {
-    this.borderWidth = (float) Math.ceil(getResources().getDimension(R.dimen.volume_slider_border_width));
     this.mediumLevel = getResources().getInteger(R.integer.volume_slider_medium_level);
     this.highLevel = getResources().getInteger(R.integer.volume_slider_high_level);
     
     this.normalColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressColor);
     this.mediumColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressMediumColor);
     this.highColor = MaterialColors.getColor(this, R.attr.volumeSliderProgressHighColor);
-    
-    this.leftOffset = this.borderWidth;
-    this.topOffset = this.borderWidth;
     
     this.canvasPaint = new Paint();
     this.canvasPaint.setAntiAlias(true);
@@ -84,15 +74,8 @@ public class VolumeSliderView extends View {
     this.progressPaint.setColor(this.normalColor);
     this.progressPaint.setStyle(Paint.Style.FILL);
     
-    this.borderPaint = new Paint();
-    this.borderPaint.setAntiAlias(true);
-    this.borderPaint.setColor(MaterialColors.getColor(this, R.attr.volumeSliderBorderColor));
-    this.borderPaint.setStrokeWidth(this.borderWidth);
-    this.borderPaint.setStyle(Paint.Style.STROKE);
-    
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
-    this.borderRect = new RectF();
   }
   
   
@@ -117,22 +100,16 @@ public class VolumeSliderView extends View {
   private void rebuildUI() {
     this.canvasRect.set(0, 0, this.canvasWidth, this.canvasHeight);
     
-    float left   = this.borderWidth / 2;
-    float top    = this.borderWidth / 2;
-    float right  = this.canvasWidth  - this.borderWidth / 2;
-    float bottom = this.canvasHeight - this.borderWidth / 2;
-    this.borderRect.set(left, top, right, bottom);
-    
     if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
     this.progressStep = (float) this.canvasWidth / this.maxValue;
     float progressPx = this.progress * this.progressStep;
     
-    left   = this.leftOffset;
-    top    = this.topOffset;
-    right  = left + progressPx;
-    bottom = this.canvasHeight - this.borderWidth;
+    float left   = 0;
+    float top    = 0;
+    float right  = left + progressPx;
+    float bottom = this.canvasHeight;
     this.progressRect.set(left, top, right, bottom);
     
     invalidate();
@@ -192,7 +169,6 @@ public class VolumeSliderView extends View {
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
-    canvas.drawRect(this.borderRect, this.borderPaint);
   }
   
   @Override
