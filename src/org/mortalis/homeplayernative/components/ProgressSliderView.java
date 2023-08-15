@@ -49,6 +49,7 @@ public class ProgressSliderView extends View {
   
   private int maxValue;
   private int progress;
+  private float progressStep;
 
   private short[] samples;
   
@@ -97,8 +98,9 @@ public class ProgressSliderView extends View {
   
   public void reset() {
     this.showLoop = false;
-    setProgress(0);
     this.touchEnabled = true;
+    this.progress = 0;
+    rebuildUI();
   }
   
   public void setMax(int value) {
@@ -122,21 +124,21 @@ public class ProgressSliderView extends View {
     if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
+    this.progressStep = (float) this.canvasWidth / this.maxValue;
+    
     rebuildProgess();
     invalidate();
   }
   
   private void rebuildProgess() {
-    float _progress = (float) this.progress * this.canvasWidth / this.maxValue;
-    
     float left   = 0;
     float top    = 0;
-    float right  = left + _progress;
+    float right  = this.progress * this.progressStep;
     float bottom = this.canvasHeight;
     this.progressRect.set(left, top, right, bottom);
   }
-  
-  
+
+
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     if (!this.sliderEnabled) return true;
@@ -159,7 +161,7 @@ public class ProgressSliderView extends View {
         return true;
       }
       
-      int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
+      int _progress = (int) (x / this.progressStep);
       setProgress(_progress);
       
       sendPosition(this.progress);
@@ -284,13 +286,13 @@ public class ProgressSliderView extends View {
     loopEndRect.set(0, 0, 0, 0);
     
     if (this.showLoop) {
-      float loopStartPx = (float) loopStart * this.canvasWidth / this.maxValue;
+      float loopStartPx = (float) loopStart * this.progressStep;
       if (loopStart != 0) {
         loopStartRect.set(loopStartPx - LOOP_EDGE_WIDTH_05, 0, loopStartPx + LOOP_EDGE_WIDTH_05, this.canvasHeight);
       }
       
       if (loopEnd != this.maxValue) {
-        float loopEndPx = (float) loopEnd * this.canvasWidth / this.maxValue;
+        float loopEndPx = (float) loopEnd * this.progressStep;
         loopEndRect.set(loopEndPx - LOOP_EDGE_WIDTH_05, 0, loopEndPx + LOOP_EDGE_WIDTH_05, this.canvasHeight);
       }
     }

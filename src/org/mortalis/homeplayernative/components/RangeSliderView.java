@@ -33,11 +33,11 @@ public class RangeSliderView extends View {
   private int maxValue;
   private int progressStart;
   private int progressEnd;
+  private float progressStep;
   
   private int pointer;
   private float startX;
   private int startValue;
-  private float progressStep;
   
   private boolean rangeStartSelected;
   private boolean rangeEndSelected;
@@ -145,18 +145,18 @@ public class RangeSliderView extends View {
       
       startX = x;
       
-      float distanceToStart = Math.abs(x - progressStart * progressStep);
-      float distanceToEnd = Math.abs(x - progressEnd * progressStep);
+      float distanceToStart = Math.abs(x - this.progressStart * this.progressStep);
+      float distanceToEnd = Math.abs(x - this.progressEnd * this.progressStep);
       
       if (distanceToStart < distanceToEnd) {
         rangeStartSelected = true;
         rangeEndSelected = false;
-        startValue = progressStart;
+        startValue = this.progressStart;
       }
       else {
         rangeEndSelected = true;
         rangeStartSelected = false;
-        startValue = progressEnd;
+        startValue = this.progressEnd;
       }
     }
     
@@ -171,11 +171,11 @@ public class RangeSliderView extends View {
       if (progress > maxValue) progress = maxValue;
       
       if (rangeStartSelected) {
-        if (progress > progressEnd) progress = progressEnd - MIN_RANGE;
+        if (progress > this.progressEnd) progress = this.progressEnd - MIN_RANGE;
         setProgressStart(progress);
       }
       else if (rangeEndSelected) {
-        if (progress < progressStart) progress = progressStart + MIN_RANGE;
+        if (progress < this.progressStart) progress = this.progressStart + MIN_RANGE;
         setProgressEnd(progress);
       }
       
