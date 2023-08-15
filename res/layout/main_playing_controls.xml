@@ -24,6 +24,7 @@
     android:tint="?secondaryTextColor"
     android:background="@color/control_button_background"
   />
+  
   <FrameLayout
     android:id="@+id/iconContainer"
     android:layout_width="wrap_content"
@@ -38,6 +39,7 @@
       android:tint="?secondaryTextColor"
       android:background="@color/control_button_background"
     />
+    
     <RelativeLayout
       android:layout_width="120dp"
       android:layout_height="match_parent"
@@ -85,6 +87,26 @@
       <RelativeLayout
           android:layout_width="16dp"
           android:layout_height="16dp"
+          android:layout_marginRight="16dp"
+          android:layout_marginTop="0dp"
+          android:layout_centerVertical="true"
+          android:layout_alignParentRight="true"
+      >
+        <ImageView
+          android:id="@+id/playExtraIconLoop"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_gravity="center"
+          android:gravity="center"
+          android:tint="?extraIconTintColor"
+          android:src="@drawable/audio_loop_24dp"
+          android:visibility="gone"
+        />
+      </RelativeLayout>
+      
+      <RelativeLayout
+          android:layout_width="16dp"
+          android:layout_height="16dp"
           android:layout_marginLeft="16dp"
           android:layout_marginBottom="6dp"
           android:layout_alignParentLeft="true"
@@ -123,6 +145,7 @@
       </RelativeLayout>
     </RelativeLayout>
   </FrameLayout>
+  
   <ImageButton
     android:id="@+id/bFastForward"
     android:layout_width="0dp"

@@ -270,13 +270,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public void fastRewind(int s) {
-    changePlayPosition(getPlayingTime() - s * 1000);
+    seekTo(getPlayingTime() - s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
 
   public void fastForward(int s) {
-    changePlayPosition(getPlayingTime() + s * 1000);
+    seekTo(getPlayingTime() + s * 1000);
     sendUpdatePlayingTime();
     sendUpdateProgress();
   }
@@ -303,7 +303,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
           if (audioTime > 0 && audioTime != getTotalTime()) {
             log("Initial seeking to time: " + audioTime);
-            changePlayPosition(audioTime);
+            seekTo(audioTime);
           }
 
           sendInitPlayingTime();
@@ -532,17 +532,22 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   
   public void enableUpdateTime() {
-    logd("enableUpdateTime()");
     updateTimeEnabled = true;
   }
   
   public void disableUpdateTime() {
-    logd("disableUpdateTime()");
     updateTimeEnabled = false;
   }
   
   public void changePlayPosition(int time) {  // ms
     logd("changePlayPosition() " + time);
+    seekTo(time);
+    sendUpdatePlayingTime();
+    sendUpdateProgress();
+  }
+  
+  public void seekTo(int time) {  // ms
+    logd("seekTo() " + time);
     EngineNative.seekTo(time);
   }
   

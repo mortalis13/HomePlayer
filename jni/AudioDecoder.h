@@ -63,6 +63,10 @@ public:
   void setRepeat(bool repeat);
   bool isRepeat();
   
+  void setLoop(bool loop);
+  void setLoopStart(int time);
+  void setLoopEnd(int time);
+  
   void seekTo(int time_ms);
   int getCurrentTime();
   int getDuration();
@@ -84,7 +88,7 @@ private:
   void run();
   void cleanup();
   int decodeFrames();
-  void processAVFrame(uint8_t* buffer, int32_t numFrames);
+  void processAVFrame(uint8_t* buffer, int32_t numFrames, int32_t skipFrames);
   
   int findDelayedSamples();
   void fillAudioParams(AVCodecParameters* codecParams);
@@ -96,6 +100,11 @@ private:
   atomic<bool> ended = false;   // Decoding reached EOF and doesn't have more data to decode from the current file
   
   atomic<bool> repeat = false;
+  atomic<bool> loop = false;
+  
+  int loopStart = 0;
+  int loopEnd = 0;
+  bool loopSeekPending = false;
   
   int32_t outChannelCount = 0;
   int32_t outSampleRate = 0;

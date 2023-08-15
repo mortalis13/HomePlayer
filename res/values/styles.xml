@@ -30,6 +30,9 @@
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed</item>
     <item name="controlButtonBackgroundDefault">@color/control_button_background_default</item>
     
+    <item name="secondaryButtonBackgroundPressed">@color/secondary_button_background_pressed</item>
+    <item name="secondaryButtonBackgroundDefault">@color/secondary_button_background_default</item>
+    
     <item name="listItemBackgroundPressed">@color/list_item_background_pressed</item>
     <item name="listItemBackgroundSelected">@color/list_item_background_selected</item>
     <item name="listItemBackgroundDefault">@color/list_item_background_default</item>
@@ -80,6 +83,13 @@
     <item name="volumeSliderBackgroundColor">@color/volume_slider_background_color</item>
     <item name="volumeSliderBorderColor">@color/volume_slider_border_color</item>
     
+    <item name="rangeSliderBackgroundColor">@color/range_slider_background_color</item>
+    <item name="rangeSliderProgressColor">@color/range_slider_progress_color</item>
+    
+    <item name="looperEnableButtonBackgroundPressed">@color/looper_enable_button_background_pressed</item>
+    <item name="looperEnableButtonBackgroundSelected">@color/looper_enable_button_background_selected</item>
+    <item name="looperEnableButtonBackgroundDefault">@color/looper_enable_button_background_default</item>
+    
     <item name="statusBackground">@color/status_background</item>
   </style>
   
@@ -102,6 +112,8 @@
     <item name="sliderWaveformColor">@color/slider_waveform_color_dark</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed_dark</item>
+    
+    <item name="secondaryButtonBackgroundPressed">@color/secondary_button_background_pressed_dark</item>
 
     <item name="listItemBackgroundPressed">@color/list_item_background_pressed_dark</item>
     <item name="listItemBackgroundSelected">@color/list_item_background_selected_dark</item>
@@ -144,6 +156,13 @@
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color_dark</item>
     <item name="volumeSliderProgressHighColor">@color/volume_slider_progress_high_color_dark</item>
     <item name="volumeSliderBorderColor">@color/volume_slider_border_color_dark</item>
+    
+    <item name="rangeSliderBackgroundColor">@color/range_slider_background_color_dark</item>
+    <item name="rangeSliderProgressColor">@color/range_slider_progress_color_dark</item>
+    
+    <item name="looperEnableButtonBackgroundPressed">@color/looper_enable_button_background_pressed_dark</item>
+    <item name="looperEnableButtonBackgroundSelected">@color/looper_enable_button_background_selected_dark</item>
+    <item name="looperEnableButtonBackgroundDefault">@color/looper_enable_button_background_default_dark</item>
     
     <item name="statusBackground">@color/status_background_dark</item>
   </style>

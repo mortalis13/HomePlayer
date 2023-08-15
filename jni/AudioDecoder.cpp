@@ -103,9 +103,7 @@ void AudioDecoder::run() {
 int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
-
   bool is_eof = false;
-  this->delayedSamples = 0;
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -128,8 +126,11 @@ int AudioDecoder::decodeFrames() {
     if (this->seekPending) {
       this->seekPending = false;
       is_eof = false;
-
-      int seek_result = avformat_seek_file(formatContext, -1, 0, this->seekTimestamp, INT64_MAX, 0);
+      
+      int64_t seek_ts = this->seekTimestamp - 0.05 * AV_TIME_BASE;
+      if (seek_ts < 0) seek_ts = 0;
+      int seek_result = avformat_seek_file(formatContext, -1, 0, seek_ts, INT64_MAX, 0);
+      
       if (seek_result >= 0) {
         avcodec_flush_buffers(codecContext);
       }
@@ -198,8 +199,55 @@ int AudioDecoder::decodeFrames() {
       av_samples_alloc((uint8_t**) &buffer, nullptr, this->outChannelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
       int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       
+      // Loop
+      int skip_frames = 0;
+      
+      if (this->loop && this->loopSeekPending) {
+        // Block used after seek to loop start is done, need to search for the exact frame/sample position to write audio from
+        LOGI("After seek, frame pts is: %d", audioFrame->pts);
+        
+        double seek_s = (double) this->seekTimestamp / AV_TIME_BASE;
+        int64_t seekPTS = seek_s * this->outChannelCount * this->outSampleRate;
+        int64_t nextPTS = this->currentPTS + dst_nb_samples * this->outChannelCount;
+        
+        if (nextPTS < seekPTS) {
+          LOGI("skipping av frame %d, it's before the target time, nextPTS %d < seekPTS %d (%.3f s)", currentPTS, nextPTS, seekPTS, seek_s);
+          av_frame_unref(audioFrame);
+          continue;
+        }
+        else {
+          skip_frames = (seekPTS - currentPTS) / this->outChannelCount;
+          LOGI("av frame %d has the target time, skipping %d audio frames to the pts %d (%.3f s)", currentPTS, skip_frames, seekPTS, seek_s);
+        }
+      }
+
+      this->loopSeekPending = false;
+      
+      if (this->loop) {
+        // Block used to detect the loop end is reached, write extact samples that belong to the loop and rewind to the loop start
+        int64_t loopEndPTS = (double) loopEnd / 1000.0 * this->outChannelCount * this->outSampleRate;
+        int64_t nextPTS = currentPTS + dst_nb_samples * this->outChannelCount;
+        int64_t currentPTS_cached = currentPTS;
+        
+        if (nextPTS >= loopEndPTS) {
+          seekTo(loopStart);
+          this->loopSeekPending = true;
+          
+          if (currentPTS_cached > loopEndPTS) {
+            LOGI("Current frame is after the loop end (%d > %d), skipping the entire frame and rewinding to the loop start", currentPTS_cached, loopEndPTS);
+            av_freep(&buffer);
+            av_frame_unref(audioFrame);
+            break;
+          }
+
+          int diff = (nextPTS - loopEndPTS) / this->outChannelCount;
+          frame_count -= diff;
+          LOGI("last av frame in loop %d, frame_count is cutted: %d => %d", currentPTS, frame_count + diff, frame_count);
+        }
+      }
+      
       // Write
-      processAVFrame(buffer, frame_count);
+      processAVFrame(buffer, frame_count, skip_frames);
 
       av_freep(&buffer);
       av_frame_unref(audioFrame);
@@ -216,11 +264,11 @@ end:
   return result;
 }
 
-void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames) {
+void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames, int32_t skipFrames) {
   // --> Decoder thread
   if (this->streamWriter) {
     // Pass the samples outside
-    streamWriter->writeAudio(buffer, numFrames);
+    streamWriter->writeAudio(buffer, numFrames, skipFrames);
   }
 }
 
@@ -232,7 +280,9 @@ int AudioDecoder::loadFile(string filePath) {
   
   this->loaded = false;
   this->currentPTS = 0;
+  this->delayedSamples = 0;
   this->seekPending = false;
+  this->loopSeekPending = false;
   
   result = avformat_open_input(&formatContext, filePath.c_str(), NULL, NULL);
   if (result < 0) {
@@ -399,6 +449,20 @@ void AudioDecoder::seekTo(int time_ms) {
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
   this->seekPending = true;
   this->currentPTS = (double) time_ms / 1000.0 * this->outChannelCount * this->outSampleRate;
+}
+
+
+void AudioDecoder::setLoop(bool loop) {
+  LOGD("setLoop() => %d", loop);
+  this->loop = loop;
+}
+
+void AudioDecoder::setLoopStart(int time) {
+  this->loopStart = time;
+}
+
+void AudioDecoder::setLoopEnd(int time) {
+  this->loopEnd = time;
 }
 
 

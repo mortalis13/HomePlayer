@@ -21,6 +21,7 @@ public class ProgressSliderView extends View {
   
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   private static final int WAVEFORM_PAD = (int) Fun.dpToPx(2);
+  private static final float LOOP_EDGE_WIDTH_05 = Fun.dpToPx(1);
   
   private boolean sliderEnabled;
   private boolean touchEnabled;
@@ -33,6 +34,12 @@ public class ProgressSliderView extends View {
   private RectF canvasRect;
   private RectF progressRect;
   private RectF borderRect;
+  
+  private boolean showLoop;
+  private Paint loopPaint;
+  private RectF loopStartRect;
+  private RectF loopEndRect;
+  private RectF loopProgressRect;
   
   private Picture waveformPicture;
   
@@ -73,6 +80,10 @@ public class ProgressSliderView extends View {
     this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.sliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
+    this.loopPaint = new Paint();
+    this.loopPaint.setColor(MaterialColors.getColor(this, R.attr.rangeSliderProgressColor));
+    this.loopPaint.setStyle(Paint.Style.FILL);
+    
     this.progressPaint = new Paint();
     this.progressPaint.setColor(progressColor);
     this.progressPaint.setStyle(Paint.Style.FILL);
@@ -91,10 +102,14 @@ public class ProgressSliderView extends View {
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
     this.borderRect = new RectF();
+    this.loopStartRect = new RectF();
+    this.loopEndRect = new RectF();
+    this.loopProgressRect = new RectF();
   }
   
   
   public void reset() {
+    this.showLoop = false;
     setProgress(0);
     this.touchEnabled = true;
   }
@@ -106,6 +121,7 @@ public class ProgressSliderView extends View {
   public void setProgress(int value) {
     this.progress = value;
     rebuildProgess();
+    rebuildLoopProgress();
     invalidate();
   }
   
@@ -198,6 +214,12 @@ public class ProgressSliderView extends View {
     canvas.drawRect(this.borderRect, this.borderPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
     drawWaveform(canvas);
+    
+    if (showLoop) {
+      canvas.drawRect(this.loopStartRect, this.loopPaint);
+      canvas.drawRect(this.loopEndRect, this.loopPaint);
+      canvas.drawRect(this.loopProgressRect, this.loopPaint);
+    }
   }
   
   @Override
@@ -277,6 +299,37 @@ public class ProgressSliderView extends View {
   private void drawWaveform(Canvas canvas) {
     if (waveformPicture == null) return;
     canvas.drawPicture(waveformPicture);
+  }
+  
+  
+  public void setLoopPoints(boolean loopEnabled, int loopStart, int loopEnd) {
+    this.showLoop = loopEnabled;
+    loopStartRect.set(0, 0, 0, 0);
+    loopEndRect.set(0, 0, 0, 0);
+    
+    if (this.showLoop) {
+      float loopStartPx = (float) loopStart * this.workingWidth / this.maxValue;
+      if (loopStart != 0) {
+        loopStartRect.set(loopStartPx - LOOP_EDGE_WIDTH_05, 0, loopStartPx + LOOP_EDGE_WIDTH_05, this.workingHeight);
+      }
+      
+      if (loopEnd != this.maxValue) {
+        float loopEndPx = (float) loopEnd * this.workingWidth / this.maxValue;
+        loopEndRect.set(loopEndPx - LOOP_EDGE_WIDTH_05, 0, loopEndPx + LOOP_EDGE_WIDTH_05, this.workingHeight);
+      }
+    }
+    
+    rebuildLoopProgress();
+    invalidate();
+  }
+  
+  private void rebuildLoopProgress() {
+    loopProgressRect.set(0, 0, 0, 0);
+    if (this.showLoop && this.progressRect.right > loopStartRect.left) {
+      float right = this.progressRect.right;
+      if (right > loopEndRect.left && loopEndRect.left != 0) right = loopEndRect.left;
+      loopProgressRect.set(loopStartRect.left, 0, right, this.workingHeight);
+    }
   }
   
   

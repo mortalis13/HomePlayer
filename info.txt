@@ -1,3 +1,8 @@
+audio props
+---------------
+1 mp3 av frame -> 1152 audio frames with N channels -> 1152 * N audio samples -> 44100 Hz -> 26.12 ms
+
+
 
 eq bands calc
 ------------

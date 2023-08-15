@@ -25,6 +25,9 @@ public class EngineNative {
   
   public static native void seekTo(int time);
   public static native void setRepeat(boolean repeat);
+  public static native void setLoop(boolean loop);
+  public static native void setLoopStart(int time);
+  public static native void setLoopEnd(int time);
   
   public static native void enableFilter();
   public static native void disableFilter();

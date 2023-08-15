@@ -53,6 +53,9 @@ public:
   string getAudioPath();
   void seekTo(int time_ms);
   void setRepeat(bool repeat);
+  void setLoop(bool loop);
+  void setLoopStart(int time);
+  void setLoopEnd(int time);
   
   // Filter
   void enableFilter();
@@ -69,7 +72,7 @@ public:
   int getBitrate();
   string getCodecName();
 
-  virtual void writeAudio(uint8_t* stream, int32_t numFrames);
+  virtual void writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFrames);
 
 public:
   EngineChangeListener* engineChangeListener = NULL;
