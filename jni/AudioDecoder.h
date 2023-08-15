@@ -115,6 +115,7 @@ private:
   
   bool seekPending = false;
   int64_t seekTimestamp = 0;
+  int64_t seekTimestamp2 = 0;
   
   string audioPath;
   
@@ -129,5 +130,6 @@ private:
   
   AudioStreamWriter* streamWriter = NULL;
   
+  int after_seek = 0;
 };
 #endif //AUDIO_DECODER_H

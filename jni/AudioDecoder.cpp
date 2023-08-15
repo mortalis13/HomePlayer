@@ -131,6 +131,19 @@ int AudioDecoder::decodeFrames() {
       if (seek_ts < 0) seek_ts = 0;
       int seek_result = avformat_seek_file(formatContext, -1, 0, seek_ts, INT64_MAX, 0);
       
+      // int seek_result = avformat_seek_file(formatContext, -1, 0, this->seekTimestamp, INT64_MAX, 0);
+      // int seek_result = av_seek_frame(formatContext, -1, this->seekTimestamp, AVSEEK_FLAG_BACKWARD);
+      
+      // int seek_result = av_seek_frame(formatContext, -1, 1 * 4410 * 2 * 4, AVSEEK_FLAG_BYTE);
+      // int seek_result = avio_seek(formatContext->pb, 10000, SEEK_SET);
+      // LOGI("pos: %d", formatContext->pb->pos);
+      
+      // int seek_result = av_seek_frame(formatContext, -1, 1000000, AVSEEK_FLAG_FRAME);
+      // int seek_result = av_seek_frame(formatContext, audioStreamIndex, av_rescale(seekTimestamp2, formatContext->streams[audioStreamIndex]->time_base.den, formatContext->streams[audioStreamIndex]->time_base.num) / 1000.0, AVSEEK_FLAG_FRAME);
+      
+      LOGI("currentPTS-seek-estimate: %d", currentPTS);
+      after_seek = 0;
+      
       if (seek_result >= 0) {
         avcodec_flush_buffers(codecContext);
       }
@@ -190,6 +203,27 @@ int AudioDecoder::decodeFrames() {
       AVRational audio_time_base = (AVRational){1, this->outSampleRate * this->outChannelCount};
       audioFrame->pts = av_rescale_q(audioFrame->pts, codecContext->pkt_timebase, audio_time_base);
       this->currentPTS = audioFrame->pts - this->delayedSamples * this->outChannelCount;
+      
+      if (after_seek < 1) {
+        after_seek++;
+        // Dump bytes for the frame
+        // string s = "";
+        // for (int i = 0; i < audioFrame->nb_samples * sizeof(float); ++i) {
+        //   uint8_t ch1 = audioFrame->extended_data[0][i];
+        //   uint8_t ch2 = audioFrame->extended_data[1][i];
+        //   char buf[10];
+        //   int n = sprintf(buf, "%02x %02x ", ch1, ch2);
+        //   s += string(buf, n);
+          
+        //   if (i > 0 && i % 100 == 0) {
+        //     LOGI("%s", s.c_str());
+        //     s = "";
+        //   }
+        // }
+        // LOGI("%s", s.c_str());
+      }
+      
+      // LOGI("audioFrame->pts: %d, currentPTS: %d, audioFrame->nb_samples: %d, frame_count: %d", audioFrame->pts, currentPTS, audioFrame->nb_samples, frame_count);
       
       // Resample
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
@@ -447,6 +481,7 @@ void AudioDecoder::seekTo(int time_ms) {
   LOGD("seekTo() => %d ms", time_ms);
   if (time_ms < 0) time_ms = 0;
   this->seekTimestamp = (double) time_ms / 1000.0 * AV_TIME_BASE;
+  this->seekTimestamp2 = time_ms;
   this->seekPending = true;
   this->currentPTS = (double) time_ms / 1000.0 * this->outChannelCount * this->outSampleRate;
 }
