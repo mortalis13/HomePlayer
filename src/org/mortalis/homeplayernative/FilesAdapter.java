@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayernative.actions.Action;
+import org.mortalis.homeplayernative.actions.SingleAction;
 import org.mortalis.homeplayernative.components.IconOverlayView;
 import static org.mortalis.homeplayernative.Fun.log;
 
@@ -46,12 +46,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private int text_color_error;
   private float itemMenuWidth;
   
-  Action<ListItem> itemClickAction;
-  Action<ListItem> iconClickAction;
-  Action<String> afterFileRemovedAction;
-  Action<String> infoClickAction;
-  Action<ListItem> repeatSelectAction;
-  Action<Integer> itemBeforeBindAction;
+  SingleAction<ListItem> itemClickAction;
+  SingleAction<ListItem> iconClickAction;
+  SingleAction<String> afterFileRemovedAction;
+  SingleAction<String> infoClickAction;
+  SingleAction<ListItem> repeatSelectAction;
+  SingleAction<Integer> itemBeforeBindAction;
   
   
   public FilesAdapter(List<ListItem> fileList, Context context) {

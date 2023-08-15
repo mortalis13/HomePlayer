@@ -45,7 +45,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 
-import org.mortalis.homeplayernative.actions.SimpleAction;
+import org.mortalis.homeplayernative.actions.Action;
 
 import org.mortalis.homeplayernative.components.ProgressSliderView;
 import org.mortalis.homeplayernative.components.VolumeSliderView;
@@ -744,13 +744,13 @@ public class MainActivity extends AppCompatActivity {
     
     
     // Looper
-    SimpleAction _updateLoop = () -> {
+    Action _updateLoop = () -> {
       textLoopStartTime.setText(Fun.formatTime(loopSlider.getProgressStart(), false, true));
       textLoopEndTime.setText(Fun.formatTime(loopSlider.getProgressEnd(), false, true));
       progressSlider.setLoopPoints(loopEnabled, loopSlider.getProgressStart(), loopSlider.getProgressEnd());
     };
     
-    SimpleAction _updateLoopStep = () -> {
+    Action _updateLoopStep = () -> {
       bLoopCycleOffsetStep.setText(String.format("%d ms", loopOffsetStep));
     };
     
