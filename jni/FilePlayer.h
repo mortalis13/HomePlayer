@@ -3,6 +3,7 @@
 
 #include <string>
 #include <mutex>
+#include <fstream>
 
 #include "oboe/Oboe.h"
 
@@ -12,6 +13,16 @@
 
 using namespace std;
 using namespace oboe;
+
+
+const uint8_t WAV_HEADER[] = {
+  'R','I','F','F',
+  0x00, 0x00, 0x00, 0x00,
+  'W','A','V','E','f','m','t',' ',
+  0x10, 0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x44, 0xac, 0x00, 0x00, 0x20, 0x62, 0x05, 0x00, 0x08, 0x00, 0x20, 0x00,
+  'd','a','t','a',
+  0x00, 0x00, 0x00, 0x00
+};
 
 
 class FilePlayer : public AudioStreamWriter {
@@ -104,5 +115,10 @@ private:
   
   mutex decoderWaitMutex;
 
+  bool dumpOutput = true;
+  bool dumpActive = true;
+  ofstream dumpfile;
+  string dumppath;
+  int dumpsize = 0;
 };
 #endif //FILE_PLAYER_H

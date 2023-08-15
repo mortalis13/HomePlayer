@@ -158,6 +158,21 @@ bool FilePlayer::startAudio() {
     return false;
   }
   
+  if (dumpOutput) {
+    dumpActive = true;
+    dumpsize = 0;
+    dumppath = this->decoder->getAudioPath() + "_dump.wav";
+    
+    LOGI("Opening dump file '%s'", dumppath.c_str());
+    dumpfile.open(dumppath, ios::binary);
+    if (!dumpfile.is_open()) {
+      LOGW("Dump file is not opened");
+    }
+    else {
+      dumpfile.write((char*) WAV_HEADER, sizeof(WAV_HEADER));
+    }
+  }
+  
   LOGI("Start playback for %s", this->decoder->getAudioPath().c_str());
   this->decoder->start();
   
@@ -173,6 +188,20 @@ void FilePlayer::pause() {
   if (!this->decoder) return;
   this->decoder->pause();
   this->playing = false;
+
+  if (dumpOutput && dumpfile.is_open()) {
+    dumpActive = false;
+    
+    dumpfile.seekp(4);
+    int file_size = dumpsize + sizeof(WAV_HEADER) - 4 - 4;
+    dumpfile.write((char*) &file_size, 4);
+
+    dumpfile.seekp(sizeof(WAV_HEADER) - 4);
+    dumpfile.write((char*) &dumpsize, 4);
+
+    dumpfile.close();
+    LOGI("Dump file closed, data size: %d, 0x%x", dumpsize, dumpsize);
+  }
 }
 
 bool FilePlayer::resume() {
@@ -339,15 +368,24 @@ void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFram
   }
   
   auto result = audioStream->write(stream, numFrames, 100);
+  bool written = true;
   
   if (!result) {
+    written = false;
     LOGE("Stream write error: %s", convertToText(result.error()));
     if (result.error() == Result::ErrorDisconnected) {
       LOGW("Stream is disconnected. Restarting");
       if (this->restartStream()) {
         audioStream->write(stream, numFrames, 100);
+        written = true;
       }
     }
+  }
+  
+  if (dumpOutput && dumpActive && dumpfile.is_open() && written) {
+    int size = numFrames * channels * sizeof(float);
+    dumpfile.write((char*) stream, size);
+    dumpsize += size;
   }
 }
 
