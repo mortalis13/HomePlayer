@@ -21,9 +21,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 
-import org.mortalis.homeplayernative.actions.Action;
+import org.mortalis.homeplayernative.actions.SingleAction;
 import org.mortalis.homeplayernative.actions.DoubleAction;
-import org.mortalis.homeplayernative.actions.SimpleAction;
+import org.mortalis.homeplayernative.actions.Action;
 
 import org.mortalis.homeplayernative.jni.EngineNative;
 
@@ -72,19 +72,19 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private final Handler progressHandler = new Handler(Looper.getMainLooper());
   private Runnable progressRunnable;
 
-  public SimpleAction exitAction = () -> {};
-  public Action<Integer> progressSetupAction = (arg) -> {};
-  public Action<Integer> progressUpdateAction = (arg) -> {};
+  public Action exitAction = () -> {};
+  public SingleAction<Integer> progressSetupAction = (arg) -> {};
+  public SingleAction<Integer> progressUpdateAction = (arg) -> {};
   public DoubleAction<Integer> timeInitAction = (arg1, arg2) -> {};
   public DoubleAction<Integer> timeUpdateAction = (arg1, arg2) -> {};
-  public SimpleAction onPlayerPreloadedAction = () -> {};
-  public SimpleAction onPlayerStartedAction = () -> {};
-  public SimpleAction onPlayerPausedAction = () -> {};
-  public SimpleAction onPlayerResumedAction = () -> {};
-  public SimpleAction onPlayerStoppedAction = () -> {};
-  public SimpleAction onPlayerErrorAction = () -> {};
-  public SimpleAction onHeadphonesUnplugAction = () -> {};
-  public SimpleAction onHeadphonesPlugAction = () -> {};
+  public Action onPlayerPreloadedAction = () -> {};
+  public Action onPlayerStartedAction = () -> {};
+  public Action onPlayerPausedAction = () -> {};
+  public Action onPlayerResumedAction = () -> {};
+  public Action onPlayerStoppedAction = () -> {};
+  public Action onPlayerErrorAction = () -> {};
+  public Action onHeadphonesUnplugAction = () -> {};
+  public Action onHeadphonesPlugAction = () -> {};
 
 
   @Override

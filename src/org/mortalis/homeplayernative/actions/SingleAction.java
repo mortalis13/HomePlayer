@@ -1,6 +1,6 @@
 package org.mortalis.homeplayernative.actions;
 
 @FunctionalInterface
-public interface SimpleAction {
-  public void execute();
+public interface SingleAction<T> {
+  public void execute(T arg);
 }
