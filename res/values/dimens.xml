@@ -18,6 +18,11 @@
   <dimen name="trim_slider_border_width">0dp</dimen>
   <dimen name="trim_slider_snap_size">2dp</dimen>
   
+  <dimen name="loop_slider_height">50dp</dimen>
+  <dimen name="loop_time_text_size">16dp</dimen>
+  <dimen name="loop_step_text_size">16dp</dimen>
+  <dimen name="loop_control_panel_height">60dp</dimen>
+  
   <dimen name="eq_band_height">42dp</dimen>
   <dimen name="eq_band_text_size">14dp</dimen>
   <dimen name="eq_main_gain_text_size">18dp</dimen>

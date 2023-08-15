@@ -1,0 +1,154 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+<LinearLayout
+  android:id="@+id/looperPanel"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:visibility="gone"
+>
+  <org.mortalis.homeplayernative.components.RangeSliderView
+    android:id="@+id/loopSlider"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/loop_slider_height"
+  />
+  
+  <include layout="@layout/divider_horizontal_include"/>
+
+  <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+  >
+    <TextView
+      android:id="@+id/textLoopStartTime"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginLeft="4dp"
+      android:gravity="center_vertical"
+      android:textColor="?secondaryTextColor"
+      android:textSize="@dimen/loop_time_text_size"
+      android:layout_alignParentLeft="true"
+    />
+    
+    <TextView
+      android:id="@+id/textLoopEndTime"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_marginRight="4dp"
+      android:gravity="center_vertical"
+      android:textColor="?secondaryTextColor"
+      android:textSize="@dimen/loop_time_text_size"
+      android:layout_alignParentRight="true"
+    />
+  </RelativeLayout>
+
+  <include layout="@layout/divider_horizontal_include"/>
+  
+  <LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/loop_control_panel_height"
+  >
+    <ImageButton
+      android:id="@+id/bLooperEnable"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/baseline_power_settings_new_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/looper_enable_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bSeekLoopStart"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_first_page_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bSeekLoopEnd"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_last_page_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bLooperReset"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_cancel_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+  </LinearLayout>
+
+  <include layout="@layout/divider_horizontal_include"/>
+
+  <LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/loop_control_panel_height"
+  >
+    <ImageButton
+      android:id="@+id/bLoopStartMinus"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_remove_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bLoopStartPlus"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_add_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+    <include layout="@layout/divider_vertical_include"/>
+    <Button
+      android:id="@+id/bLoopCycleOffsetStep"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:textSize="@dimen/loop_step_text_size"
+      android:textColor="?secondaryTextColor"
+      android:textAllCaps="false"
+      android:background="@color/secondary_button_background"
+    />
+    <include layout="@layout/divider_vertical_include"/>
+    <ImageButton
+      android:id="@+id/bLoopEndMinus"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_remove_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+    <ImageButton
+      android:id="@+id/bLoopEndPlus"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_weight="1"
+      android:src="@drawable/outline_add_black_24"
+      android:tint="?secondaryTextColor"
+      android:background="@color/secondary_button_background"
+    />
+  </LinearLayout>
+  
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="2dp"
+    android:background="?separatorColor"
+  />
+</LinearLayout>
+  
+</merge>

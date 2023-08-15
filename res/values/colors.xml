@@ -49,6 +49,9 @@
   <color name="control_button_background_pressed">#ddd</color>
   <color name="control_button_background_default">@color/transparent</color>
   
+  <color name="secondary_button_background_pressed">#ddd</color>
+  <color name="secondary_button_background_default">@color/transparent</color>
+  
   <color name="toggle_button_background_pressed">#bfd0d7</color>
   <color name="toggle_button_background_selected">#bacad1</color>
   <color name="toggle_button_background_default">@color/transparent</color>
@@ -84,6 +87,13 @@
   <color name="volume_slider_progress_high_color">#dbb1b1</color>
   <color name="volume_slider_border_color">#888</color>
   
+  <color name="range_slider_background_color">#ddd</color>
+  <color name="range_slider_progress_color">#9fc9c0</color>
+  
+  <color name="looper_enable_button_background_pressed">#ddd</color>
+  <color name="looper_enable_button_background_selected">#d6a8a8</color>
+  <color name="looper_enable_button_background_default">@color/transparent</color>
+  
   <color name="status_background">#ddd</color>
   
   
@@ -107,6 +117,8 @@
   <color name="slider_waveform_color_dark">#707070</color>
 
   <color name="control_button_background_pressed_dark">#111</color>
+  
+  <color name="secondary_button_background_pressed_dark">#333</color>
 
   <color name="list_item_background_pressed_dark">#333</color>
   <color name="list_item_background_selected_dark">#444</color>
@@ -123,7 +135,7 @@
   <color name="list_item_icon_color_highlight_dark">#bc5757</color>
   <color name="list_item_separator_color_dark">#565656</color>
   
-  <color name="danger_button_background_pressed_dark">#4E2C2C</color>
+  <color name="danger_button_background_pressed_dark">#4e2c2c</color>
   <color name="danger_button_background_default_dark">#874646</color>
   
   <color name="toggle_button_background_pressed_dark">#4b585e</color>
@@ -150,6 +162,13 @@
   <color name="volume_slider_progress_medium_color_dark">#b27e5e</color>
   <color name="volume_slider_progress_high_color_dark">#845757</color>
   <color name="volume_slider_border_color_dark">#555</color>
+  
+  <color name="range_slider_background_color_dark">#333</color>
+  <color name="range_slider_progress_color_dark">#709c92</color>
+  
+  <color name="looper_enable_button_background_pressed_dark">#333</color>
+  <color name="looper_enable_button_background_selected_dark">#6d4545</color>
+  <color name="looper_enable_button_background_default_dark">@color/transparent</color>
   
   <color name="status_background_dark">#343434</color>
 </resources>

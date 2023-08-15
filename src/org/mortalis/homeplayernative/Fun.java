@@ -434,6 +434,10 @@ public class Fun {
     return result;
   }
   
+  public static int getScreenDpi() {
+    return Resources.getSystem().getDisplayMetrics().densityDpi;
+  }
+  
   public static float dpToPx(float dp) {
     DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
     float px = dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);

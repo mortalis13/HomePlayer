@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.HorizontalScrollView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ScrollView;
@@ -44,10 +45,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 
+import org.mortalis.homeplayernative.actions.SimpleAction;
+
 import org.mortalis.homeplayernative.components.ProgressSliderView;
 import org.mortalis.homeplayernative.components.VolumeSliderView;
 import org.mortalis.homeplayernative.components.TrimSliderView;
 import org.mortalis.homeplayernative.components.EqualizerView;
+import org.mortalis.homeplayernative.components.RangeSliderView;
 
 import org.mortalis.homeplayernative.decoder.DecoderNative;
 import org.mortalis.homeplayernative.decoder.DecoderResult;
@@ -68,6 +72,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.stream.Stream;
+import java.util.function.Function;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -127,6 +132,9 @@ public class MainActivity extends AppCompatActivity {
   private int audioTrimSeconds;
   private int trimmedProgressColor;
   
+  private boolean loopEnabled;
+  private int loopOffsetStep;
+  
   private boolean extraInfoIsForCurrentFile;
   
   private Set<String> repeatableFiles;
@@ -153,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton bFastForward;
   private ImageView playExtraIconShuffle;
   private ImageView playExtraIconRepeat;
+  private ImageView playExtraIconLoop;
   private ImageView playExtraIconTrim;
   private ImageView playExtraIconEQ;
   
@@ -163,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout extraControlPanel;
   private ImageButton bShuffle;
   private ImageButton bTrimAudio;
+  private ImageButton bLoopSetup;
   private ImageButton bEqualizer;
   private ImageButton bRepeat;
   
@@ -170,6 +180,22 @@ public class MainActivity extends AppCompatActivity {
   private TrimSliderView trimAudioSlider;
   private TextView textTrimValue;
   private TextView textTrimMax;
+  
+  private LinearLayout looperPanel;
+  private RangeSliderView loopSlider;
+  private TextView textLoopStartTime;
+  private TextView textLoopEndTime;
+  
+  private ImageButton bLooperEnable;
+  private ImageButton bSeekLoopStart;
+  private ImageButton bSeekLoopEnd;
+  private ImageButton bLooperReset;
+  
+  private ImageButton bLoopStartMinus;
+  private ImageButton bLoopStartPlus;
+  private Button bLoopCycleOffsetStep;
+  private ImageButton bLoopEndMinus;
+  private ImageButton bLoopEndPlus;
   
   private LinearLayout equalizerPanel;
   private EqualizerView equalizerView;
@@ -346,6 +372,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void init() {
+    log("Screen DPI: " + Fun.getScreenDpi());
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
     audioManager = context.getSystemService(AudioManager.class);
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
@@ -390,6 +417,8 @@ public class MainActivity extends AppCompatActivity {
     bindPlayerService();
     
     repeatableFiles = new HashSet<>();
+    
+    loopOffsetStep = Vars.LOOP_OFFSET_STEP_DEFAULT;
   }
   
   private void configUI() {
@@ -415,6 +444,7 @@ public class MainActivity extends AppCompatActivity {
     extraControlPanel = findViewById(R.id.extraControlPanel);
     bShuffle = findViewById(R.id.bShuffle);
     bTrimAudio = findViewById(R.id.bTrimAudio);
+    bLoopSetup = findViewById(R.id.bLoopSetup);
     bEqualizer = findViewById(R.id.bEqualizer);
     bRepeat = findViewById(R.id.bRepeat);
     
@@ -422,6 +452,21 @@ public class MainActivity extends AppCompatActivity {
     trimAudioSlider = findViewById(R.id.trimAudioSlider);
     textTrimValue = findViewById(R.id.textTrimValue);
     textTrimMax = findViewById(R.id.textTrimMax);
+    
+    looperPanel = findViewById(R.id.looperPanel);
+    loopSlider = findViewById(R.id.loopSlider);
+    textLoopStartTime = findViewById(R.id.textLoopStartTime);
+    textLoopEndTime = findViewById(R.id.textLoopEndTime);
+    
+    bLooperEnable = findViewById(R.id.bLooperEnable);
+    bSeekLoopStart = findViewById(R.id.bSeekLoopStart);
+    bSeekLoopEnd = findViewById(R.id.bSeekLoopEnd);
+    bLooperReset = findViewById(R.id.bLooperReset);
+    bLoopStartMinus = findViewById(R.id.bLoopStartMinus);
+    bLoopStartPlus = findViewById(R.id.bLoopStartPlus);
+    bLoopCycleOffsetStep = findViewById(R.id.bLoopCycleOffsetStep);
+    bLoopEndMinus = findViewById(R.id.bLoopEndMinus);
+    bLoopEndPlus = findViewById(R.id.bLoopEndPlus);
     
     equalizerPanel = findViewById(R.id.equalizerPanel);
     equalizerView = findViewById(R.id.equalizerView);
@@ -465,6 +510,7 @@ public class MainActivity extends AppCompatActivity {
     
     playExtraIconShuffle = findViewById(R.id.playExtraIconShuffle);
     playExtraIconRepeat = findViewById(R.id.playExtraIconRepeat);
+    playExtraIconLoop = findViewById(R.id.playExtraIconLoop);
     playExtraIconTrim = findViewById(R.id.playExtraIconTrim);
     playExtraIconEQ = findViewById(R.id.playExtraIconEQ);
     
@@ -532,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
       public void onChanged(int value) {
         if (!serviceBound) return;
         audioTrimEnabled = false;
-        playerService.changePlayPosition(value);
+        playerService.seekTo(value);
         playerService.enableUpdateTime();
       }
       public void onCancelled() {
@@ -559,6 +605,11 @@ public class MainActivity extends AppCompatActivity {
     bTrimAudio.setOnClickListener(v -> {
       v.setSelected(!v.isSelected());
       toggleTrimAudioPanel();
+    });
+    
+    bLoopSetup.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      toggleLooperPanel();
     });
     
     bEqualizer.setOnClickListener(v -> {
@@ -675,6 +726,8 @@ public class MainActivity extends AppCompatActivity {
     volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     updateVolumeLevel();
     
+    
+    // Trim
     textTrimMax.setText(Fun.formatTime(Vars.MAX_TRIM * 1000, false, false));
     updateAudioTrimText(0);
     
@@ -689,6 +742,119 @@ public class MainActivity extends AppCompatActivity {
       audioTrimEnabled = false;
     });
     
+    
+    // Looper
+    SimpleAction _updateLoop = () -> {
+      textLoopStartTime.setText(Fun.formatTime(loopSlider.getProgressStart(), false, true));
+      textLoopEndTime.setText(Fun.formatTime(loopSlider.getProgressEnd(), false, true));
+      progressSlider.setLoopPoints(loopEnabled, loopSlider.getProgressStart(), loopSlider.getProgressEnd());
+    };
+    
+    SimpleAction _updateLoopStep = () -> {
+      bLoopCycleOffsetStep.setText(String.format("%d ms", loopOffsetStep));
+    };
+    
+    loopSlider.setProgressListener(new RangeSliderView.ProgressListener() {
+      public void onChanging(int valueStart, int valueEnd) {
+        _updateLoop.execute();
+        EngineNative.setLoopStart(valueStart);
+        EngineNative.setLoopEnd(valueEnd);
+      }
+      public void onReset() {
+        _updateLoop.execute();
+        EngineNative.setLoopStart(loopSlider.getProgressStart());
+        EngineNative.setLoopEnd(loopSlider.getProgressEnd());
+      }
+    });
+    
+    textLoopStartTime.setOnClickListener(v -> {
+      if (playerService == null) return;
+      int time = playerService.getPlayingTime();
+      if (time == -1) return;
+      loopSlider.setProgressStart(time);
+      _updateLoop.execute();
+      EngineNative.setLoopStart(loopSlider.getProgressStart());
+    });
+    
+    textLoopEndTime.setOnClickListener(v -> {
+      if (playerService == null) return;
+      int time = playerService.getPlayingTime();
+      if (time == -1) return;
+      loopSlider.setProgressEnd(time);
+      _updateLoop.execute();
+      EngineNative.setLoopEnd(loopSlider.getProgressEnd());
+    });
+    
+    bLooperEnable.setOnClickListener(v -> {
+      v.setSelected(!v.isSelected());
+      loopEnabled = v.isSelected();
+      
+      log("Looper is set to %b", loopEnabled);
+      EngineNative.setLoop(loopEnabled);
+      
+      playExtraIconLoop.setVisibility(loopEnabled ? View.VISIBLE: View.GONE);
+      _updateLoop.execute();
+    });
+    
+    bSeekLoopStart.setOnClickListener(v -> {
+      if (!loopEnabled) return;
+      if (playerService == null) return;
+      
+      int time = loopSlider.getProgressStart();
+      if (time < playerService.getTotalTime()) {
+        playerService.changePlayPosition(time);
+      }
+    });
+    
+    bSeekLoopEnd.setOnClickListener(v -> {
+      if (!loopEnabled) return;
+      if (playerService == null) return;
+      
+      int time = loopSlider.getProgressEnd();
+      if (time < playerService.getTotalTime()) {
+        playerService.changePlayPosition(time);
+      }
+    });
+
+    bLooperReset.setOnClickListener(v -> {
+      loopSlider.reset();
+    });
+    
+    bLoopCycleOffsetStep.setOnClickListener(v -> {
+      for (int i = 0; i < Vars.LOOP_OFFSET_STEPS.length; i++) {
+        if (loopOffsetStep == Vars.LOOP_OFFSET_STEPS[i]) {
+          int next_id = (i == Vars.LOOP_OFFSET_STEPS.length - 1) ? 0: i + 1;
+          loopOffsetStep = Vars.LOOP_OFFSET_STEPS[next_id];
+          break;
+        }
+      }
+      _updateLoopStep.execute();
+    });
+    _updateLoopStep.execute();
+    
+    bLoopStartMinus.setOnClickListener(v -> {
+      loopSlider.setProgressStart(loopSlider.getProgressStart() - loopOffsetStep);
+      _updateLoop.execute();
+      EngineNative.setLoopStart(loopSlider.getProgressStart());
+    });
+    bLoopStartPlus.setOnClickListener(v -> {
+      loopSlider.setProgressStart(loopSlider.getProgressStart() + loopOffsetStep);
+      _updateLoop.execute();
+      EngineNative.setLoopStart(loopSlider.getProgressStart());
+    });
+    bLoopEndMinus.setOnClickListener(v -> {
+      loopSlider.setProgressEnd(loopSlider.getProgressEnd() - loopOffsetStep);
+      _updateLoop.execute();
+      EngineNative.setLoopEnd(loopSlider.getProgressEnd());
+    });
+    bLoopEndPlus.setOnClickListener(v -> {
+      loopSlider.setProgressEnd(loopSlider.getProgressEnd() + loopOffsetStep);
+      _updateLoop.execute();
+      EngineNative.setLoopEnd(loopSlider.getProgressEnd());
+    });
+    
+    
+    // Equalizer
     equalizerView.setupBands(Vars.EQ_BANDS);
     equalizerView.setChangeListener(new EqualizerView.ChangeListener() {
       public void stateChanged(boolean enabled) {
@@ -1145,6 +1311,9 @@ public class MainActivity extends AppCompatActivity {
     logd("onPlayerPreloaded()");
     progressSlider.enable();
     updatePlayingStats();
+    
+    setupLooper();
+    if (loopEnabled) EngineNative.setLoop(loopEnabled);
     
     if (extraInfoPanel.getVisibility() == View.VISIBLE) {
       if (extraInfoIsForCurrentFile || 
@@ -1777,6 +1946,13 @@ public class MainActivity extends AppCompatActivity {
     progressSlider.setProgress(time);
   }
   
+  private void setupLooper() {
+    if (playerService == null) return;
+    int totalTime = playerService.getTotalTime();
+    loopSlider.setMax(totalTime);
+    loopSlider.reset();
+  }
+  
   private void setPlayButtonDefault() {
     bPlayPause.setImageResource(R.drawable.baseline_play_arrow_black_36);
   }
@@ -1822,6 +1998,7 @@ public class MainActivity extends AppCompatActivity {
   
   private boolean extraPanelsVisible() {
     return trimAudioPanel.getVisibility() == View.VISIBLE ||
+           looperPanel.getVisibility() == View.VISIBLE ||
            equalizerPanel.getVisibility() == View.VISIBLE ||
            extraInfoPanel.getVisibility() == View.VISIBLE;
   }
@@ -1830,6 +2007,10 @@ public class MainActivity extends AppCompatActivity {
     if (trimAudioPanel.getVisibility() == View.VISIBLE) {
       trimAudioPanel.setVisibility(View.GONE);
       bTrimAudio.setSelected(false);
+    }
+    if (looperPanel.getVisibility() == View.VISIBLE) {
+      looperPanel.setVisibility(View.GONE);
+      bLoopSetup.setSelected(false);
     }
     if (equalizerPanel.getVisibility() == View.VISIBLE) {
       equalizerPanel.setVisibility(View.GONE);
@@ -1851,10 +2032,12 @@ public class MainActivity extends AppCompatActivity {
     if (visibility == View.GONE) {
       trimAudioPanel.setVisibility(View.GONE);
       bTrimAudio.setSelected(false);
+      looperPanel.setVisibility(View.GONE);
+      bLoopSetup.setSelected(false);
       equalizerPanel.setVisibility(View.GONE);
       bEqualizer.setSelected(false);
     }
-    if (visibility == View.VISIBLE) {
+    else {
       hideExtraInfoPanel();
     }
   }
@@ -1865,6 +2048,21 @@ public class MainActivity extends AppCompatActivity {
     trimAudioPanel.setVisibility(visibility);
     
     if (visibility == View.VISIBLE) {
+      looperPanel.setVisibility(View.GONE);
+      bLoopSetup.setSelected(false);
+      equalizerPanel.setVisibility(View.GONE);
+      bEqualizer.setSelected(false);
+    }
+  }
+  
+  private void toggleLooperPanel() {
+    logd("toggleLooperPanel()");
+    int visibility = looperPanel.getVisibility() == View.GONE ? View.VISIBLE: View.GONE;
+    looperPanel.setVisibility(visibility);
+   
+    if (visibility == View.VISIBLE) {
+      trimAudioPanel.setVisibility(View.GONE);
+      bTrimAudio.setSelected(false);
       equalizerPanel.setVisibility(View.GONE);
       bEqualizer.setSelected(false);
     }
@@ -1877,6 +2075,8 @@ public class MainActivity extends AppCompatActivity {
     if (visibility == View.VISIBLE) {
       trimAudioPanel.setVisibility(View.GONE);
       bTrimAudio.setSelected(false);
+      looperPanel.setVisibility(View.GONE);
+      bLoopSetup.setSelected(false);
       
       extraControlPanel.post(() -> {
         int[] location = new int[2];

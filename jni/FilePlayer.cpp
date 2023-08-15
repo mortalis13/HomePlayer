@@ -222,6 +222,21 @@ void FilePlayer::seekTo(int time_ms) {
   this->decoder->seekTo(time_ms);
 }
 
+void FilePlayer::setLoop(bool loop) {
+  if (!this->decoder) return;
+  this->decoder->setLoop(loop);
+}
+
+void FilePlayer::setLoopStart(int time) {
+  if (!this->decoder) return;
+  this->decoder->setLoopStart(time);
+}
+
+void FilePlayer::setLoopEnd(int time) {
+  if (!this->decoder) return;
+  this->decoder->setLoopEnd(time);
+}
+
 
 // ==> Filter
 void FilePlayer::enableFilter() {
@@ -309,11 +324,18 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
 }
 
 // virtual AudioStreamWriter
-void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames) {
-  this->processAudio((float*) stream, numFrames, audioStream->getChannelCount());
+void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFrames) {
+  int8_t channels = audioStream->getChannelCount();
+  
+  if (skipFrames > 0) {
+    stream += skipFrames * channels * sizeof(float);
+    numFrames -= skipFrames;
+  }
+  
+  this->processAudio((float*) stream, numFrames, channels);
   
   if (this->isFilterEnabled) {
-    this->filterAudio((float*) stream, numFrames, audioStream->getChannelCount());
+    this->filterAudio((float*) stream, numFrames, channels);
   }
   
   auto result = audioStream->write(stream, numFrames, 100);

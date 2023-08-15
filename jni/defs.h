@@ -19,7 +19,13 @@ typedef struct AudioParams {
 
 class AudioStreamWriter {
 public:
-  virtual void writeAudio(uint8_t* stream, int32_t numFrames) = 0;
+  // stream: buffer with audio samples to read from, byte pointer
+  //   (for float samples, 1 sample is 4 bytes)
+  // numFrames: number of audio frames to read from the stream
+  //   (1 frame contains N samples for N channels, for float samples, 1 frame 4*N bytes are read from the stream)
+  // skipFrames: number of audio frames to skip from the stream beginning
+  //   (the number of frames that has to be read from the end of the stream is numFrames-skipFrames)
+  virtual void writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFrames) = 0;
 };
 
 class EngineChangeListener {

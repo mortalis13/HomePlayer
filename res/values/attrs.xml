@@ -21,6 +21,9 @@
   <attr name="controlButtonBackgroundPressed" format="color"/>
   <attr name="controlButtonBackgroundDefault" format="color"/>
   
+  <attr name="secondaryButtonBackgroundPressed" format="color"/>
+  <attr name="secondaryButtonBackgroundDefault" format="color"/>
+  
   <attr name="listItemBackgroundPressed" format="color"/>
   <attr name="listItemBackgroundSelected" format="color"/>
   <attr name="listItemBackgroundDefault" format="color"/>
@@ -70,6 +73,13 @@
   <attr name="volumeSliderProgressHighColor" format="color"/>
   <attr name="volumeSliderBackgroundColor" format="color"/>
   <attr name="volumeSliderBorderColor" format="color"/>
+  
+  <attr name="rangeSliderBackgroundColor" format="color"/>
+  <attr name="rangeSliderProgressColor" format="color"/>
+  
+  <attr name="looperEnableButtonBackgroundPressed" format="color"/>
+  <attr name="looperEnableButtonBackgroundSelected" format="color"/>
+  <attr name="looperEnableButtonBackgroundDefault" format="color"/>
   
   <attr name="statusBackground" format="color"/>
 </resources>

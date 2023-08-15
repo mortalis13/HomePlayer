@@ -193,6 +193,18 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setRe
   player.setRepeat(repeat);
 }
 
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setLoop(JNIEnv *env, jclass obj, jboolean loop) {
+  player.setLoop(loop);
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setLoopStart(JNIEnv *env, jclass obj, jint time) {
+  player.setLoopStart(time);
+}
+
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_setLoopEnd(JNIEnv *env, jclass obj, jint time) {
+  player.setLoopEnd(time);
+}
+
 
 // Filter
 JNIEXPORT void JNICALL Java_org_mortalis_homeplayernative_jni_EngineNative_enableFilter(JNIEnv *env, jclass obj) {
