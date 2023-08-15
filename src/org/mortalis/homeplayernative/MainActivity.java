@@ -1938,8 +1938,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void initProgress(int time) {
-    progressSlider.reset();
     progressSlider.setMax(time);
+    progressSlider.reset();
   }
   
   private void updateProgress(int time) {

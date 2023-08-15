@@ -104,11 +104,10 @@ public class VolumeSliderView extends View {
     if (this.maxValue == 0) return;
     
     this.progressStep = (float) this.canvasWidth / this.maxValue;
-    float progressPx = this.progress * this.progressStep;
     
     float left   = 0;
     float top    = 0;
-    float right  = left + progressPx;
+    float right  = this.progress * this.progressStep;
     float bottom = this.canvasHeight;
     this.progressRect.set(left, top, right, bottom);
     
