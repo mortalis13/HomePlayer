@@ -2,6 +2,10 @@
   <dimen name="title_height">52dp</dimen>
   <dimen name="playing_info_height">68dp</dimen>
   <dimen name="playing_controls_height">68dp</dimen>
+  <dimen name="play_button_width">120dp</dimen>
+  <dimen name="play_button_extra_icon_size">16dp</dimen>
+  <dimen name="play_button_extra_icon_horizontal_margin">16dp</dimen>
+  <dimen name="play_button_extra_icon_vertical_margin">6dp</dimen>
   
   <dimen name="scrollbar_width">8dp</dimen>
   <dimen name="scrollbar_height">100dp</dimen>
@@ -14,6 +18,9 @@
   <dimen name="slider_left_right_snap_size">8dp</dimen>
   
   <dimen name="volume_slider_border_width">0dp</dimen>
+  
+  <dimen name="extra_control_button_panel_height">60dp</dimen>
+  <dimen name="extra_control_button_width">60dp</dimen>
   
   <dimen name="trim_slider_border_width">0dp</dimen>
   <dimen name="trim_slider_snap_size">2dp</dimen>

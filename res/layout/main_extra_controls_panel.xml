@@ -11,7 +11,7 @@
 
 <RelativeLayout
   android:layout_width="match_parent"
-  android:layout_height="60dp"
+  android:layout_height="@dimen/extra_control_button_panel_height"
 >
   <View
     android:layout_width="2dp"
@@ -28,7 +28,7 @@
   
   <ImageButton
     android:id="@+id/bShuffle"
-    android:layout_width="60dp"
+    android:layout_width="@dimen/extra_control_button_width"
     android:layout_height="match_parent"
     android:layout_marginLeft="2dp"
     android:src="@drawable/round_shuffle_black_24"
@@ -39,7 +39,7 @@
   
   <ImageButton
     android:id="@+id/bTrimAudio"
-    android:layout_width="60dp"
+    android:layout_width="@dimen/extra_control_button_width"
     android:layout_height="match_parent"
     android:src="@drawable/audio_trim_24dp"
     android:tint="?secondaryTextColor"
@@ -49,7 +49,7 @@
   
   <ImageButton
     android:id="@+id/bLoopSetup"
-    android:layout_width="60dp"
+    android:layout_width="@dimen/extra_control_button_width"
     android:layout_height="match_parent"
     android:src="@drawable/audio_loop_24dp"
     android:tint="?secondaryTextColor"
@@ -59,7 +59,7 @@
   
   <ImageButton
     android:id="@+id/bEqualizer"
-    android:layout_width="60dp"
+    android:layout_width="@dimen/extra_control_button_width"
     android:layout_height="match_parent"
     android:src="@drawable/baseline_equalizer_black_24"
     android:tint="?secondaryTextColor"
@@ -69,7 +69,7 @@
   
   <ImageButton
     android:id="@+id/bRepeat"
-    android:layout_width="60dp"
+    android:layout_width="@dimen/extra_control_button_width"
     android:layout_height="match_parent"
     android:layout_marginRight="2dp"
     android:src="@drawable/round_repeat_black_24"
