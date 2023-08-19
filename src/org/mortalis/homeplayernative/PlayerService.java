@@ -237,8 +237,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       EngineNative.startEngine();
     }
 
-    int result = EngineNative.resumeAudio();
-    if (result != 0) {
+    boolean result = EngineNative.resumeAudio();
+    if (!result) {
       loge("Could not resume audio");
       return false;
     }
@@ -292,9 +292,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       }
       
       if (Fun.fileExists(audioPath)) {
-        int result = EngineNative.loadAudio(audioPath);
+        boolean result = EngineNative.loadAudio(audioPath);
 
-        if (result != 0) {
+        if (!result) {
           onLoadError();
         }
         else {

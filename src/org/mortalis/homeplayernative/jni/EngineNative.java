@@ -5,19 +5,19 @@ import static org.mortalis.homeplayernative.Fun.logd;
 
 public class EngineNative {
   public static native void initEngine();
-  public static native int startEngine();
-  public static native int stopEngine();
+  public static native boolean startEngine();
+  public static native void stopEngine();
   
   public static native boolean isStreamClosed();
   public static native boolean isStreamRestarting();
   public static native boolean isPlaying();
   public static native void setGain(float gain);
 
-  public static native int loadAudio(String audioPath);
+  public static native boolean loadAudio(String audioPath);
   public static native boolean bufferNextAudio(String audioPath);
-  public static native int playAudio();
-  public static native int pauseAudio();
-  public static native int resumeAudio();
+  public static native boolean playAudio();
+  public static native boolean pauseAudio();
+  public static native boolean resumeAudio();
   
   public static native int getDuration();
   public static native int getCurrentPosition();

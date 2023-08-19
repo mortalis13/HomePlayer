@@ -45,7 +45,7 @@ public:
   bool loadAudio(string audioPath);
   bool bufferNextAudio(string audioPath);
   bool startAudio();
-  void pause();
+  bool pause();
   bool resume();
   
   int getDuration();

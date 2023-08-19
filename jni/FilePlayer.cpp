@@ -177,10 +177,11 @@ bool FilePlayer::startAudio() {
   return true;
 }
 
-void FilePlayer::pause() {
-  if (!this->decoder) return;
+bool FilePlayer::pause() {
+  if (!this->decoder) return false;
   this->decoder->pause();
   this->playing = false;
+  return true;
 }
 
 bool FilePlayer::resume() {
