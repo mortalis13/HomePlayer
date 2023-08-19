@@ -195,9 +195,9 @@ int AudioDecoder::decodeFrames() {
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
       int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->outSampleRate, audioFrame->sample_rate, AV_ROUND_UP);
       
-      uint8_t* buffer;
-      av_samples_alloc((uint8_t**) &buffer, nullptr, this->outChannelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
-      int frame_count = swr_convert(swrContext, (uint8_t**) &buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
+      uint8_t* audio_buffer;
+      av_samples_alloc((uint8_t**) &audio_buffer, nullptr, this->outChannelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
+      int frame_count = swr_convert(swrContext, (uint8_t**) &audio_buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       
       // Loop
       int skip_frames = 0;
@@ -212,7 +212,7 @@ int AudioDecoder::decodeFrames() {
         
         if (nextPTS < seekPTS) {
           LOGI("skipping av frame %d, it's before the target time, nextPTS %d < seekPTS %d (%.3f s)", currentPTS, nextPTS, seekPTS, seek_s);
-          av_freep(&buffer);
+          av_freep(&audio_buffer);
           av_frame_unref(audioFrame);
           continue;
         }
@@ -236,7 +236,7 @@ int AudioDecoder::decodeFrames() {
           
           if (currentPTS_cached > loopEndPTS) {
             LOGI("Current frame is after the loop end (%d > %d), skipping the entire frame and rewinding to the loop start", currentPTS_cached, loopEndPTS);
-            av_freep(&buffer);
+            av_freep(&audio_buffer);
             av_frame_unref(audioFrame);
             break;
           }
@@ -248,9 +248,9 @@ int AudioDecoder::decodeFrames() {
       }
       
       // Write
-      processAVFrame(buffer, frame_count, skip_frames);
+      processAVFrame(audio_buffer, frame_count, skip_frames);
 
-      av_freep(&buffer);
+      av_freep(&audio_buffer);
       av_frame_unref(audioFrame);
     }
   } // while not stopped

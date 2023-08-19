@@ -48,7 +48,7 @@ android {
   }
   
   buildFeatures {
-      prefab true
+    prefab true
   }
   
   externalNativeBuild {

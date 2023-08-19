@@ -55,6 +55,8 @@ bool FilePlayer::openStream() {
 
 bool FilePlayer::startStream() {
   LOGD("startStream()");
+  if (!audioStream) return false;
+  
   auto result = audioStream->requestStart();
   LOGI("Start stream result: %s", convertToText(result));
   return result == Result::OK;
@@ -62,6 +64,8 @@ bool FilePlayer::startStream() {
 
 bool FilePlayer::stopStream() {
   LOGD("stopStream()");
+  if (!audioStream) return false;
+  
   auto result = audioStream->requestStop();
   LOGI("Stop stream result: %s", convertToText(result));
   return result == Result::OK;
@@ -69,6 +73,8 @@ bool FilePlayer::stopStream() {
 
 bool FilePlayer::closeStream() {
   LOGD("closeStream()");
+  if (!audioStream) return false;
+  
   auto result = audioStream->close();
   LOGI("Close stream result: %s", convertToText(result));
   return result == Result::OK;
@@ -92,8 +98,8 @@ bool FilePlayer::restartStream() {
 }
 
 bool FilePlayer::isStreamClosed() {
-  if (!this->audioStream) return true;
-  return this->audioStream->getState() == StreamState::Closed;
+  if (!audioStream) return true;
+  return audioStream->getState() == StreamState::Closed;
 }
 
 bool FilePlayer::isRestarting() {
@@ -109,6 +115,7 @@ void FilePlayer::setGain(float gainDb) {
 // ==> Decoder
 bool FilePlayer::loadAudio(string audioPath) {
   LOGD("loadAudio() -start- => %s", audioPath.c_str());
+  if (!audioStream) return false;
   this->playing = false;
   
   if (this->decoder && !this->decoder->isStopped()) {
@@ -134,6 +141,7 @@ bool FilePlayer::loadAudio(string audioPath) {
 
 bool FilePlayer::bufferNextAudio(string audioPath) {
   LOGD("bufferNextAudio() -start- => %s", audioPath.c_str());
+  if (!audioStream) return false;
   
   // Temp decoder used to preload audio that would be played next
   // it will be assigned to the main decoder when the current audio ends normally, with EOF
@@ -325,6 +333,7 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
 
 // virtual AudioStreamWriter
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFrames) {
+  if (!audioStream) return;
   int8_t channels = audioStream->getChannelCount();
   
   if (skipFrames > 0) {
