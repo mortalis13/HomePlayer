@@ -91,6 +91,7 @@ void AudioDecoder::run() {
 
   this->playing = false;
   this->stopped = true;
+  this->loaded = false;
   
   if (result == 0) {
     this->ended = true;
@@ -173,7 +174,7 @@ int AudioDecoder::decodeFrames() {
 
     result = avcodec_send_packet(codecContext, audioPacket);
     if (result != 0) {
-      LOGE("avcodec_send_packet error: %s", av_err2str(result));
+      LOGE("avcodec_send_packet error: (%d) %s", result, av_err2str(result));
       goto end;
     }
     av_packet_unref(audioPacket);
@@ -189,7 +190,7 @@ int AudioDecoder::decodeFrames() {
       }
       else if (result == AVERROR(EAGAIN)) continue;
       else if (result < 0) {
-        LOGE("avcodec_receive_frame error: %s", av_err2str(result));
+        LOGE("avcodec_receive_frame error: (%d) %s", result, av_err2str(result));
         continue;
       }
       
@@ -293,7 +294,7 @@ int AudioDecoder::loadFile(string filePath) {
   
   result = avformat_open_input(&formatContext, filePath.c_str(), NULL, NULL);
   if (result < 0) {
-    LOGE("Failed to open file. Error code: %s", av_err2str(result));
+    LOGE("Failed to open file: (%d) %s", result, av_err2str(result));
     this->cleanup();
     return result;
   }
@@ -301,7 +302,7 @@ int AudioDecoder::loadFile(string filePath) {
   
   result = avformat_find_stream_info(formatContext, NULL);
   if (result < 0) {
-    LOGE("Failed to find stream info. Error code: %s", av_err2str(result));
+    LOGE("Failed to find stream info: (%d) %s", result, av_err2str(result));
     this->cleanup();
     return result;
   }
@@ -345,7 +346,7 @@ int AudioDecoder::loadFile(string filePath) {
   
   result = avcodec_parameters_to_context(codecContext, audioStream->codecpar);
   if (result < 0) {
-    LOGE("Failed to copy codec parameters to codec context");
+    LOGE("Failed to copy codec parameters to codec context: (%d) %s", result, av_err2str(result));
     this->cleanup();
     return result;
   }
@@ -353,7 +354,7 @@ int AudioDecoder::loadFile(string filePath) {
 
   result = avcodec_open2(codecContext, audioCodec, nullptr);
   if (result < 0) {
-    LOGE("Could not open codec");
+    LOGE("Could not open codec: (%d) %s", result, av_err2str(result));
     this->cleanup();
     return result;
   }
@@ -384,7 +385,7 @@ int AudioDecoder::loadFile(string filePath) {
 
   result = swr_init(swrContext);
   if (result < 0) {
-    LOGE("Failed to initialize the resampling context. Error: %s", av_err2str(result));
+    LOGE("Failed to initialize resampler context: (%d) %s", result, av_err2str(result));
     this->cleanup();
     return result;
   }
