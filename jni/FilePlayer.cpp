@@ -390,10 +390,10 @@ void FilePlayer::waitDecoderThread() {
   lock_guard<mutex> guard(decoderWaitMutex);
   LOGD("waitDecoderThread() -start-");
   
-  bool isEndedOnEOF = this->decoder->waitDecoderThread();
+  bool isFinished = this->decoder->waitDecoderThread();
   this->playing = false;
-  
-  if (isEndedOnEOF) {
+
+  if (isFinished) {
     this->startBufferedDecoder();
     if (engineChangeListener) engineChangeListener->audioEnded();
   }

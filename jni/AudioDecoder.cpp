@@ -28,6 +28,7 @@ void AudioDecoder::start() {
   this->playing = true;
   this->stopped = false;
   this->ended = false;
+  this->error = false;
   
   runThread = std::async(launch::async, &AudioDecoder::run, this);
   LOGI("Decoder thread started");
@@ -74,12 +75,13 @@ bool AudioDecoder::isRepeat() {
 
 bool AudioDecoder::waitDecoderThread() {
   // --> Decoder wait thread
-  // Returns true if decoding thread was ended after eof, not forced
+  // Returns true if decoding thread was ended after eof, not forced, or after a decoding error occurred
   LOGD("--> waitDecoderThread() -start-");
   // Block until set_value is called
   threadEndSignal->get_future().wait();
-  LOGD("--> waitDecoderThread() -end-, EOF %sreached", this->ended ? "": "not ");
-  return this->ended;
+  LOGD("--> waitDecoderThread() -end-");
+  LOGI("EOF %sreached, finished %s errors", (this->ended ? "": "not "), (this->error ? "with": "without"));
+  return this->ended || this->error;
 }
 
 void AudioDecoder::run() {
@@ -93,6 +95,10 @@ void AudioDecoder::run() {
   if (result == 0) {
     this->ended = true;
     LOGI("File decoding completed after EOF");
+  }
+  if (result < 0) {
+    this->error = true;
+    LOGW("File decoding completed with errors");
   }
   
   LOGI("Decoder thread ended");

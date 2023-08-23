@@ -98,6 +98,7 @@ private:
   atomic<bool> stopped = true;  // Decoder is stopped, after finishing decoding or was forces to stop from outside
   atomic<bool> playing = false; // Decoder is decoding the current file and writes samples to the output stream
   atomic<bool> ended = false;   // Decoding reached EOF and doesn't have more data to decode from the current file
+  atomic<bool> error = false;   // Critical error when decoding data that stops the decoder thread
   
   atomic<bool> repeat = false;
   atomic<bool> loop = false;
