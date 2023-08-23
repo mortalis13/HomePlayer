@@ -950,6 +950,7 @@ public class MainActivity extends AppCompatActivity {
     else if (playerService.isPlayerLoaded()) {
       boolean result = playerService.resume();
       if (result) setPlayButtonAsPause();
+      else setPlayButtonDefault();
     }
     else {
       // If stopped or service is reset, restart audio
