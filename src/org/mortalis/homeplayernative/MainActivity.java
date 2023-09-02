@@ -797,7 +797,6 @@ public class MainActivity extends AppCompatActivity {
     });
     
     bSeekLoopStart.setOnClickListener(v -> {
-      if (!loopEnabled) return;
       if (playerService == null) return;
       
       int time = loopSlider.getProgressStart();
@@ -807,7 +806,6 @@ public class MainActivity extends AppCompatActivity {
     });
     
     bSeekLoopEnd.setOnClickListener(v -> {
-      if (!loopEnabled) return;
       if (playerService == null) return;
       
       int time = loopSlider.getProgressEnd();

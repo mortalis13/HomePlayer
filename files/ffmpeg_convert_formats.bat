@@ -48,7 +48,7 @@ fm -y -hide_banner -i serenade.mp3 serenade.wma
 fm -y -hide_banner -i serenade.mp3 serenade.wmv
 fm -y -hide_banner -i serenade.mp3 serenade.wv
 
-rem Video ??
+rem Video
 fm -y -hide_banner -i serenade.mp3 serenade.avi
 fm -y -hide_banner -i serenade.mp3 serenade.mkv
 fm -y -hide_banner -i serenade.mp3 serenade.webm
