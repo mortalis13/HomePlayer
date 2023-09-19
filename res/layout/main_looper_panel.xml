@@ -7,7 +7,7 @@
   android:orientation="vertical"
   android:visibility="gone"
 >
-  <org.mortalis.homeplayernative.components.RangeSliderView
+  <org.mortalis.homeplayer.components.RangeSliderView
     android:id="@+id/loopSlider"
     android:layout_width="match_parent"
     android:layout_height="@dimen/loop_slider_height"

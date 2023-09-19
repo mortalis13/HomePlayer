@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name">Home Player Native</string>
+  <string name="app_name">Home Player</string>
   
-  <string name="notification_channel_name">Home Player Native Notifications</string>
+  <string name="notification_channel_name">Home Player Notifications</string>
   <string name="notification_channel_description"></string>
 </resources>
