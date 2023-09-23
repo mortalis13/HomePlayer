@@ -54,7 +54,6 @@ import org.mortalis.homeplayer.components.EqualizerView;
 import org.mortalis.homeplayer.components.RangeSliderView;
 
 import org.mortalis.homeplayer.jni.AudioUtilsNative;
-import org.mortalis.homeplayer.jni.DecoderResult;
 import org.mortalis.homeplayer.jni.EngineNative;
 
 import static org.mortalis.homeplayer.Fun.log;
@@ -2170,7 +2169,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateWaveform(String audioPath) {
     if (currentWaveformFile != null && currentWaveformFile.equals(audioPath)) {
-      log("The waveform is already built for the audio %s", audioPath);
+      log("The waveform is already built for the audio (%s)", audioPath);
       return;
     }
     
@@ -2182,23 +2181,28 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    log("Updating waveform for \"%s\" and size %d x %d", audioPath, sliderWidth, sliderHeight);
-    
+    log("Building waveform for (%s) and size %d x %d", audioPath, sliderWidth, sliderHeight);
     AudioUtilsNative.cancelWaveform();
     
     waveformDecodeThread = new Thread(() -> {
       synchronized (lock) {
         log("waveformDecodeThread started");
-        DecoderResult result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);
-        // DecoderResult result = AudioUtilsNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
+        currentWaveformFile = null;
         
-        int pixels = (result != null && result.samples != null) ? result.samples.length: -1;
-        log("Waveform build result (%s): %s, %d pixels", audioPath, result, pixels);
+        if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != sliderWidth) {
+          AudioUtilsNative.waveformData = new short[sliderWidth];
+        }
+        int result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);
         
-        if (result != null) {
-          progressSlider.updateWaveform(result.samples);
+        if (result == 0 && AudioUtilsNative.waveformData != null) {
+          log("Waveform build result (%s): %d, %d pixels", audioPath, result, AudioUtilsNative.waveformData.length);
+          progressSlider.updateWaveform(AudioUtilsNative.waveformData);
           currentWaveformFile = audioPath;
         }
+        else if (result < 0) {
+          AudioUtilsNative.waveformData = null;
+        }
+        
         log("waveformDecodeThread ended");
       }
     });

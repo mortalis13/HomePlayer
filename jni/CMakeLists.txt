@@ -9,7 +9,6 @@ set (APP_SOURCES
   AudioFilter.cpp
   FilePlayer.cpp
   EngineNative.cpp
-  DecoderNative.cpp
 )
 
 message("CMAKE_VERSION => \"${CMAKE_VERSION}\"")
