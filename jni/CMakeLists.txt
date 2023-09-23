@@ -4,11 +4,12 @@ project(home-player LANGUAGES CXX)
 find_package(oboe REQUIRED CONFIG)
 
 set (APP_SOURCES
-  DecoderNative.cpp
+  AudioUtilsNative.cpp
   AudioDecoder.cpp
   AudioFilter.cpp
   FilePlayer.cpp
   EngineNative.cpp
+  DecoderNative.cpp
 )
 
 message("CMAKE_VERSION => \"${CMAKE_VERSION}\"")
@@ -16,7 +17,7 @@ message("CMAKE_CURRENT_LIST_DIR => \"${CMAKE_CURRENT_LIST_DIR}\"")
 
 include_directories(.)
 
-add_library(decoder SHARED ${APP_SOURCES})
+add_library(audio SHARED ${APP_SOURCES})
 
 
 # ffmpeg-6.0
@@ -37,6 +38,6 @@ set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${FFMPEG_DIR}/lib/
 # end ffmpeg
 
 
-target_link_libraries(decoder oboe::oboe android log avformat avutil avcodec swresample)
+target_link_libraries(audio oboe::oboe android log avformat avutil avcodec swresample)
 
-target_compile_options(decoder PRIVATE -std=c++17 -frtti -fexceptions -Wall)
+target_compile_options(audio PRIVATE -std=c++17 -frtti -fexceptions -Wall)

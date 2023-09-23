@@ -4,6 +4,8 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <vector>
+#include <cmath>
 
 #include "utils/logging.h"
 
@@ -13,13 +15,15 @@ AudioDecoder::AudioDecoder(AudioStreamWriter* streamWriter) {
   threadEndSignal = new promise<void>();
 }
 
+AudioDecoder::AudioDecoder() {}
+
 AudioDecoder::~AudioDecoder() {
   LOGD("~AudioDecoder()");
   if (!isStopped()) {
     stop();
   }
   this->cleanup();
-  delete threadEndSignal;
+  if (threadEndSignal) delete threadEndSignal;
 }
 
 
@@ -281,16 +285,9 @@ void AudioDecoder::processAVFrame(uint8_t* buffer, int32_t numFrames, int32_t sk
 }
 
 
-int AudioDecoder::loadFile(string filePath) {
-  LOGD("loadFile() -start- => %s", filePath.c_str());
-  this->audioPath = filePath;
+int AudioDecoder::loadCodec(string filePath) {
+  LOGD("loadCodec() -start- => %s", filePath.c_str());
   int result = -1;
-  
-  this->loaded = false;
-  this->currentPTS = 0;
-  this->delayedSamples = 0;
-  this->seekPending = false;
-  this->loopSeekPending = false;
   
   result = avformat_open_input(&formatContext, filePath.c_str(), NULL, NULL);
   if (result < 0) {
@@ -321,9 +318,6 @@ int AudioDecoder::loadFile(string filePath) {
   }
   LOGD("AV: audio stream found");
 
-  fillAudioParams(audioStream->codecpar);
-  printCodecParameters(audioStream->codecpar);
-  
   this->dataChannels = audioStream->codecpar->ch_layout.nb_channels;
   
   const AVCodec* audioCodec = avcodec_find_decoder(audioStream->codecpar->codec_id);
@@ -360,6 +354,29 @@ int AudioDecoder::loadFile(string filePath) {
   }
   LOGD("AV: codec opened");
   
+  LOGD("loadCodec() -end- => %s", filePath.c_str());
+  return result;
+}
+
+int AudioDecoder::loadFile(string filePath) {
+  LOGD("loadFile() -start- => %s", filePath.c_str());
+  int result = -1;
+  
+  this->audioPath = filePath;
+  this->loaded = false;
+  this->currentPTS = 0;
+  this->delayedSamples = 0;
+  this->seekPending = false;
+  this->loopSeekPending = false;
+  
+  result = this->loadCodec(filePath);
+  if (result < 0) return result;
+  
+  AVCodecParameters* codecParams = formatContext->streams[this->audioStreamIndex]->codecpar;
+  
+  fillAudioParams(codecParams);
+  printCodecParameters(codecParams);
+  
   swrContext = swr_alloc();
   if (!swrContext) {
     LOGE("Could not allocate resampler context");
@@ -371,11 +388,11 @@ int AudioDecoder::loadFile(string filePath) {
   AVChannelLayout outChannelLayout;
   av_channel_layout_default(&outChannelLayout, this->outChannelCount);
   
-  printResamplerParameters(audioStream->codecpar, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
+  printResamplerParameters(codecParams, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
   
-  av_opt_set_chlayout(swrContext, "in_chlayout", &audioStream->codecpar->ch_layout, 0);
-  av_opt_set_int(swrContext, "in_sample_rate", audioStream->codecpar->sample_rate, 0);
-  av_opt_set_sample_fmt(swrContext, "in_sample_fmt", (AVSampleFormat) audioStream->codecpar->format, 0);
+  av_opt_set_chlayout(swrContext, "in_chlayout", &codecParams->ch_layout, 0);
+  av_opt_set_int(swrContext, "in_sample_rate", codecParams->sample_rate, 0);
+  av_opt_set_sample_fmt(swrContext, "in_sample_fmt", (AVSampleFormat) codecParams->format, 0);
   
   av_opt_set_chlayout(swrContext, "out_chlayout", &outChannelLayout, 0);
   av_opt_set_int(swrContext, "out_sample_rate", outSampleRate, 0);
@@ -517,4 +534,220 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
   LOGD("Codec ID: %s", avcodec_get_name(codecParams->codec_id));
   LOGD("===END Codec params===");
   LOGD("");
+}
+
+
+int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
+  LOGD("compressSamples() -start-");
+  compressing = true;
+  
+  float samples_sum = 0;
+  int sample_id = 0;
+  
+  vector<float> packed_buffer;
+  
+  AVPacket* audioPacket;
+  AVFrame* audioFrame;
+  
+  audioPacket = av_packet_alloc();
+  if (!audioPacket) {
+    LOGE("[compress] Could not allocate audio packet");
+    return -1;
+  }
+  
+  audioFrame = av_frame_alloc();
+  if (!audioFrame) {
+    LOGE("[compress] Could not allocate audio frame");
+    av_packet_free(&audioPacket);
+    return -1;
+  }
+  
+  // estimate if it's enough to group each frame or a custom block size should be used
+  int64_t estimated_total_samples = (int64_t) ((double) formatContext->duration / AV_TIME_BASE * codecContext->sample_rate);
+  int64_t estimated_frames = (codecContext->frame_size != 0) ? estimated_total_samples / codecContext->frame_size: 0;
+  
+  LOGI("[compress] duration: %ld", formatContext->duration);
+  LOGI("[compress] frame_size: %d", codecContext->frame_size);
+  LOGI("[compress] estimated_total_samples: %ld", estimated_total_samples);
+  LOGI("[compress] estimated_frames: %ld", estimated_frames);
+  
+  bool is_static_block_size = false;
+  int block_size = 0;
+  
+  if (estimated_frames < dest_size) {
+    is_static_block_size = true;
+    if (estimated_total_samples < 0) {
+      LOGW("[compress] estimated_total_samples < 0");
+      block_size = 1000;
+    }
+    else {
+      block_size = 10;
+      while (dest_size * block_size * 10 < estimated_total_samples) block_size *= 10;
+    }
+  }
+  
+  LOGI("[compress] block_size: %d", block_size);
+  
+  bool is_planar = av_sample_fmt_is_planar(codecContext->sample_fmt);
+  
+  while (this->compressing) {
+    int result = av_read_frame(formatContext, audioPacket);
+    if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
+      LOGW("[compress] av_read_frame: %s", av_err2str(result));
+      avcodec_send_packet(codecContext, audioPacket);
+      av_packet_unref(audioPacket);
+      break;
+    }
+    
+    if (audioPacket->stream_index != this->audioStreamIndex) {
+      av_packet_unref(audioPacket);
+      continue;
+    }
+    
+    result = avcodec_send_packet(codecContext, audioPacket);
+    if (result < 0) {
+      LOGE("[compress] avcodec_send_packet: %d: %s", result, av_err2str(result));
+      break;
+    }
+    av_packet_unref(audioPacket);
+    
+    while (result >= 0) {
+      result = avcodec_receive_frame(codecContext, audioFrame);
+      if (result == AVERROR_EOF) {
+        LOGW("[compress] avcodec_receive_frame EOF");
+        avcodec_flush_buffers(codecContext);
+        break;
+      }
+      if (result == AVERROR(EAGAIN)) break;
+      if (result < 0) {
+        LOGW("[compress] avcodec_receive_frame: %s", av_err2str(result));
+        break;
+      }
+      
+      if (!is_static_block_size) block_size = audioFrame->nb_samples;
+      
+      for (int sid = 0; sid < audioFrame->nb_samples; sid++) {
+        float sample = 0;
+        uint8_t* base;
+        int offset;
+        
+        int num_channels = audioFrame->ch_layout.nb_channels;
+        
+        for (int ch = 0; ch < num_channels; ch++) {
+          float channelSample = 0;
+          
+          if (is_planar) {
+            base = audioFrame->extended_data[ch];
+            offset = sid;
+          }
+          else {
+            base = audioFrame->data[0];
+            offset = sid * num_channels + ch;
+          }
+          
+          switch (codecContext->sample_fmt) {
+            case AV_SAMPLE_FMT_U8:
+            case AV_SAMPLE_FMT_U8P:
+              channelSample = static_cast<float>(reinterpret_cast<uint8_t*>(base)[offset]);
+              break;
+            
+            case AV_SAMPLE_FMT_S16:
+            case AV_SAMPLE_FMT_S16P:
+              channelSample = static_cast<float>(reinterpret_cast<int16_t*>(base)[offset]);
+              break;
+            
+            case AV_SAMPLE_FMT_S32:
+            case AV_SAMPLE_FMT_S32P:
+              channelSample = static_cast<float>(reinterpret_cast<int32_t*>(base)[offset]);
+              break;
+            
+            case AV_SAMPLE_FMT_FLT:
+            case AV_SAMPLE_FMT_FLTP:
+              channelSample = reinterpret_cast<float*>(base)[offset];
+              break;
+            
+            default:
+              break;
+          }
+          
+          sample += channelSample;
+        }
+        
+        sample /= num_channels;
+        samples_sum += abs(sample);
+        
+        // pack samples
+        sample_id++;
+        if (sample_id >= block_size) {
+          float block = samples_sum / block_size;
+          packed_buffer.push_back(block);
+          
+          samples_sum = 0;
+          sample_id = 0;
+        }
+      } // for nb_samples
+      
+      av_frame_unref(audioFrame);
+    }
+  }
+  
+  if (!compressing) {
+    LOGI("Compression stopped");
+    av_frame_free(&audioFrame);
+    av_packet_free(&audioPacket);
+    return 1;
+  }
+  
+  // normalize data to fit in dest_size
+  int total_buf_size = packed_buffer.size();
+  int unit_size = total_buf_size / dest_size;
+  int over_size = total_buf_size % dest_size;
+  
+  LOGI("[compress] total_buf_size: %d", total_buf_size);
+  LOGI("[compress] unit_size: %d", unit_size);
+  LOGI("[compress] over_size: %f", over_size);
+  
+  // step for resizing arrays: (old_len - 1) / (new_len - 1)
+  // only elements that are 'step' away will be taken
+  float step = (float) (total_buf_size - 1) / (total_buf_size - over_size - 1);
+  LOGI("[compress] step: %f", step);
+  
+  int data_id = 0;
+  float block_sum = 0;
+  int block_counter = 0;
+  float max_unit = 0;
+  
+  for (int i = 0; i < total_buf_size - over_size; ++i) {
+    block_sum += packed_buffer[round(i * step)];
+    block_counter++;
+    
+    if (block_counter == unit_size) {
+      float unit = block_sum / unit_size;
+      compressed_data[data_id++] = unit;
+
+      if (unit > max_unit) max_unit = unit;
+      
+      block_sum = 0;
+      block_counter = 0;
+    }
+  }
+  
+  if (max_unit != 0) {
+    for (int i = 0; i < dest_size; ++i) {
+      compressed_data[i] /= max_unit;
+    }
+  }
+  
+  av_frame_free(&audioFrame);
+  av_packet_free(&audioPacket);
+  
+  compressing = false;
+  LOGD("compressSamples() -end-");
+  return 0;
+}
+
+
+void AudioDecoder::stopCompression() {
+  LOGD("stopCompression()");
+  this->compressing = false;
 }

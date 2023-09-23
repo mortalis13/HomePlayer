@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer.decoder;
+package org.mortalis.homeplayer.jni;
 
 public class DecoderResult {
   

@@ -23,9 +23,12 @@ static const AVSampleFormat OUTPUT_SAMPLE_FORMAT = AV_SAMPLE_FMT_FLT;
 
 public:
   AudioDecoder(AudioStreamWriter* streamWriter);
+  AudioDecoder();
   ~AudioDecoder();
   
+  int loadCodec(string filePath);
   int loadFile(string filePath);
+  void cleanup();
   
   void start();
   void stop();
@@ -76,6 +79,9 @@ public:
   }
 
   bool waitDecoderThread();
+  
+  int compressSamples(float* samples, int dest_size);
+  void stopCompression();
 
 public:
   AudioParams audioParams;
@@ -86,7 +92,6 @@ private:
   static void printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat);
   
   void run();
-  void cleanup();
   int decodeFrames();
   void processAVFrame(uint8_t* buffer, int32_t numFrames, int32_t skipFrames);
   
@@ -102,6 +107,8 @@ private:
   
   atomic<bool> repeat = false;
   atomic<bool> loop = false;
+  
+  bool compressing = false;
   
   int loopStart = 0;
   int loopEnd = 0;
@@ -126,7 +133,7 @@ private:
   SwrContext* swrContext = NULL;
   
   future<void> runThread;
-  promise<void> *threadEndSignal;
+  promise<void>* threadEndSignal = NULL;
   
   AudioStreamWriter* streamWriter = NULL;
   

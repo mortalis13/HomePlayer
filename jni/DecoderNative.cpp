@@ -226,13 +226,13 @@ static int init_codec(const char* audio_path, enum AVMediaType type) {
 
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_stopDecoding(JNIEnv* env) {
+JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_stopDecoding(JNIEnv* env) {
   decoderUnloaded = true;
 }
 
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
+JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_decodeSamples(JNIEnv* env, jobject, jstring jaudio_path, jint view_width, jint view_height) {
   int ret = 0;
   clock_t start_time = clock();
   __android_log_print(ANDROID_LOG_INFO, CPP_LOG_TAG, "--> Decode Start");
@@ -352,7 +352,7 @@ JNIEXPORT jobject JNICALL Java_org_mortalis_homeplayer_decoder_DecoderNative_dec
   // Prepare result
   env->ReleaseStringUTFChars(jaudio_path, input_audio_path);
   
-  jclass resultClass = (env)->FindClass("org/mortalis/homeplayer/decoder/DecoderResult");
+  jclass resultClass = (env)->FindClass("org/mortalis/homeplayer/jni/DecoderResult");
   jmethodID constructor = (env)->GetMethodID(resultClass, "<init>", "()V");
   jfieldID samples_field = (env)->GetFieldID(resultClass, "samples", "[S");
   jobject resultObject = (env)->NewObject(resultClass, constructor);

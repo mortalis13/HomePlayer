@@ -53,8 +53,8 @@ import org.mortalis.homeplayer.components.TrimSliderView;
 import org.mortalis.homeplayer.components.EqualizerView;
 import org.mortalis.homeplayer.components.RangeSliderView;
 
-import org.mortalis.homeplayer.decoder.DecoderNative;
-import org.mortalis.homeplayer.decoder.DecoderResult;
+import org.mortalis.homeplayer.jni.AudioUtilsNative;
+import org.mortalis.homeplayer.jni.DecoderResult;
 import org.mortalis.homeplayer.jni.EngineNative;
 
 import static org.mortalis.homeplayer.Fun.log;
@@ -243,8 +243,8 @@ public class MainActivity extends AppCompatActivity {
   private VolumeSliderView volumeSlider;
   
   static {
-    Fun.log("Loading Decoder native library");
-    System.loadLibrary("decoder");
+    Fun.log("Loading native library");
+    System.loadLibrary("audio");
   }
   
   
@@ -1022,7 +1022,7 @@ public class MainActivity extends AppCompatActivity {
     this.audioTrimEnabled = (audioTrimSeconds > 0 && time == 0);
     
     progressSlider.reset();
-    // updateWaveform(filePath);
+    updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
     updateShuffleList(playingFile);
@@ -1057,6 +1057,7 @@ public class MainActivity extends AppCompatActivity {
     if (filePath == null || filePath.length() == 0) return;
     
     File playingFile = new File(filePath);
+    updateWaveform(filePath);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
     playerIntent.putExtra(Vars.EXTRA_SYNC_FILE, true);
@@ -2183,27 +2184,27 @@ public class MainActivity extends AppCompatActivity {
     
     log("Updating waveform for \"%s\" and size %d x %d", audioPath, sliderWidth, sliderHeight);
     
-    DecoderNative.stopDecoding();
-    if (waveformDecodeThread != null) waveformDecodeThread.interrupt();
+    AudioUtilsNative.cancelWaveform();
     
     waveformDecodeThread = new Thread(() -> {
       synchronized (lock) {
-        if (Thread.interrupted()) return;
+        log("waveformDecodeThread started");
+        DecoderResult result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);
+        // DecoderResult result = AudioUtilsNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
         
-        DecoderResult result = DecoderNative.decodeSamples(audioPath, sliderWidth, sliderHeight);
-        int numSamples = (result != null && result.samples != null) ? result.samples.length: -1;
-        log("Decode result: " + result + ", " + numSamples);
+        int pixels = (result != null && result.samples != null) ? result.samples.length: -1;
+        log("Waveform build result (%s): %s, %d pixels", audioPath, result, pixels);
         
-        if (result == null) return;
-        if (Thread.interrupted()) return;
-        
-        // progressSlider.updateWaveform(result.samples);
-        currentWaveformFile = audioPath;
+        if (result != null) {
+          progressSlider.updateWaveform(result.samples);
+          currentWaveformFile = audioPath;
+        }
+        log("waveformDecodeThread ended");
       }
     });
     
-    waveformDecodeThread.start();
     progressSlider.clearWaveform();
+    waveformDecodeThread.start();
   }
   
 
