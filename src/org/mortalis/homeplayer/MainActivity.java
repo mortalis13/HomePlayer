@@ -2190,6 +2190,7 @@ public class MainActivity extends AppCompatActivity {
         currentWaveformFile = null;
         
         if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != sliderWidth) {
+          log("Creating new array for waveform data of size %d", sliderWidth);
           AudioUtilsNative.waveformData = new short[sliderWidth];
         }
         int result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);

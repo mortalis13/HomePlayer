@@ -10,7 +10,6 @@ extern "C" {
 
 #include <string>
 #include <future>
-#include <fstream>
 
 #include "defs.h"
 

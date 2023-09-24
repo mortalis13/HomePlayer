@@ -21,7 +21,6 @@ static AudioDecoder audioDecoder;
 
 JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWaveform(JNIEnv *env, jclass cls, jstring jaudio_path, jint view_width, jint view_height) {
   LOGD(__func__);
-  
   int result;
   
   const char* path_bytes = env->GetStringUTFChars(jaudio_path, 0);
@@ -32,6 +31,8 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWa
   if (result != 0) return result;
   
   float* pixel_data = new float[view_width];
+  memset(pixel_data, 0, view_width);
+  
   result = audioDecoder.compressSamples(pixel_data, view_width);
   audioDecoder.cleanup();
   

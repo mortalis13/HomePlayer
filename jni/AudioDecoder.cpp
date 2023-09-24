@@ -169,6 +169,7 @@ int AudioDecoder::decodeFrames() {
         }
         break;
       }
+      continue;
     }
     
     if (audioPacket->stream_index != this->audioStreamIndex) {
@@ -540,11 +541,7 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
 int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   LOGD("compressSamples() -start-");
   compressing = true;
-  
-  float samples_sum = 0;
-  int sample_id = 0;
-  
-  vector<float> packed_buffer;
+  clock_t start_time = clock();
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -566,37 +563,34 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   int64_t estimated_total_samples = (int64_t) ((double) formatContext->duration / AV_TIME_BASE * codecContext->sample_rate);
   int64_t estimated_frames = (codecContext->frame_size != 0) ? estimated_total_samples / codecContext->frame_size: 0;
   
-  LOGI("[compress] duration: %ld", formatContext->duration);
+  int block_size = 10;
+  bool group_frames = (estimated_frames > dest_size);
+  
+  LOGI("[compress] duration: %f", (double) formatContext->duration / AV_TIME_BASE);
   LOGI("[compress] frame_size: %d", codecContext->frame_size);
   LOGI("[compress] estimated_total_samples: %ld", estimated_total_samples);
   LOGI("[compress] estimated_frames: %ld", estimated_frames);
+  LOGI("[compress] block_size: %s", (group_frames) ? "auto": to_string(block_size).c_str());
   
-  bool is_static_block_size = false;
-  int block_size = 0;
+  vector<float> packed_buffer;
+  packed_buffer.reserve(max(estimated_frames + 100, (int64_t) dest_size));
   
-  if (estimated_frames < dest_size) {
-    is_static_block_size = true;
-    if (estimated_total_samples < 0) {
-      LOGW("[compress] estimated_total_samples < 0");
-      block_size = 1000;
-    }
-    else {
-      block_size = 10;
-      while (dest_size * block_size * 10 < estimated_total_samples) block_size *= 10;
-    }
-  }
-  
-  LOGI("[compress] block_size: %d", block_size);
-  
+  float samples_sum = 0;
+  int sample_id = 0;
   bool is_planar = av_sample_fmt_is_planar(codecContext->sample_fmt);
+  
+  float max_value = 0;
   
   while (this->compressing) {
     int result = av_read_frame(formatContext, audioPacket);
-    if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
+    if (result < 0) {
       LOGW("[compress] av_read_frame: %s", av_err2str(result));
-      avcodec_send_packet(codecContext, audioPacket);
-      av_packet_unref(audioPacket);
-      break;
+      if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
+        avcodec_send_packet(codecContext, audioPacket);
+        av_packet_unref(audioPacket);
+        break;
+      }
+      continue;
     }
     
     if (audioPacket->stream_index != this->audioStreamIndex) {
@@ -624,14 +618,13 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
         break;
       }
       
-      if (!is_static_block_size) block_size = audioFrame->nb_samples;
+      if (group_frames) block_size = audioFrame->nb_samples;
+      int num_channels = audioFrame->ch_layout.nb_channels;
       
       for (int sid = 0; sid < audioFrame->nb_samples; sid++) {
         float sample = 0;
         uint8_t* base;
         int offset;
-        
-        int num_channels = audioFrame->ch_layout.nb_channels;
         
         for (int ch = 0; ch < num_channels; ch++) {
           float channelSample = 0;
@@ -681,6 +674,7 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
         if (sample_id >= block_size) {
           float block = samples_sum / block_size;
           packed_buffer.push_back(block);
+          if (block > max_value) max_value = block;
           
           samples_sum = 0;
           sample_id = 0;
@@ -698,51 +692,58 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
     return 1;
   }
   
-  // normalize data to fit in dest_size
   int total_buf_size = packed_buffer.size();
-  int unit_size = total_buf_size / dest_size;
-  int over_size = total_buf_size % dest_size;
-  
   LOGI("[compress] total_buf_size: %d", total_buf_size);
-  LOGI("[compress] unit_size: %d", unit_size);
-  LOGI("[compress] over_size: %d", over_size);
   
-  // step for resizing arrays: (old_len - 1) / (new_len - 1)
-  // only elements that are 'step' away will be taken
-  float step = (float) (total_buf_size - 1) / (total_buf_size - over_size - 1);
-  LOGI("[compress] step: %f", step);
-  
-  int data_id = 0;
-  float block_sum = 0;
-  int block_counter = 0;
-  float max_unit = 0;
-  
-  for (int i = 0; i < total_buf_size - over_size; ++i) {
-    block_sum += packed_buffer[round(i * step)];
-    block_counter++;
+  if (total_buf_size >= dest_size) {
+    // normalize data to fit in dest_size
+    int unit_size = total_buf_size / dest_size;
+    int over_size = total_buf_size % dest_size;
     
-    if (block_counter == unit_size) {
-      float unit = block_sum / unit_size;
-      compressed_data[data_id++] = unit;
-
-      if (unit > max_unit) max_unit = unit;
+    // step for resizing arrays: (old_len - 1) / (new_len - 1)
+    // only elements that are 'step' away will be taken
+    float step = (float) (total_buf_size - 1) / (total_buf_size - over_size - 1);
+    
+    LOGI("[compress] unit_size: %d", unit_size);
+    LOGI("[compress] over_size: %d", over_size);
+    LOGI("[compress] step: %f", step);
+    
+    int data_id = 0;
+    float block_sum = 0;
+    int block_counter = 0;
+    max_value = 0;
+    
+    for (int i = 0; i < total_buf_size - over_size; ++i) {
+      block_sum += packed_buffer[round(i * step)];
+      block_counter++;
       
-      block_sum = 0;
-      block_counter = 0;
+      if (block_counter == unit_size) {
+        float unit = block_sum / unit_size;
+        compressed_data[data_id++] = unit;
+        if (unit > max_value) max_value = unit;
+        
+        block_sum = 0;
+        block_counter = 0;
+      }
+    }
+  }
+  else {
+    LOGI("Compressed size is less then requested");
+    for (int i = 0; i < total_buf_size; ++i) {
+      compressed_data[i] = packed_buffer[i];
     }
   }
   
-  if (max_unit != 0) {
-    for (int i = 0; i < dest_size; ++i) {
-      compressed_data[i] /= max_unit;
-    }
+  if (max_value == 0) max_value = 1;
+  for (int i = 0; i < dest_size; ++i) {
+    compressed_data[i] /= max_value;
   }
   
   av_frame_free(&audioFrame);
   av_packet_free(&audioPacket);
   
   compressing = false;
-  LOGD("compressSamples() -end-");
+  LOGD("compressSamples() -end- (%.2f s)", double(clock() - start_time) / CLOCKS_PER_SEC);
   return 0;
 }
 
