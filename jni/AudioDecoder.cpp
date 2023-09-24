@@ -215,21 +215,21 @@ int AudioDecoder::decodeFrames() {
       
       if (this->loop && this->loopSeekPending) {
         // Block used after seek to loop start is done, need to search for the exact frame/sample position to write audio from
-        LOGI("After seek, frame pts is: %d", audioFrame->pts);
+        LOGI("After seek, frame pts is: %ld", audioFrame->pts);
         
         double seek_s = (double) this->seekTimestamp / AV_TIME_BASE;
         int64_t seekPTS = seek_s * this->outChannelCount * this->outSampleRate;
         int64_t nextPTS = this->currentPTS + dst_nb_samples * this->outChannelCount;
         
         if (nextPTS < seekPTS) {
-          LOGI("skipping av frame %d, it's before the target time, nextPTS %d < seekPTS %d (%.3f s)", currentPTS, nextPTS, seekPTS, seek_s);
+          LOGI("skipping av frame %ld, it's before the target time, nextPTS %ld < seekPTS %ld (%.3f s)", currentPTS, nextPTS, seekPTS, seek_s);
           av_freep(&audio_buffer);
           av_frame_unref(audioFrame);
           continue;
         }
         else {
           skip_frames = (seekPTS - currentPTS) / this->outChannelCount;
-          LOGI("av frame %d has the target time, skipping %d audio frames to the pts %d (%.3f s)", currentPTS, skip_frames, seekPTS, seek_s);
+          LOGI("av frame %ld has the target time, skipping %d audio frames to the PTS %ld (%.3f s)", currentPTS, skip_frames, seekPTS, seek_s);
         }
       }
 
@@ -246,7 +246,7 @@ int AudioDecoder::decodeFrames() {
           this->loopSeekPending = true;
           
           if (currentPTS_cached > loopEndPTS) {
-            LOGI("Current frame is after the loop end (%d > %d), skipping the entire frame and rewinding to the loop start", currentPTS_cached, loopEndPTS);
+            LOGI("Current frame is after the loop end (%ld > %ld), skipping the entire frame and rewinding to the loop start", currentPTS_cached, loopEndPTS);
             av_freep(&audio_buffer);
             av_frame_unref(audioFrame);
             break;
@@ -254,7 +254,7 @@ int AudioDecoder::decodeFrames() {
 
           int diff = (nextPTS - loopEndPTS) / this->outChannelCount;
           frame_count -= diff;
-          LOGI("last av frame in loop %d, frame_count is cutted: %d => %d", currentPTS, frame_count + diff, frame_count);
+          LOGI("last av frame in loop %ld, frame_count is cutted: %d => %d", currentPTS, frame_count + diff, frame_count);
         }
       }
       
@@ -705,7 +705,7 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   
   LOGI("[compress] total_buf_size: %d", total_buf_size);
   LOGI("[compress] unit_size: %d", unit_size);
-  LOGI("[compress] over_size: %f", over_size);
+  LOGI("[compress] over_size: %d", over_size);
   
   // step for resizing arrays: (old_len - 1) / (new_len - 1)
   // only elements that are 'step' away will be taken
