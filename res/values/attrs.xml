@@ -17,6 +17,7 @@
   <attr name="sliderProgressColor" format="color"/>
   <attr name="sliderBorderColor" format="color"/>
   <attr name="sliderWaveformColor" format="color"/>
+  <attr name="sliderWaveformProgressColor" format="color"/>
   
   <attr name="controlButtonBackgroundPressed" format="color"/>
   <attr name="controlButtonBackgroundDefault" format="color"/>

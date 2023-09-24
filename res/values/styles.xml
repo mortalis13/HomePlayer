@@ -26,6 +26,7 @@
     <item name="sliderProgressColor">@color/slider_progress_color</item>
     <item name="sliderBorderColor">@color/slider_border_color</item>
     <item name="sliderWaveformColor">@color/slider_waveform_color</item>
+    <item name="sliderWaveformProgressColor">@color/slider_waveform_progress_color</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed</item>
     <item name="controlButtonBackgroundDefault">@color/control_button_background_default</item>
@@ -110,6 +111,7 @@
     <item name="sliderProgressColor">@color/slider_progress_color_dark</item>
     <item name="sliderBorderColor">@color/slider_border_color_dark</item>
     <item name="sliderWaveformColor">@color/slider_waveform_color_dark</item>
+    <item name="sliderWaveformProgressColor">@color/slider_waveform_progress_color_dark</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed_dark</item>
     

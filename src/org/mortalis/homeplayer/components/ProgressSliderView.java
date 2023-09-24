@@ -20,7 +20,7 @@ import static org.mortalis.homeplayer.Fun.log;
 public class ProgressSliderView extends View {
   
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
-  private static final int WAVEFORM_PAD = (int) Fun.dpToPx(2);
+  private static final int WAVEFORM_PAD = (int) Fun.dpToPx(6);
   private static final float LOOP_EDGE_WIDTH_05 = Fun.dpToPx(1);
   
   private boolean sliderEnabled;
@@ -29,6 +29,7 @@ public class ProgressSliderView extends View {
   private Paint canvasPaint;
   private Paint progressPaint;
   private Paint waveformPaint;
+  private Paint waveformProgressPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
@@ -38,8 +39,6 @@ public class ProgressSliderView extends View {
   private RectF loopStartRect;
   private RectF loopEndRect;
   private RectF loopProgressRect;
-  
-  private Picture waveformPicture;
   
   private int canvasWidth;
   private int canvasHeight;
@@ -51,7 +50,7 @@ public class ProgressSliderView extends View {
   private int progress;
   private float progressStep;
 
-  private short[] samples;
+  private short[] waveformData;
   
   private ProgressChangeListener progressChangeListener;
   
@@ -84,9 +83,9 @@ public class ProgressSliderView extends View {
     
     this.waveformPaint = new Paint();
     this.waveformPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformColor));
-    // this.waveformPaint.setBlendMode(BlendMode.COLOR_DODGE);
-    // this.waveformPaint.setBlendMode(BlendMode.PLUS);
-    this.waveformPaint.setBlendMode(BlendMode.SCREEN);
+    
+    this.waveformProgressPaint = new Paint();
+    this.waveformProgressPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformProgressColor));
     
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
@@ -246,37 +245,29 @@ public class ProgressSliderView extends View {
     }
   }
   
-  public void updateWaveform(short[] samples) {
-    // Saving reference to possibly prevent SIGSEGV after returning from JNI
-    this.samples = samples;
-    
-    this.waveformPicture = new Picture();
-    Canvas waveformCanvas = this.waveformPicture.beginRecording(this.canvasWidth, this.canvasHeight);
-    
-    float center = (float) this.canvasHeight / 2;
-    
-    for (int i = 0; i < samples.length; i++) {
-      float h = samples[i];
-
-      float x = i;
-      float y0 = center - h;
-      float y1 = center + h + 1;
-      
-      waveformCanvas.drawLine(x, y0, x, y1, this.waveformPaint);
-    }
-    
-    this.waveformPicture.endRecording();
+  public void updateWaveform(short[] waveformData) {
+    this.waveformData = waveformData;
     postInvalidate();
   }
   
   public void clearWaveform() {
-    this.waveformPicture = null;
+    this.waveformData = null;
     invalidate();
   }
   
   private void drawWaveform(Canvas canvas) {
-    if (waveformPicture == null) return;
-    canvas.drawPicture(waveformPicture);
+    if (waveformData == null) return;
+    float center = (float) this.canvasHeight / 2;
+    
+    for (int i = 0; i < waveformData.length; i++) {
+      float h = waveformData[i];
+      float x = i;
+      float y0 = center - h;
+      float y1 = center + h + 1;
+      
+      Paint paint = (x > progressRect.right) ? this.waveformPaint: this.waveformProgressPaint;
+      canvas.drawLine(x, y0, x, y1, paint);
+    }
   }
   
   
