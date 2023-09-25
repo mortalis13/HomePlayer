@@ -25,9 +25,7 @@ public:
   AudioDecoder();
   ~AudioDecoder();
   
-  int loadCodec(string filePath);
   int loadFile(string filePath);
-  void cleanup();
   
   void start();
   void stop();
@@ -79,7 +77,7 @@ public:
 
   bool waitDecoderThread();
   
-  int compressSamples(float* samples, int dest_size);
+  int compressSamples(string filePath, float* samples, int dest_size);
   void stopCompression();
 
 public:
@@ -88,7 +86,11 @@ public:
 
 private:
   static void printCodecParameters(AVCodecParameters* codecParams);
-  static void printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat);
+  static void printResamplerParameters(AVCodecParameters* codecParams, int channels, int sample_rate, AVSampleFormat format);
+  
+  int loadCodec(string filePath);
+  int loadResampler(int channels, int sample_rate, AVSampleFormat format);
+  void cleanup();
   
   void run();
   int decodeFrames();

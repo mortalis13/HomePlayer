@@ -204,12 +204,11 @@ int AudioDecoder::decodeFrames() {
       this->currentPTS = audioFrame->pts - this->delayedSamples * this->outChannelCount;
       
       // Resample
+      uint8_t* audio_buffer;
       int64_t swr_delay = swr_get_delay(swrContext, audioFrame->sample_rate);
       int32_t dst_nb_samples = (int32_t) av_rescale_rnd(swr_delay + audioFrame->nb_samples, this->outSampleRate, audioFrame->sample_rate, AV_ROUND_UP);
-      
-      uint8_t* audio_buffer;
-      av_samples_alloc((uint8_t**) &audio_buffer, nullptr, this->outChannelCount, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
-      int frame_count = swr_convert(swrContext, (uint8_t**) &audio_buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
+      av_samples_alloc(&audio_buffer, nullptr, this->outChannelCount, dst_nb_samples, OUTPUT_SAMPLE_FORMAT, 0);
+      int frame_count = swr_convert(swrContext, &audio_buffer, dst_nb_samples, (const uint8_t**) audioFrame->data, audioFrame->nb_samples);
       
       // Loop
       int skip_frames = 0;
@@ -359,6 +358,42 @@ int AudioDecoder::loadCodec(string filePath) {
   return result;
 }
 
+int AudioDecoder::loadResampler(int channels, int sample_rate, AVSampleFormat format) {
+  int result = -1;
+  
+  AVCodecParameters* codecParams = formatContext->streams[this->audioStreamIndex]->codecpar;
+  printResamplerParameters(codecParams, channels, sample_rate, format);
+  
+  swrContext = swr_alloc();
+  if (!swrContext) {
+    LOGE("Could not allocate resampler context");
+    this->cleanup();
+    return -1;
+  }
+  LOGD("AV: resampler context allocated");
+  
+  AVChannelLayout channel_layout;
+  av_channel_layout_default(&channel_layout, channels);
+  
+  av_opt_set_chlayout(swrContext, "in_chlayout", &codecParams->ch_layout, 0);
+  av_opt_set_int(swrContext, "in_sample_rate", codecParams->sample_rate, 0);
+  av_opt_set_sample_fmt(swrContext, "in_sample_fmt", (AVSampleFormat) codecParams->format, 0);
+  
+  av_opt_set_chlayout(swrContext, "out_chlayout", &channel_layout, 0);
+  av_opt_set_int(swrContext, "out_sample_rate", sample_rate, 0);
+  av_opt_set_sample_fmt(swrContext, "out_sample_fmt", format, 0);
+
+  result = swr_init(swrContext);
+  if (result < 0) {
+    LOGE("Failed to initialize resampler context: (%d) %s", result, av_err2str(result));
+    this->cleanup();
+    return result;
+  }
+  LOGD("AV: resampler initialized");
+  
+  return 0;
+}
+
 int AudioDecoder::loadFile(string filePath) {
   LOGD("loadFile() -start- => %s", filePath.c_str());
   int result = -1;
@@ -373,47 +408,18 @@ int AudioDecoder::loadFile(string filePath) {
   result = this->loadCodec(filePath);
   if (result < 0) return result;
   
+  result = loadResampler(this->outChannelCount, this->outSampleRate, OUTPUT_SAMPLE_FORMAT);
+  if (result < 0) return result;
+  
   AVCodecParameters* codecParams = formatContext->streams[this->audioStreamIndex]->codecpar;
   
   fillAudioParams(codecParams);
   printCodecParameters(codecParams);
   
-  swrContext = swr_alloc();
-  if (!swrContext) {
-    LOGE("Could not allocate resampler context");
-    this->cleanup();
-    return -1;
-  }
-  LOGD("AV: resampler context allocated");
-  
-  AVChannelLayout outChannelLayout;
-  av_channel_layout_default(&outChannelLayout, this->outChannelCount);
-  
-  printResamplerParameters(codecParams, outChannelLayout, outSampleRate, OUTPUT_SAMPLE_FORMAT);
-  
-  av_opt_set_chlayout(swrContext, "in_chlayout", &codecParams->ch_layout, 0);
-  av_opt_set_int(swrContext, "in_sample_rate", codecParams->sample_rate, 0);
-  av_opt_set_sample_fmt(swrContext, "in_sample_fmt", (AVSampleFormat) codecParams->format, 0);
-  
-  av_opt_set_chlayout(swrContext, "out_chlayout", &outChannelLayout, 0);
-  av_opt_set_int(swrContext, "out_sample_rate", outSampleRate, 0);
-  av_opt_set_sample_fmt(swrContext, "out_sample_fmt", OUTPUT_SAMPLE_FORMAT, 0);
-
-  av_opt_set_int(swrContext, "force_resampling", 1, 0);
-
-  result = swr_init(swrContext);
-  if (result < 0) {
-    LOGE("Failed to initialize resampler context: (%d) %s", result, av_err2str(result));
-    this->cleanup();
-    return result;
-  }
-  LOGD("AV: resampler initialized");
-  
   findDelayedSamples();
   
   this->loaded = true;
   LOGD("loadFile() -end- => %s", filePath.c_str());
-  
   return 0;
 }
 
@@ -512,11 +518,11 @@ void AudioDecoder::fillAudioParams(AVCodecParameters* codecParams) {
   this->audioParams.codec_name = string(avcodec_get_name(codecParams->codec_id));
 }
 
-void AudioDecoder::printResamplerParameters(AVCodecParameters* codecParams, AVChannelLayout outChannelLayout, int32_t outSampleRate, AVSampleFormat outSampleFormat) {
+void AudioDecoder::printResamplerParameters(AVCodecParameters* codecParams, int channels, int sample_rate, AVSampleFormat format) {
   LOGD("===Resampler params===");
-  LOGD("Channels: %d => %d", codecParams->ch_layout.nb_channels, outChannelLayout.nb_channels);
-  LOGD("Sample rate: %d => %d", codecParams->sample_rate, outSampleRate);
-  LOGD("Sample format: %s => %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format), av_get_sample_fmt_name(outSampleFormat));
+  LOGD("Channels: %d => %d", codecParams->ch_layout.nb_channels, channels);
+  LOGD("Sample rate: %d => %d", codecParams->sample_rate, sample_rate);
+  LOGD("Sample format: %s => %s", av_get_sample_fmt_name((AVSampleFormat) codecParams->format), av_get_sample_fmt_name(format));
   LOGD("===END Resampler params===");
   LOGD("");
 }
@@ -538,10 +544,18 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
 }
 
 
-int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
-  LOGD("compressSamples() -start-");
+int AudioDecoder::compressSamples(string filePath, float* compressed_data, int dest_size) {
+  LOGD("compressSamples() -start- -> %d", dest_size);
   compressing = true;
+  int result;
   clock_t start_time = clock();
+  
+  result = loadCodec(filePath);
+  if (result != 0) return result;
+  
+  AVCodecParameters* codecParams = formatContext->streams[this->audioStreamIndex]->codecpar;
+  result = loadResampler(1, codecParams->sample_rate, AV_SAMPLE_FMT_FLTP);
+  if (result < 0) return result;
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -549,6 +563,7 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   audioPacket = av_packet_alloc();
   if (!audioPacket) {
     LOGE("[compress] Could not allocate audio packet");
+    this->cleanup();
     return -1;
   }
   
@@ -556,19 +571,21 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   if (!audioFrame) {
     LOGE("[compress] Could not allocate audio frame");
     av_packet_free(&audioPacket);
+    this->cleanup();
     return -1;
   }
   
   // estimate if it's enough to group each frame or a custom block size should be used
-  int64_t estimated_total_samples = (int64_t) ((double) formatContext->duration / AV_TIME_BASE * codecContext->sample_rate);
-  int64_t estimated_frames = (codecContext->frame_size != 0) ? estimated_total_samples / codecContext->frame_size: 0;
+  int64_t estimated_samples = (int64_t) ((double) formatContext->duration / AV_TIME_BASE * codecContext->sample_rate);
+  int64_t estimated_frames = (codecContext->frame_size != 0) ? estimated_samples / codecContext->frame_size: 0;
   
   int block_size = 10;
+  if (estimated_samples < dest_size * block_size) block_size = 1;
   bool group_frames = (estimated_frames > dest_size);
   
   LOGI("[compress] duration: %f", (double) formatContext->duration / AV_TIME_BASE);
   LOGI("[compress] frame_size: %d", codecContext->frame_size);
-  LOGI("[compress] estimated_total_samples: %ld", estimated_total_samples);
+  LOGI("[compress] estimated_samples: %ld", estimated_samples);
   LOGI("[compress] estimated_frames: %ld", estimated_frames);
   LOGI("[compress] block_size: %s", (group_frames) ? "auto": to_string(block_size).c_str());
   
@@ -577,12 +594,10 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   
   float samples_sum = 0;
   int sample_id = 0;
-  bool is_planar = av_sample_fmt_is_planar(codecContext->sample_fmt);
-  
   float max_value = 0;
   
   while (this->compressing) {
-    int result = av_read_frame(formatContext, audioPacket);
+    result = av_read_frame(formatContext, audioPacket);
     if (result < 0) {
       LOGW("[compress] av_read_frame: %s", av_err2str(result));
       if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
@@ -618,59 +633,20 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
         break;
       }
       
-      if (group_frames) block_size = audioFrame->nb_samples;
-      int num_channels = audioFrame->ch_layout.nb_channels;
+      int num_samples = audioFrame->nb_samples;
       
-      for (int sid = 0; sid < audioFrame->nb_samples; sid++) {
-        float sample = 0;
-        uint8_t* base;
-        int offset;
-        
-        for (int ch = 0; ch < num_channels; ch++) {
-          float channelSample = 0;
-          
-          if (is_planar) {
-            base = audioFrame->extended_data[ch];
-            offset = sid;
-          }
-          else {
-            base = audioFrame->data[0];
-            offset = sid * num_channels + ch;
-          }
-          
-          switch (codecContext->sample_fmt) {
-            case AV_SAMPLE_FMT_U8:
-            case AV_SAMPLE_FMT_U8P:
-              channelSample = static_cast<float>(reinterpret_cast<uint8_t*>(base)[offset]);
-              break;
-            
-            case AV_SAMPLE_FMT_S16:
-            case AV_SAMPLE_FMT_S16P:
-              channelSample = static_cast<float>(reinterpret_cast<int16_t*>(base)[offset]);
-              break;
-            
-            case AV_SAMPLE_FMT_S32:
-            case AV_SAMPLE_FMT_S32P:
-              channelSample = static_cast<float>(reinterpret_cast<int32_t*>(base)[offset]);
-              break;
-            
-            case AV_SAMPLE_FMT_FLT:
-            case AV_SAMPLE_FMT_FLTP:
-              channelSample = reinterpret_cast<float*>(base)[offset];
-              break;
-            
-            default:
-              break;
-          }
-          
-          sample += channelSample;
-        }
-        
-        sample /= num_channels;
-        samples_sum += abs(sample);
+      // Resample
+      float* audio_buffer;
+      av_samples_alloc((uint8_t**) &audio_buffer, nullptr, 1, num_samples, AV_SAMPLE_FMT_FLTP, 0);
+      int frame_count = swr_convert(swrContext, (uint8_t**) &audio_buffer, num_samples, (const uint8_t**) audioFrame->data, num_samples);
+      
+      if (group_frames) block_size = num_samples;
+      
+      for (int sid = 0; sid < frame_count; sid++) {
+        samples_sum += abs(audio_buffer[sid]);
+        sample_id++;
         
         // pack samples
-        sample_id++;
         if (sample_id >= block_size) {
           float block = samples_sum / block_size;
           packed_buffer.push_back(block);
@@ -679,8 +655,9 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
           samples_sum = 0;
           sample_id = 0;
         }
-      } // for nb_samples
+      }
       
+      av_freep(&audio_buffer);
       av_frame_unref(audioFrame);
     }
   }
@@ -689,6 +666,7 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
     LOGI("Compression stopped");
     av_frame_free(&audioFrame);
     av_packet_free(&audioPacket);
+    this->cleanup();
     return 1;
   }
   
@@ -741,6 +719,7 @@ int AudioDecoder::compressSamples(float* compressed_data, int dest_size) {
   
   av_frame_free(&audioFrame);
   av_packet_free(&audioPacket);
+  this->cleanup();
   
   compressing = false;
   LOGD("compressSamples() -end- (%.2f s)", double(clock() - start_time) / CLOCKS_PER_SEC);

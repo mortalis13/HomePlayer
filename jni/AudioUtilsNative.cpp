@@ -27,14 +27,10 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWa
   string audioPath(path_bytes);
   env->ReleaseStringUTFChars(jaudio_path, path_bytes);
   
-  result = audioDecoder.loadCodec(audioPath);
-  if (result != 0) return result;
-  
   float* pixel_data = new float[view_width];
-  memset(pixel_data, 0, view_width);
+  memset(pixel_data, 0, view_width * sizeof(float));
   
-  result = audioDecoder.compressSamples(pixel_data, view_width);
-  audioDecoder.cleanup();
+  result = audioDecoder.compressSamples(audioPath, pixel_data, view_width);
   
   if (result != 0) {
     delete[] pixel_data;
