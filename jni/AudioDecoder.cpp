@@ -643,16 +643,14 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
       if (group_frames) block_size = num_samples;
       
       for (int sid = 0; sid < frame_count; sid++) {
-        samples_sum += abs(audio_buffer[sid]);
+        float sample = abs(audio_buffer[sid]);
+        if (sample > max_value) max_value = sample;
         sample_id++;
         
         // pack samples
         if (sample_id >= block_size) {
-          float block = samples_sum / block_size;
-          packed_buffer.push_back(block);
-          if (block > max_value) max_value = block;
-          
-          samples_sum = 0;
+          packed_buffer.push_back(max_value);
+          max_value = 0;
           sample_id = 0;
         }
       }
