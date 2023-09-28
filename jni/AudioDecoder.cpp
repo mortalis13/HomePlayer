@@ -589,12 +589,17 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   LOGI("[compress] estimated_frames: %ld", estimated_frames);
   LOGI("[compress] block_size: %s", (group_frames) ? "auto": to_string(block_size).c_str());
   
-  vector<float> packed_buffer;
-  packed_buffer.reserve(max(estimated_frames + 100, (int64_t) dest_size));
+  // store separately max and min values for each block
+  vector<float> packed_buffer_max;
+  vector<float> packed_buffer_min;
+  int size = max(estimated_frames + 100, (int64_t) dest_size);
+  packed_buffer_max.reserve(size);
+  packed_buffer_min.reserve(size);
   
   float samples_sum = 0;
   int sample_id = 0;
-  float max_value = 0;
+  float max_value = INT_MIN;
+  float min_value = INT_MAX;
   
   while (this->compressing) {
     result = av_read_frame(formatContext, audioPacket);
@@ -643,14 +648,20 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
       if (group_frames) block_size = num_samples;
       
       for (int sid = 0; sid < frame_count; sid++) {
-        float sample = abs(audio_buffer[sid]);
+        float sample = audio_buffer[sid];
         if (sample > max_value) max_value = sample;
+        if (sample < min_value) min_value = sample;
         sample_id++;
-        
+       
         // pack samples
         if (sample_id >= block_size) {
-          packed_buffer.push_back(max_value);
-          max_value = 0;
+          if (max_value > 0 && min_value > 0) min_value = 0;
+          if (max_value < 0 && min_value < 0) max_value = 0;
+          packed_buffer_max.push_back(max_value);
+          packed_buffer_min.push_back(min_value);
+          
+          max_value = INT_MIN;
+          min_value = INT_MAX;
           sample_id = 0;
         }
       }
@@ -668,7 +679,7 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
     return 1;
   }
   
-  int total_buf_size = packed_buffer.size();
+  int total_buf_size = packed_buffer_max.size();
   LOGI("[compress] total_buf_size: %d", total_buf_size);
   
   if (total_buf_size >= dest_size) {
@@ -685,20 +696,27 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
     LOGI("[compress] step: %f", step);
     
     int data_id = 0;
-    float block_sum = 0;
+    float block_sum_max = 0;
+    float block_sum_min = 0;
     int block_counter = 0;
     max_value = 0;
     
     for (int i = 0; i < total_buf_size - over_size; ++i) {
-      block_sum += packed_buffer[round(i * step)];
+      int id = round(i * step);
+      block_sum_max += packed_buffer_max[id];
+      block_sum_min += packed_buffer_min[id];
       block_counter++;
       
       if (block_counter == unit_size) {
-        float unit = block_sum / unit_size;
-        compressed_data[data_id++] = unit;
-        if (unit > max_value) max_value = unit;
+        float unit_max = block_sum_max / unit_size;
+        float unit_min = block_sum_min / unit_size;
         
-        block_sum = 0;
+        // put pairs of max and min values for each sample group
+        compressed_data[data_id++] = unit_max;
+        compressed_data[data_id++] = unit_min;
+        
+        block_sum_max = 0;
+        block_sum_min = 0;
         block_counter = 0;
       }
     }
@@ -706,13 +724,20 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   else {
     LOGI("Compressed size is less then requested");
     for (int i = 0; i < total_buf_size; ++i) {
-      compressed_data[i] = packed_buffer[i];
+      compressed_data[i*2] = packed_buffer_max[i];
+      compressed_data[i*2+1] = packed_buffer_min[i];
     }
   }
   
-  if (max_value == 0) max_value = 1;
-  for (int i = 0; i < dest_size; ++i) {
-    compressed_data[i] /= max_value;
+  float max_data = INT_MIN;
+  for (int i = 0; i < dest_size * 2; ++i) {
+    float value = abs(compressed_data[i]);
+    if (value > max_data) max_data = value;
+  }
+  if (max_data == 0) max_data = 1;
+  
+  for (int i = 0; i < dest_size * 2; ++i) {
+    compressed_data[i] /= max_data;
   }
   
   av_frame_free(&audioFrame);

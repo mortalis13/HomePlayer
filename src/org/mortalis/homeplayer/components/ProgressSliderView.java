@@ -83,9 +83,11 @@ public class ProgressSliderView extends View {
     
     this.waveformPaint = new Paint();
     this.waveformPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformColor));
+    this.waveformPaint.setAntiAlias(false);
     
     this.waveformProgressPaint = new Paint();
     this.waveformProgressPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformProgressColor));
+    this.waveformProgressPaint.setAntiAlias(false);
     
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
@@ -258,12 +260,14 @@ public class ProgressSliderView extends View {
   private void drawWaveform(Canvas canvas) {
     if (waveformData == null) return;
     float center = (float) this.canvasHeight / 2;
+    int x = 0;
     
-    for (int i = 0; i < waveformData.length; i++) {
-      float h = waveformData[i];
-      float x = i;
-      float y0 = center - h;
-      float y1 = center + h + 1;
+    for (int i = 0; i < waveformData.length; i+=2, x++) {
+      // Line from h1 to h2
+      float h1 = waveformData[i];
+      float h2 = waveformData[i+1];
+      float y0 = center - h1;
+      float y1 = center - h2;
       
       Paint paint = (x > progressRect.right) ? this.waveformPaint: this.waveformProgressPaint;
       canvas.drawLine(x, y0, x, y1, paint);

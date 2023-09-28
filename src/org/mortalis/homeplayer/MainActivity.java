@@ -2189,14 +2189,15 @@ public class MainActivity extends AppCompatActivity {
         log("waveformDecodeThread started");
         currentWaveformFile = null;
         
-        if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != sliderWidth) {
-          log("Creating new array for waveform data of size %d", sliderWidth);
-          AudioUtilsNative.waveformData = new short[sliderWidth];
+        if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != sliderWidth * 2) {
+          // Waveform is drawn with vertical lines from min to max value for each block, data is sequential [max1, min1, max2, min2, ...]
+          log("Creating new array for waveform data of size %d x 2 values for each pixel", sliderWidth);
+          AudioUtilsNative.waveformData = new short[sliderWidth * 2];
         }
         int result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);
         
         if (result == 0 && AudioUtilsNative.waveformData != null) {
-          log("Waveform build result (%s): %d, %d pixels", audioPath, result, AudioUtilsNative.waveformData.length);
+          log("Waveform build result (%s): %d, %d values", audioPath, result, AudioUtilsNative.waveformData.length);
           progressSlider.updateWaveform(AudioUtilsNative.waveformData);
           currentWaveformFile = audioPath;
         }
