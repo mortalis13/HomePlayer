@@ -37,7 +37,7 @@
       android:gravity="center_vertical"
       android:textSize="16dp"
       android:textColor="?primaryTextColor"
-      android:text="15"
+      android:text="0"
       android:layout_alignParentLeft="true"
     />
     <TextView
@@ -48,7 +48,7 @@
       android:gravity="center_vertical"
       android:textSize="16dp"
       android:textColor="?primaryTextColor"
-      android:text="128.3 MB"
+      android:text=""
       android:layout_toRightOf="@+id/textTotalFiles"
     />
     <TextView
@@ -59,7 +59,7 @@
       android:gravity="center_vertical"
       android:textSize="16dp"
       android:textColor="?primaryTextColor"
-      android:text="00:41:27"
+      android:text=""
       android:layout_toRightOf="@+id/textTotalSize"
     />
     

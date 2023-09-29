@@ -1153,12 +1153,7 @@ public class MainActivity extends AppCompatActivity {
     
     titleScroller.fullScroll(View.FOCUS_LEFT);
     
-    textTotalFiles.setText(String.valueOf(fileList.size()));
-    
-    long totalSize = Stream.of(files)
-      .mapToLong(File::length)
-      .reduce(0, Long::sum);
-    textTotalSize.setText(Fun.formatSize(totalSize));
+    updateDirStatus();
     
     loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
     loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -2138,11 +2133,23 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void resetCurrentDirTime() {
-    textTotalTime.setText("00:00:00");
+    textTotalTime.setText("");
   }
   
   private void resetPlayingDirTime() {
     textPlayingFolderTime.setText("00:00:00");
+  }
+  
+  private void updateDirStatus() {
+    if (fileList == null) return;
+    textTotalFiles.setText(String.valueOf(fileList.size()));
+    
+    long totalSize = fileList.stream()
+      .filter(item -> item.isFile)
+      .mapToLong(item -> new File(item.path).length())
+      .reduce(0, Long::sum);
+    textTotalSize.setText(Fun.formatSize(totalSize));
+    textTotalSize.setVisibility(totalSize > 0 ? View.VISIBLE: View.GONE);
   }
   
   private void updateVolumeText() {
@@ -2258,6 +2265,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostExecute(Void result) {
       String folderTime = Fun.formatTime(totalTime, true, false);
       textTotalTime.setText(folderTime);
+      textTotalTime.setVisibility(totalTime > 0 ? View.VISIBLE: View.GONE);
       
       if (updatePlayingDir) {
         textPlayingFolderTime.setText(folderTime);
