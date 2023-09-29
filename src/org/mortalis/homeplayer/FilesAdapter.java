@@ -271,6 +271,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         v.setSelected(!v.isSelected());
         item.repeat = !item.repeat;
         repeatSelectAction.execute(item);
+        notifyItemChanged(getLayoutPosition());
+        hideItemMenu();
       });
       
       itemView.setOnTouchListener((View view, MotionEvent event) -> {
