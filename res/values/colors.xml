@@ -113,7 +113,7 @@
   <color name="scrollbar_default_background_dark">#80aaaaaa</color>
   <color name="scrollbar_pressed_background_dark">#884c92ad</color>
 
-  <color name="slider_progress_color_dark">#596d77</color>
+  <color name="slider_progress_color_dark">#4c5d66</color>
   <color name="slider_border_color_dark">#555</color>
   <color name="slider_waveform_color_dark">#707070</color>
   <color name="slider_waveform_progress_color_dark">#aaa</color>
