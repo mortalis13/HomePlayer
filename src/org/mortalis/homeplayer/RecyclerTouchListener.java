@@ -25,14 +25,21 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent event) {
     gestureDetector.onTouchEvent(event);
+
     int action = event.getAction();
-    
     if (action == MotionEvent.ACTION_DOWN) {
+      boolean hideMenu = true;
+
       var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());
-      int currentPos = viewHolder.getBindingAdapterPosition();
+      if (viewHolder.itemMenuPanel.getVisibility() == View.VISIBLE) {
+        float menuPanelX = viewHolder.itemMenuPanel.getChildAt(0).getX();
+        if (event.getX() >= menuPanelX) hideMenu = false;
+      }
       
-      FilesAdapter adapter = (FilesAdapter) recyclerView.getAdapter();
-      adapter.hideActiveItemMenu(currentPos);
+      if (hideMenu) {
+        FilesAdapter adapter = (FilesAdapter) recyclerView.getAdapter();
+        adapter.hideActiveItemMenu();
+      }
     }
     
     return false;
@@ -40,7 +47,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   private FilesAdapter.ItemViewHolder getViewHolder(RecyclerView recyclerView, float x, float y) {
     View view = recyclerView.findChildViewUnder(x, y);
-    FilesAdapter.ItemViewHolder viewHolder = (FilesAdapter.ItemViewHolder) recyclerView.findContainingViewHolder(view);
+    var viewHolder = (FilesAdapter.ItemViewHolder) recyclerView.findContainingViewHolder(view);
     return viewHolder;
   }
 

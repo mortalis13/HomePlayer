@@ -124,7 +124,7 @@
     />
     <ImageButton
       android:id="@+id/bRemoveFile"
-      android:layout_width="70dp"
+      android:layout_width="@dimen/item_menu_button_width"
       android:layout_height="match_parent"
       android:src="@drawable/outline_highlight_off_black_24"
       android:tint="?secondaryTextColor"
@@ -133,7 +133,7 @@
     />
     <ImageButton
       android:id="@+id/bFileInfo"
-      android:layout_width="70dp"
+      android:layout_width="@dimen/item_menu_button_width"
       android:layout_height="match_parent"
       android:src="@drawable/outline_info_black_24"
       android:tint="?secondaryTextColor"
@@ -142,7 +142,7 @@
     />
     <ImageButton
       android:id="@+id/bRepeatFile"
-      android:layout_width="70dp"
+      android:layout_width="@dimen/item_menu_button_width"
       android:layout_height="match_parent"
       android:src="@drawable/round_repeat_black_24"
       android:tint="?secondaryTextColor"

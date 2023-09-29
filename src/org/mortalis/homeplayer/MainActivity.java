@@ -1289,8 +1289,7 @@ public class MainActivity extends AppCompatActivity {
       .count();
     
     textTotalFavorites.setText(String.valueOf(totalFavorites));
-    int visibility = (totalFavorites == 0) ? View.GONE: View.VISIBLE;
-    totalFavoritesBlock.setVisibility(visibility);
+    totalFavoritesBlock.setVisibility(totalFavorites == 0 ? View.GONE: View.VISIBLE);
   }
   
   

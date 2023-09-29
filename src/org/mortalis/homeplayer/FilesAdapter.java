@@ -44,7 +44,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private int item_icon_color_lastplayed;
   private int text_color_default;
   private int text_color_error;
-  private float itemMenuWidth;
+  private float menuButtonWidth;
   
   SingleAction<ListItem> itemClickAction;
   SingleAction<ListItem> iconClickAction;
@@ -62,7 +62,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     text_color_default = MaterialColors.getColor(context, R.attr.primaryTextColor, Color.TRANSPARENT);
     text_color_error = MaterialColors.getColor(context, R.attr.listItemTextColorError, Color.TRANSPARENT);
     
-    itemMenuWidth = context.getResources().getDimension(R.dimen.item_menu_button_width);
+    menuButtonWidth = context.getResources().getDimension(R.dimen.item_menu_button_width);
   }
   
   @Override
@@ -197,16 +197,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     return -1;
   }
   
-  public void hideActiveItemMenu(int currentPos) {
-    if (holderWithMenu != null) {
-      int pos = holderWithMenu.getBindingAdapterPosition();
-      
-      if (pos != currentPos) {
-        holderWithMenu.hideItemMenu();
-        notifyItemChanged(pos);
-        holderWithMenu = null;
-      }
-    }
+  public void hideActiveItemMenu() {
+    if (holderWithMenu == null) return;
+    holderWithMenu.hideItemMenu();
+    notifyItemChanged(holderWithMenu.getBindingAdapterPosition());
+    holderWithMenu = null;
   }
   
   
@@ -271,7 +266,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         v.setSelected(!v.isSelected());
         item.repeat = !item.repeat;
         repeatSelectAction.execute(item);
-        notifyItemChanged(getLayoutPosition());
+        notifyItemChanged(getBindingAdapterPosition());
         hideItemMenu();
       });
       
@@ -329,7 +324,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       resetRemoveState();
       itemMenuPanel.setVisibility(View.VISIBLE);
       
-      TranslateAnimation animation = new TranslateAnimation(itemMenuWidth, 0, 0, 0);
+      TranslateAnimation animation = new TranslateAnimation(menuButtonWidth, 0, 0, 0);
       animation.setDuration(150);
       itemMenuPanel.startAnimation(animation);
     }
