@@ -11,12 +11,15 @@ import android.view.View;
 import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.R;
+import org.mortalis.homeplayer.Fun;
+
 import static org.mortalis.homeplayer.Fun.log;
 
 
 public class TrimSliderView extends View {
   
   private static final int SLIDER_SENSITIVITY = 100;
+  private static final float RESET_GAP = Fun.dpToPx(30);
   
   private boolean sliderEnabled;
   
@@ -132,7 +135,11 @@ public class TrimSliderView extends View {
     }
     
     if (action == MotionEvent.ACTION_UP) {
-      if (!this.hasMoved) {
+      if (x < RESET_GAP) {
+        setProgress(0);
+        sendPosition(this.progress);
+      }
+      else if (!this.hasMoved) {
         int _progress = (int) ((float) x * this.maxValue / this.canvasWidth);
         setProgress(_progress);
         sendPosition(this.progress);
