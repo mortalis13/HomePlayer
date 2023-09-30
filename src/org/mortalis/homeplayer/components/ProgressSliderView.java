@@ -36,6 +36,7 @@ public class ProgressSliderView extends View {
   
   private boolean showLoop;
   private Paint loopPaint;
+  private Paint loopProgressPaint;
   private RectF loopStartRect;
   private RectF loopEndRect;
   private RectF loopProgressRect;
@@ -73,10 +74,6 @@ public class ProgressSliderView extends View {
     this.canvasPaint.setColor(MaterialColors.getColor(this, R.attr.sliderBackgroundColor));
     this.canvasPaint.setStyle(Paint.Style.FILL);
     
-    this.loopPaint = new Paint();
-    this.loopPaint.setColor(MaterialColors.getColor(this, R.attr.rangeSliderProgressColor));
-    this.loopPaint.setStyle(Paint.Style.FILL);
-    
     this.progressPaint = new Paint();
     this.progressPaint.setColor(progressColor);
     this.progressPaint.setStyle(Paint.Style.FILL);
@@ -88,6 +85,14 @@ public class ProgressSliderView extends View {
     this.waveformProgressPaint = new Paint();
     this.waveformProgressPaint.setColor(MaterialColors.getColor(this, R.attr.sliderWaveformProgressColor));
     this.waveformProgressPaint.setAntiAlias(false);
+    
+    this.loopPaint = new Paint();
+    this.loopPaint.setColor(MaterialColors.getColor(this, R.attr.sliderLoopPointsColor));
+    this.loopPaint.setStyle(Paint.Style.FILL);
+    
+    this.loopProgressPaint = new Paint();
+    this.loopProgressPaint.setColor(MaterialColors.getColor(this, R.attr.sliderLoopProgressColor));
+    this.loopProgressPaint.setStyle(Paint.Style.FILL);
     
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
@@ -192,12 +197,16 @@ public class ProgressSliderView extends View {
   protected void onDraw(Canvas canvas) {
     canvas.drawRect(this.canvasRect, this.canvasPaint);
     canvas.drawRect(this.progressRect, this.progressPaint);
+    
+    if (showLoop) {
+      canvas.drawRect(this.loopProgressRect, this.loopProgressPaint);
+    }
+    
     drawWaveform(canvas);
     
     if (showLoop) {
       canvas.drawRect(this.loopStartRect, this.loopPaint);
       canvas.drawRect(this.loopEndRect, this.loopPaint);
-      canvas.drawRect(this.loopProgressRect, this.loopPaint);
     }
   }
   
@@ -269,7 +278,7 @@ public class ProgressSliderView extends View {
       float y0 = center - h1;
       float y1 = center - h2;
       
-      Paint paint = (x > progressRect.right) ? this.waveformPaint: this.waveformProgressPaint;
+      Paint paint = (x >= progressRect.right) ? this.waveformPaint: this.waveformProgressPaint;
       canvas.drawLine(x, y0, x, y1, paint);
     }
   }

@@ -183,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
   private LinearLayout looperPanel;
   private RangeSliderView loopSlider;
   private TextView textLoopStartTime;
+  private TextView textLoopLength;
   private TextView textLoopEndTime;
   
   private ImageButton bLooperEnable;
@@ -455,6 +456,7 @@ public class MainActivity extends AppCompatActivity {
     looperPanel = findViewById(R.id.looperPanel);
     loopSlider = findViewById(R.id.loopSlider);
     textLoopStartTime = findViewById(R.id.textLoopStartTime);
+    textLoopLength = findViewById(R.id.textLoopLength);
     textLoopEndTime = findViewById(R.id.textLoopEndTime);
     
     bLooperEnable = findViewById(R.id.bLooperEnable);
@@ -745,6 +747,7 @@ public class MainActivity extends AppCompatActivity {
     // Looper
     Action _updateLoop = () -> {
       textLoopStartTime.setText(Fun.formatTime(loopSlider.getProgressStart(), false, true));
+      textLoopLength.setText("[" + Fun.formatTime(loopSlider.getProgressEnd() - loopSlider.getProgressStart(), false, true) + "]");
       textLoopEndTime.setText(Fun.formatTime(loopSlider.getProgressEnd(), false, true));
       progressSlider.setLoopPoints(loopEnabled, loopSlider.getProgressStart(), loopSlider.getProgressEnd());
     };
@@ -1019,6 +1022,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     this.audioTrimEnabled = (this.audioTrimSeconds > 0 && time == 0);
+    if (loopEnabled) disableLoop();
     
     progressSlider.reset();
     updateWaveform(filePath);
@@ -1036,7 +1040,6 @@ public class MainActivity extends AppCompatActivity {
     
     startService(playerIntent);
     log("playerService started");
-    
     updateTimeEnabled = true;
     
     removeFromShuffleList(playingFile);
@@ -1058,6 +1061,8 @@ public class MainActivity extends AppCompatActivity {
     File playingFile = new File(filePath);
     
     this.audioTrimEnabled = (this.audioTrimSeconds > 0);
+    if (loopEnabled) disableLoop();
+    
     updateWaveform(filePath);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
@@ -1960,6 +1965,13 @@ public class MainActivity extends AppCompatActivity {
     int totalTime = playerService.getTotalTime();
     loopSlider.setMax(totalTime);
     loopSlider.reset();
+  }
+  
+  private void disableLoop() {
+    loopEnabled = false;
+    bLooperEnable.setSelected(false);
+    EngineNative.setLoop(false);
+    playExtraIconLoop.setVisibility(View.GONE);
   }
   
   private void setPlayButtonDefault() {

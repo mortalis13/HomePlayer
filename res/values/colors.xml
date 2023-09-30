@@ -65,6 +65,8 @@
   <color name="slider_border_color">#888</color>
   <color name="slider_waveform_color">#909090</color>
   <color name="slider_waveform_progress_color">#666</color>
+  <color name="slider_loop_points_color">@color/range_slider_progress_color</color>
+  <color name="slider_loop_progress_color">#9fc9c0</color>
   
   <color name="trim_slider_background_color">@color/transparent</color>
   <color name="trim_slider_progress_color">#c0b4c6</color>
@@ -117,6 +119,8 @@
   <color name="slider_border_color_dark">#555</color>
   <color name="slider_waveform_color_dark">#707070</color>
   <color name="slider_waveform_progress_color_dark">#aaa</color>
+  <color name="slider_loop_points_color_dark">@color/range_slider_progress_color_dark</color>
+  <color name="slider_loop_progress_color_dark">#46625b</color>
 
   <color name="control_button_background_pressed_dark">#111</color>
   

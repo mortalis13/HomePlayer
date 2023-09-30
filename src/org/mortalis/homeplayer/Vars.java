@@ -26,7 +26,7 @@ public class Vars {
   public static final int MAX_TRIM = 300;  // s
   
   public static final int LOOP_OFFSET_STEP_DEFAULT = 100;  // ms
-  public static final int[] LOOP_OFFSET_STEPS = new int[] {1, 10, 100, 1000};  // ms
+  public static final int[] LOOP_OFFSET_STEPS = new int[] {1, 10, 50, 100};  // ms
   
   public static final int EQ_BANDS = 8;
   public static final float EQ_Q_FACTOR = 1.0f;
