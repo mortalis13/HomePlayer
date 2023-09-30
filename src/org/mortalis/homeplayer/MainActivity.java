@@ -22,6 +22,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.KeyEvent;
@@ -88,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
   private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
   
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
-  private static final File START_DIR = new File(Environment.getExternalStorageDirectory(), "_music");
   
   private Context context;
   
@@ -138,12 +138,14 @@ public class MainActivity extends AppCompatActivity {
   
   private Set<String> repeatableFiles;
   
+  private Parcelable listScrollState;
+  
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
   
   private ProgressSliderView progressSlider;
-  private RecyclerView listItems;
+  private RecyclerView itemsListView;
   
   private TextView textTimeLeft;
   private TextView textTimePlaying;
@@ -268,9 +270,6 @@ public class MainActivity extends AppCompatActivity {
     configUI();
     restoreState();
     initEngine();
-    
-    File dir = lastFolder == null ? START_DIR: new File(lastFolder);
-    changeDir(dir);
   }
   
   @Override
@@ -426,7 +425,7 @@ public class MainActivity extends AppCompatActivity {
     titleScroller = findViewById(R.id.titleScroller);
     activeTitle = findViewById(R.id.activeTitle);
     
-    listItems = findViewById(R.id.listItems);
+    itemsListView = findViewById(R.id.itemsList);
     progressSlider = findViewById(R.id.progressSlider);
     
     textTimePlaying = findViewById(R.id.textTimePlaying);
@@ -556,9 +555,9 @@ public class MainActivity extends AppCompatActivity {
       }
     };
     
-    listItems.setAdapter(filesAdapter);
-    listItems.setLayoutManager(listLayoutManager);
-    listItems.addOnItemTouchListener(new RecyclerTouchListener(listItems));
+    itemsListView.setAdapter(filesAdapter);
+    itemsListView.setLayoutManager(listLayoutManager);
+    itemsListView.addOnItemTouchListener(new RecyclerTouchListener(itemsListView));
     
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);
@@ -1129,7 +1128,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  
+
   // ------------------------------ Navigation ------------------------------
   private void changeDir(File path, boolean scrollTop) {
     logd("changeDir(): " + path);
@@ -1139,6 +1138,12 @@ public class MainActivity extends AppCompatActivity {
     itemsQueue.clear();
     
     if (path == null || !path.exists()) path = ROOT_STORAGE;
+
+    boolean isChangeToChild = (currentPath != null && path.getParentFile().equals(currentPath));
+    if (isChangeToChild) {
+      listScrollState = itemsListView.getLayoutManager().onSaveInstanceState();
+    }
+
     currentPath = path;
     
     File[] dirs = path.listFiles(Fun.dirFilter);
@@ -1196,10 +1201,19 @@ public class MainActivity extends AppCompatActivity {
     }
     
     String prevPath = currentPath.getPath();
-    changeDir(currentPath.getParentFile());
     
-    int scrollPos = filesAdapter.getItemPosition(prevPath);
-    listLayoutManager.scrollToPosition(scrollPos);
+    boolean scrollTop = true;
+    if (listScrollState != null) scrollTop = false;
+    changeDir(currentPath.getParentFile(), scrollTop);
+    
+    if (listScrollState != null) {
+      itemsListView.getLayoutManager().onRestoreInstanceState(listScrollState);
+      listScrollState = null;
+    }
+    else {
+      int scrollPos = filesAdapter.getItemPosition(prevPath);
+      listLayoutManager.scrollToPosition(scrollPos);
+    }
   }
   
   private void refreshCurrentDir(boolean scrollTop) {
@@ -1208,6 +1222,10 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void validateCurrentDir() {
+    if (currentPath == null && lastFolder != null) {
+      currentPath = new File(lastFolder);
+    }
+    
     if (currentPath == null || !currentPath.exists()) {
       logw("The last visited directory doesn't exist (" + currentPath + "), changing to its parent");
       File parent = Fun.getNearestExistingParent(currentPath);

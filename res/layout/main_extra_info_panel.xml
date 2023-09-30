@@ -271,7 +271,7 @@
     android:textSize="@dimen/extra_info_font_size"
     android:textStyle="bold"
     android:textColor="?tertiaryTextColor"
-    android:text="S. Format:"
+    android:text="Format:"
   />
   <TextView
     android:id="@+id/textExtraSampleFormat"
