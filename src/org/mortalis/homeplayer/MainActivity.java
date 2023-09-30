@@ -1206,9 +1206,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    if (!belongsToCurrentDir(getPlayingFile())) {
-      refreshCurrentDir(true);
-    }
+    refreshCurrentDir(false);
   }
   
   private File getPlayingFile() {
