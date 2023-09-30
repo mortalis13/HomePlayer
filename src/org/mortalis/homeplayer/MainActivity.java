@@ -1018,7 +1018,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    this.audioTrimEnabled = (audioTrimSeconds > 0 && time == 0);
+    this.audioTrimEnabled = (this.audioTrimSeconds > 0 && time == 0);
     
     progressSlider.reset();
     updateWaveform(filePath);
@@ -1056,6 +1056,8 @@ public class MainActivity extends AppCompatActivity {
     if (filePath == null || filePath.length() == 0) return;
     
     File playingFile = new File(filePath);
+    
+    this.audioTrimEnabled = (this.audioTrimSeconds > 0);
     updateWaveform(filePath);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
@@ -1393,7 +1395,7 @@ public class MainActivity extends AppCompatActivity {
       }
     }
     
-    if (audioTrimEnabled && playingTime / 1000 >= audioTrimSeconds) {
+    if (this.audioTrimEnabled && playingTime / 1000 >= this.audioTrimSeconds) {
       if (isPlayingLastFile()) {
         if (playerService != null) playerService.seekToEnd();
       }
