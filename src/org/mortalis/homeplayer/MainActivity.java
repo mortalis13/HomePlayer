@@ -1172,6 +1172,8 @@ public class MainActivity extends AppCompatActivity {
     markFavorites();
     updateFavoritesStats();
     
+    validatePlayingList();
+    
     hideExtraPanels();
   }
   
@@ -1580,6 +1582,14 @@ public class MainActivity extends AppCompatActivity {
     if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
     loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(playingList);
     loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+  }
+  
+  private void validatePlayingList() {
+    if (playingList == null || playingList.length == 0) return;
+    if (playingList[0].getParentFile().equals(currentPath) && playingList.length != fileList.size()) {
+      reloadPlayingListForDir(currentPath);
+      updatePlayingStats();
+    }
   }
   
   private void itemClick(ListItem item) {
