@@ -114,7 +114,6 @@ void AudioDecoder::run() {
 int AudioDecoder::decodeFrames() {
   // --> Decoder thread
   int result = -1;
-  bool is_eof = false;
   
   AVPacket* audioPacket;
   AVFrame* audioFrame;
@@ -136,7 +135,6 @@ int AudioDecoder::decodeFrames() {
   while (!this->stopped) {
     if (this->seekPending) {
       this->seekPending = false;
-      is_eof = false;
       
       int64_t seek_ts = this->seekTimestamp - 0.05 * AV_TIME_BASE;
       if (seek_ts < 0) seek_ts = 0;
@@ -159,7 +157,6 @@ int AudioDecoder::decodeFrames() {
     if (result < 0) {
       LOGW("av_read_frame error: %s", av_err2str(result));
       if (result == AVERROR_EOF || avio_feof(formatContext->pb)) {
-        is_eof = true;
         avcodec_send_packet(codecContext, audioPacket);
         av_packet_unref(audioPacket);
         
@@ -596,10 +593,9 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   packed_buffer_max.reserve(size);
   packed_buffer_min.reserve(size);
   
-  float samples_sum = 0;
   int sample_id = 0;
-  float max_value = INT_MIN;
-  float min_value = INT_MAX;
+  float max_value = (float) INT_MIN;
+  float min_value = (float) INT_MAX;
   
   while (this->compressing) {
     result = av_read_frame(formatContext, audioPacket);
@@ -660,8 +656,8 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
           packed_buffer_max.push_back(max_value);
           packed_buffer_min.push_back(min_value);
           
-          max_value = INT_MIN;
-          min_value = INT_MAX;
+          max_value = (float) INT_MIN;
+          min_value = (float) INT_MAX;
           sample_id = 0;
         }
       }
