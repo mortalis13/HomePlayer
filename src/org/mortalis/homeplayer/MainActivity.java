@@ -1044,7 +1044,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
-    filesAdapter.markLastPlayedItem(filePath);
+    markItem(filePath);
     selectItem(filePath);
     
     if (!startPlayback) setPlayButtonDefault();
@@ -1069,7 +1069,7 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
-    filesAdapter.markLastPlayedItem(filePath);
+    markItem(filePath);
     selectItem(filePath);
   }
   
@@ -1242,13 +1242,12 @@ public class MainActivity extends AppCompatActivity {
   
   private void markLastPlayedFileInDir(File dir) {
     String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + dir.getPath());
-    
     if (lastFile != null) {
       String lastFileName = new File(lastFile).getName();
       int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + dir.getPath());
       
       log("Last played file in dir '%s': '%s', Time: %d", dir, lastFileName, lastTime);
-      filesAdapter.markLastPlayedItem(lastFile);
+      markItem(lastFile);
     }
   }
   
@@ -1488,6 +1487,13 @@ public class MainActivity extends AppCompatActivity {
       log("Selecting item or its folder: " + filePath);
       filesAdapter.selectItem(playingItemPos);
     }
+  }
+  
+  private void markItem(String filePath) {
+    if (filePath == null) return;
+    // File doesn't belong to the current folder
+    if (!currentPath.equals(new File(filePath).getParentFile())) return;
+    filesAdapter.markLastPlayedItem(filePath);
   }
   
   private boolean isPlayingLastFile() {

@@ -108,7 +108,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   }
   
   public int getPositionForSubpath(String filePath) {
-    // Finds position of the file in the current list, if the curretn directory path is a subpath of the file
+    // Finds position of the file in the current list, if the current directory path is a subpath of the file
     if (filePath == null) return -1;
     int size = this.fileList.size();
     if (size == 0) return -1;
