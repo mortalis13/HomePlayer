@@ -15,17 +15,13 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
   @Override
   public void onReceive(Context context, Intent intent) {
     Fun.logd("PlayerServiceReceiver.onReceive: " + intent.getAction());
-    if (receiverListener == null) return;
-    
     String action = intent.getAction();
-    if (action.equals(PlayerService.ACTION_PLAY)) {
-      receiverListener.onMsgPlay();
-    }
-    else if (action.equals(PlayerService.ACTION_PAUSE)) {
-      receiverListener.onMsgPause();
-    }
-    else if (action.equals(PlayerService.ACTION_EXIT)) {
-      receiverListener.onMsgExit();
+    if (receiverListener == null || action == null) return;
+
+    switch (action) {
+      case PlayerService.ACTION_PLAY -> receiverListener.onMsgPlay();
+      case PlayerService.ACTION_PAUSE -> receiverListener.onMsgPause();
+      case PlayerService.ACTION_EXIT -> receiverListener.onMsgExit();
     }
   }
   

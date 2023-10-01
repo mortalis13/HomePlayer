@@ -4,8 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Picture;
-import android.graphics.BlendMode;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,6 +12,7 @@ import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
+
 import static org.mortalis.homeplayer.Fun.log;
 
 

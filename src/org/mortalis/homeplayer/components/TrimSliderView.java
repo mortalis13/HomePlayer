@@ -110,7 +110,6 @@ public class TrimSliderView extends View {
     
     int action = event.getAction();
     int x = (int) event.getX();
-    int y = (int) event.getY();
     
     if (action == MotionEvent.ACTION_DOWN) {
       this.moveStartX = x;

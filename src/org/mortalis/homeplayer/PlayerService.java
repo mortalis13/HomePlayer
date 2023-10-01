@@ -19,6 +19,7 @@ import android.os.Looper;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
 
 import org.mortalis.homeplayer.actions.SingleAction;
@@ -33,6 +34,7 @@ import static org.mortalis.homeplayer.Fun.logw;
 import static org.mortalis.homeplayer.Fun.loge;
 
 import java.io.File;
+import java.io.IOException;
 
 
 public class PlayerService extends Service implements AudioManager.OnAudioFocusChangeListener, EngineNative.NativeChangeListener {
@@ -59,7 +61,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private String audioPath;
   private int audioTime;
   private boolean startPlayback;
-  private boolean fileRepeat;
   private boolean repeat;
   private boolean action_SyncAudioFile;
 
@@ -193,8 +194,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     serviceFilter.addAction(ACTION_PLAY);
     serviceFilter.addAction(ACTION_PAUSE);
     serviceFilter.addAction(ACTION_EXIT);
-    registerReceiver(playerServiceReceiver, serviceFilter);
-    
+    ContextCompat.registerReceiver(this, playerServiceReceiver, serviceFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
+
     registerHeadphonesReceiver();
 
     notificationManager = NotificationManagerCompat.from(this);
@@ -431,13 +432,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("buildPlayerNotification()");
 
     try {
-      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
-      metadata.setDataSource(audioPath);
-      String audioArtist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-      metadata.release();
-
       String title = new File(audioPath).getName();
-      String text = audioArtist;
+      String text = getArtist(audioPath);
 
       Intent intent = new Intent(this, MainActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -481,6 +477,24 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
     if (notification == null) return;
     notificationManager.notify(Vars.NOTIFICATION_ID, notification);
+  }
+  
+  private String getArtist(String audioPath) {
+    String artist = "";
+    
+    var metadata = new MediaMetadataRetriever();
+    try {
+      metadata.setDataSource(audioPath);
+      artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+    }
+    catch (Exception e) {
+      logw("Could not get artist for audio %s", audioPath);
+    }
+    finally {
+      try {metadata.release();} catch (IOException e) {}
+    }
+    
+    return artist;
   }
   
   
@@ -569,7 +583,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   public boolean isStopped() {
-    // return EngineNative.isStopped();
     return stopped;
   }
   
@@ -596,24 +609,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   
   // ----- Audio params
-  int getChannels() {
-    if (!this.playerLoaded) return 0;
-    return EngineNative.getChannels();
-  }
-
-  int getSampleRate() {
-    if (!this.playerLoaded) return 0;
-    return EngineNative.getSampleRate();
-  }
-
   String getSampleFormat() {
     if (!this.playerLoaded) return null;
     return EngineNative.getSampleFormat();
-  }
-
-  int getBitrate() {
-    if (!this.playerLoaded) return 0;
-    return EngineNative.getBitrate();
   }
 
   String getCodecName() {
@@ -627,15 +625,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     IntentFilter headphonesFilter = new IntentFilter();
     headphonesFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     headphonesFilter.addAction(AudioManager.ACTION_HEADSET_PLUG);
-    registerReceiver(headphonesPlugReceiver, headphonesFilter);
+    ContextCompat.registerReceiver(this, headphonesPlugReceiver, headphonesFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
   }
   
-  public void unregisterHeadphonesReceiver() {
-    logd("unregisterHeadphonesReceiver()");
-    unregisterReceiver(headphonesPlugReceiver);
-  }
-  
-  
+
   // --> EngineNative.NativeChangeListener
   @Override
   public void onAudioStopped() {
@@ -649,24 +642,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("onAudioFocusChange()");
     
     switch (focusChange) {
-      case AudioManager.AUDIOFOCUS_GAIN:
-        log("AUDIOFOCUS_GAIN");
-        break;
-      
-      case AudioManager.AUDIOFOCUS_LOSS:
-        log("AUDIOFOCUS_LOSS");
-        pause();
-        break;
-      
-      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-        log("AUDIOFOCUS_LOSS_TRANSIENT");
-        pause();
-        break;
-      
-      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-        log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
-        pause();
-        break;
+      case AudioManager.AUDIOFOCUS_GAIN -> log("AUDIOFOCUS_GAIN");
+      case AudioManager.AUDIOFOCUS_LOSS -> {log("AUDIOFOCUS_LOSS"); pause();}
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {log("AUDIOFOCUS_LOSS_TRANSIENT"); pause();}
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK"); pause();}
     }
   }
   
@@ -681,6 +660,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
+      if (action == null) return;
       
       if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
         log("Headphones unplugged [noisy]");

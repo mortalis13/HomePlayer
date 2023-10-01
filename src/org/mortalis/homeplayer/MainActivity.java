@@ -63,6 +63,7 @@ import static org.mortalis.homeplayer.Fun.loge;
 import static org.mortalis.homeplayer.Fun.logw;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,7 +73,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.stream.Stream;
-import java.util.function.Function;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -112,19 +112,18 @@ public class MainActivity extends AppCompatActivity {
   
   private boolean playbackShuffle;
   private List<File> shuffleList;
-  private Random randShuffle = new Random();
+  private final Random randShuffle = new Random();
   
   private AudioInfo currentExtraInfo;
   
   private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
   private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
-  private Queue<Integer> itemsQueue = new ArrayDeque<>(50);
+  private final Queue<Integer> itemsQueue = new ArrayDeque<>(50);
   
   private AudioManager audioManager;
-  private VolumeReceiver volumeReceiver = new VolumeReceiver();
+  private final VolumeReceiver volumeReceiver = new VolumeReceiver();
   
   private final Object lock = new Object();
-  private Thread waveformDecodeThread;
   private String currentWaveformFile;
   
   private boolean audioTrimEnabled;
@@ -1139,9 +1138,9 @@ public class MainActivity extends AppCompatActivity {
     
     if (path == null || !path.exists()) path = ROOT_STORAGE;
 
-    boolean isChangeToChild = (currentPath != null && path.getParentFile().equals(currentPath));
+    boolean isChangeToChild = (currentPath != null && currentPath.equals(path.getParentFile()));
     if (isChangeToChild) {
-      listScrollState = itemsListView.getLayoutManager().onSaveInstanceState();
+      listScrollState = listLayoutManager.onSaveInstanceState();
     }
 
     currentPath = path;
@@ -1207,7 +1206,7 @@ public class MainActivity extends AppCompatActivity {
     changeDir(currentPath.getParentFile(), scrollTop);
     
     if (listScrollState != null) {
-      itemsListView.getLayoutManager().onRestoreInstanceState(listScrollState);
+      listLayoutManager.onRestoreInstanceState(listScrollState);
       listScrollState = null;
     }
     else {
@@ -1330,7 +1329,7 @@ public class MainActivity extends AppCompatActivity {
     updatePlayingStats();
     
     setupLooper();
-    if (loopEnabled) EngineNative.setLoop(loopEnabled);
+    if (loopEnabled) EngineNative.setLoop(true);
     
     if (extraInfoPanel.getVisibility() == View.VISIBLE) {
       if (extraInfoIsForCurrentFile || 
@@ -1530,17 +1529,19 @@ public class MainActivity extends AppCompatActivity {
   private int extractAudioTime(String filePath) {
     int time = 0;
     
+    var mediaExtractor = new MediaExtractor();
     try {
-      MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
-
       MediaFormat format = mediaExtractor.getTrackFormat(0);
+      
       long duration = format.getLong(MediaFormat.KEY_DURATION);
       time = (int) (duration / 1000);
-      mediaExtractor.release();
     }
     catch (Exception e) {
       logw("Could not load media extractor for: " + filePath);
+    }
+    finally {
+      mediaExtractor.release();
     }
     
     return time;
@@ -1595,6 +1596,7 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Utils ------------------------------
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
+    if (dir == null) return;
     playingList = dir.listFiles(Fun.fileFilter);
     if (playingList == null) return;
     Arrays.sort(playingList, Fun.nocaseComp);
@@ -1611,7 +1613,8 @@ public class MainActivity extends AppCompatActivity {
   
   private void validatePlayingList() {
     if (playingList == null || playingList.length == 0) return;
-    if (playingList[0].getParentFile().equals(currentPath) && playingList.length != fileList.size()) {
+    // Reload cached list if the loaded file list size doesn't match the playlist size and current folder is the playlist folder
+    if (currentPath != null && currentPath.equals(playingList[0].getParentFile()) && playingList.length != fileList.size()) {
       reloadPlayingListForDir(currentPath);
       updatePlayingStats();
     }
@@ -1648,7 +1651,7 @@ public class MainActivity extends AppCompatActivity {
   private void processPlayingDirChange(File newAudioFile) {
     logd("processPlayingDirChange(): " + newAudioFile);
     if (playerService == null) return;
-    if (newAudioFile == null || newAudioFile.getParentFile() == null) return;
+    if (newAudioFile == null || newAudioFile.getParent() == null) return;
 
     if (playerService.hasAudio()) {
       var currentAudio = new File(playerService.getAudioPath());
@@ -1745,7 +1748,7 @@ public class MainActivity extends AppCompatActivity {
         break;
       }
     }
-
+    
     String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
     textPlayingPosition.setText(stats);
     
@@ -1808,38 +1811,44 @@ public class MainActivity extends AppCompatActivity {
     
     AudioInfo info = new AudioInfo();
     info.file = new File(filePath);
-    
+
+    var metadata = new MediaMetadataRetriever();
     try {
-      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
       metadata.setDataSource(filePath);
       
       info.title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
       info.artist = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
       info.album = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
       info.year = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
-      info.bitrate = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
-      info.time = Integer.parseInt(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-      metadata.release();
+      String bitrate = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+      info.bitrate = bitrate != null ? Integer.parseInt(bitrate): 0;
+      String time = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+      info.time = time != null ? Integer.parseInt(time): 0;
     }
     catch (Exception e) {
-      loge("Could not get audio metadata for: %s => %s", filePath, e);
+      logw("Could not get audio metadata for: %s => %s", filePath, e);
     }
-    
+    finally {
+      try {metadata.release();} catch (IOException e) {}
+    }
+
+    var mediaExtractor = new MediaExtractor();
     try {
-      MediaExtractor mediaExtractor = new MediaExtractor();
       mediaExtractor.setDataSource(filePath);
-      
+
       MediaFormat format = mediaExtractor.getTrackFormat(0);
       info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 0);
       info.frequency = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 0);
-      mediaExtractor.release();
     }
     catch (Exception e) {
-      loge("Could not get audio parameters for: %s => %s", filePath, e);
+      logw("Could not get audio parameters for: %s => %s", filePath, e);
     }
-    
+    finally {
+      mediaExtractor.release();
+    }
+
     extraInfoIsForCurrentFile = (playerService != null && playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
-    
+
     info.codec = null;
     info.sampleFormat = null;
     if (extraInfoIsForCurrentFile) {
@@ -1855,9 +1864,9 @@ public class MainActivity extends AppCompatActivity {
       loge("Current audio info is null");
       return;
     }
-    
+
+    var metadata = new MediaMetadataRetriever();
     try {
-      MediaMetadataRetriever metadata = new MediaMetadataRetriever();
       metadata.setDataSource(currentExtraInfo.file.getPath());
       
       byte[] pictureData = metadata.getEmbeddedPicture();
@@ -1872,11 +1881,12 @@ public class MainActivity extends AppCompatActivity {
         
         currentExtraInfo.imageSize = pictureData.length;
       }
-
-      metadata.release();
     }
     catch (Exception e) {
       logw("The file doesn't contain image: " + e);
+    }
+    finally {
+      try {metadata.release();} catch (IOException e) {}
     }
   }
   
@@ -2129,7 +2139,7 @@ public class MainActivity extends AppCompatActivity {
         if (eqViewHeight < 0) eqViewHeight = 0;
         log("Changing equalizerView height => " + eqViewHeight);
         
-        // Dynamically set EQ view height to fill the remaining space between the contorl panel and status panel
+        // Dynamically set EQ view height to fill the remaining space between the control panel and status panel
         equalizerView.setLayoutParams(new LinearLayout.LayoutParams(equalizerView.getLayoutParams().width, eqViewHeight));
         
         equalizerPanel.setVisibility(visibility);
@@ -2236,7 +2246,7 @@ public class MainActivity extends AppCompatActivity {
     log("Building waveform for (%s) and size %d x %d", audioPath, sliderWidth, sliderHeight);
     AudioUtilsNative.cancelWaveform();
     
-    waveformDecodeThread = new Thread(() -> {
+    Thread waveformDecodeThread = new Thread(() -> {
       synchronized (lock) {
         log("waveformDecodeThread started");
         currentWaveformFile = null;
@@ -2382,7 +2392,10 @@ public class MainActivity extends AppCompatActivity {
   
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
-      if (intent.getAction().equals(VOLUME_CHANGED_ACTION) && intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC) {
+      if (intent.getAction() != null &&
+          intent.getAction().equals(VOLUME_CHANGED_ACTION) &&
+          intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC)
+      {
         int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         log("Volume changed => " + volume);
         updateVolumeLevel();

@@ -1,32 +1,23 @@
 package org.mortalis.homeplayer;
 
-import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
-import android.view.View.MeasureSpec;
 import android.widget.Toast;
-
-import androidx.core.app.NotificationCompat;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
@@ -34,7 +25,7 @@ import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 
 public class Fun {
   
-  private static String[] units = {"B", "KB", "MB", "GB", "TB"};
+  private static final String[] units = {"B", "KB", "MB", "GB", "TB"};
   
   
   public static FileFilter dirFilter = (file) -> {
@@ -94,12 +85,13 @@ public class Fun {
     }
     
     File parent = file.getParentFile();
-    if (!parent.exists()) {
+    if (parent == null || !parent.exists()) {
       loge("The parent does not exist for file " + file);
       return null;
     }
     
     File[] files = parent.listFiles(fileFilter);
+    if (files == null) return null;
     Arrays.sort(files, nocaseComp);
     
     int len = files.length;
@@ -280,7 +272,7 @@ public class Fun {
   
   
   private static void log(Object value, Vars.LogLevel level) {
-    String msg = null;
+    String msg = "";
     if (value != null) {
       msg = value.toString();
       if (Vars.APP_LOG_LEVEL == Vars.LogLevel.VERBOSE) {
@@ -291,18 +283,10 @@ public class Fun {
     try {
       if (Vars.APP_LOG_LEVEL.compareTo(level) <= 0) {
         switch (level) {
-        case INFO:
-          Log.i(Vars.APP_LOG_TAG, msg);
-          break;
-        case DEBUG:
-          Log.d(Vars.APP_LOG_TAG, msg);
-          break;
-        case WARN:
-          Log.w(Vars.APP_LOG_TAG, msg);
-          break;
-        case ERROR:
-          Log.e(Vars.APP_LOG_TAG, msg);
-          break;
+          case INFO -> Log.i(Vars.APP_LOG_TAG, msg);
+          case DEBUG -> Log.d(Vars.APP_LOG_TAG, msg);
+          case WARN -> Log.w(Vars.APP_LOG_TAG, msg);
+          case ERROR -> Log.e(Vars.APP_LOG_TAG, msg);
         }
       }
     }
@@ -316,7 +300,6 @@ public class Fun {
       log(String.format(format, values));
     }
     catch (Exception e) {
-      loge("Fun.log(format, values) Exception, " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -326,7 +309,6 @@ public class Fun {
       logd(String.format(format, values));
     }
     catch (Exception e) {
-      loge("Fun.logd(format, values) Exception, " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -336,11 +318,19 @@ public class Fun {
       loge(String.format(format, values));
     }
     catch (Exception e) {
-      loge("Fun.loge(format, values) Exception, " + e.getMessage());
       e.printStackTrace();
     }
   }
-  
+
+  public static void logw(String format, Object... values) {
+    try {
+      logw(String.format(format, values));
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void log(Object value) {
     log(value, Vars.LogLevel.INFO);
   }
@@ -362,14 +352,17 @@ public class Fun {
     String result = "";
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     
-    if (stackTrace == null || stackTrace.length == 0) return result;
+    if (stackTrace.length == 0) return result;
     String callingClassName = stackTrace[0].getClassName();
     
     var callerElement = Arrays.stream(stackTrace)
       .filter(e -> !e.getClassName().equals(callingClassName))
       .findFirst()
-      .get();
-    result = String.format("[%s:%s():%d]", callerElement.getClassName(), callerElement.getMethodName(), callerElement.getLineNumber());
+      .orElse(null);
+
+    if (callerElement != null) {
+      result = String.format("[%s:%s():%d]", callerElement.getClassName(), callerElement.getMethodName(), callerElement.getLineNumber());
+    }
     
     return result;
   }
@@ -388,52 +381,7 @@ public class Fun {
       notificationManager.createNotificationChannel(channel);
     }
   }
-  
-  public static Notification buildNotification(Context context, String title, String text) {
-    var builder = new NotificationCompat.Builder(context, Vars.NOTIFICATIONS_CHANNEL_ID);
-    Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.round_audiotrack_white_24);
-    
-    builder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-    builder.setLargeIcon(largeIcon);
-    builder.setColor(Color.RED);
-    builder.setShowWhen(false);
-    builder.setOngoing(false);
-    builder.setVibrate(null);
-    
-    builder.setContentTitle(title);
-    builder.setContentText(text);
-    
-    return builder.build();
-  }
-  
-  public static void cancelNotification(Context context, int id) {
-    NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-    notificationManager.cancel(id);
-  }
-  
-  
-  public static int measureViewHeight(View view) {
-    int result = 0;
-    
-    int widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-    int heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-    view.measure(widthMeasureSpec, heightMeasureSpec);
-    result = view.getMeasuredHeight();
-    
-    return result;
-  }
-  
-  public static int measureViewWidth(View view) {
-    int result = 0;
-    
-    int widthMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-    int heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-    view.measure(widthMeasureSpec, heightMeasureSpec);
-    result = view.getMeasuredWidth();
-    
-    return result;
-  }
-  
+
   public static int getScreenDpi() {
     return Resources.getSystem().getDisplayMetrics().densityDpi;
   }

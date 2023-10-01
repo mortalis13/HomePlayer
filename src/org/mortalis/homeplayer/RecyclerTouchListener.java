@@ -12,12 +12,16 @@ import static org.mortalis.homeplayer.Fun.log;
 
 public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListener {
   
-  private GestureDetectorCompat gestureDetector;
+  private final GestureDetectorCompat gestureDetector;
   
   public RecyclerTouchListener(final RecyclerView recyclerView) {
     gestureDetector = new GestureDetectorCompat(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
       public void onLongPress(MotionEvent event) {
         var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());
+        if (viewHolder == null) {
+          log("item onLongPress: viewHolder is null");
+          return;
+        };
         viewHolder.processLongPress();
       }
     });
@@ -31,6 +35,11 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
       boolean hideMenu = true;
 
       var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());
+      if (viewHolder == null) {
+        log("item ACTION_DOWN: viewHolder is null");
+        return false;
+      }
+
       if (viewHolder.itemMenuPanel.getVisibility() == View.VISIBLE) {
         float menuPanelX = viewHolder.itemMenuPanel.getChildAt(0).getX();
         if (event.getX() >= menuPanelX) hideMenu = false;
@@ -38,7 +47,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
       
       if (hideMenu) {
         FilesAdapter adapter = (FilesAdapter) recyclerView.getAdapter();
-        adapter.hideActiveItemMenu();
+        if (adapter != null) adapter.hideActiveItemMenu();
       }
     }
     
@@ -47,6 +56,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   private FilesAdapter.ItemViewHolder getViewHolder(RecyclerView recyclerView, float x, float y) {
     View view = recyclerView.findChildViewUnder(x, y);
+    if (view == null) return null;
     var viewHolder = (FilesAdapter.ItemViewHolder) recyclerView.findContainingViewHolder(view);
     return viewHolder;
   }

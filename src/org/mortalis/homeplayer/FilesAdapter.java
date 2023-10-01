@@ -5,7 +5,6 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,6 +22,7 @@ import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.actions.SingleAction;
 import org.mortalis.homeplayer.components.IconOverlayView;
+
 import static org.mortalis.homeplayer.Fun.log;
 
 
@@ -30,7 +30,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   
-  private List<ListItem> fileList;
+  private final List<ListItem> fileList;
   private RecyclerView recyclerView;
   
   private boolean itemLongPressed;
@@ -39,12 +39,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private int selectedItemPos = -1;
   
   private ItemViewHolder holderWithMenu;
-  
-  private int item_icon_color_default;
-  private int item_icon_color_lastplayed;
-  private int text_color_default;
-  private int text_color_error;
-  private float menuButtonWidth;
+
+  private final int item_icon_color_default;
+  private final int item_icon_color_lastplayed;
+  private final int text_color_default;
+  private final int text_color_error;
+  private final float menuButtonWidth;
   
   SingleAction<ListItem> itemClickAction;
   SingleAction<ListItem> iconClickAction;
@@ -128,14 +128,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   
   public void selectItem(int itemPos) {
     selectedItemPos = itemPos;
-    if (lastItemSelectedPos == -1) {
-      lastItemSelectedPos = selectedItemPos;
-    }
-    else {
+    if (lastItemSelectedPos != -1) {
       notifyItemChanged(lastItemSelectedPos);
-      lastItemSelectedPos = selectedItemPos;
     }
-    
+    lastItemSelectedPos = selectedItemPos;
+
     notifyItemChanged(selectedItemPos);
   }
   
@@ -191,7 +188,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (item.path.equals(path)) return i;
+      if (item.path.equals(path)) {
+        return i;
+      }
     }
     
     return -1;
@@ -270,9 +269,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         hideItemMenu();
       });
       
-      itemView.setOnTouchListener((View view, MotionEvent event) -> {
-        return processOnTouch(view, event);
-      });
+      itemView.setOnTouchListener((view, event) -> processOnTouch(view, event));
     }
     
     public void processLongPress() {
