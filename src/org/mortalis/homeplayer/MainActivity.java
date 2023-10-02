@@ -541,10 +541,6 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
     filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
     filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
-    filesAdapter.itemBeforeBindAction = (item) -> {
-      if (!item.isFile || item.time != null) return;
-      item.time = Fun.formatTime(extractAudioTime(item.path), false, false);
-    };
     
     listLayoutManager = new LinearLayoutManager(context);
     
@@ -1161,6 +1157,18 @@ public class MainActivity extends AppCompatActivity {
     
     var stream = fileList.stream().filter(item -> item.isFile).map(item -> item.path);
     loadDirectoryTimeTask.setList(stream);
+    loadDirectoryTimeTask.progress((pos, time) -> {
+      int dirsCount = 0;
+      if (dirs != null) dirsCount = dirs.length;
+      pos += dirsCount;
+      
+      if (pos >= fileList.size()) return;
+      fileList.get(pos).time = Fun.formatTime(time, false, false);
+      
+      if (pos <= itemsListView.getChildCount()) {
+        filesAdapter.notifyItemChanged(pos);
+      }
+    });
     loadDirectoryTimeTask.execute(time -> {
       textTotalTime.setText(Fun.formatTime(time, true, false));
       textTotalTime.setVisibility(time > 0 ? View.VISIBLE: View.GONE);
@@ -2312,8 +2320,16 @@ public class MainActivity extends AppCompatActivity {
       totalTime = 0;
       
       List<String> files = list.collect(Collectors.toList());
-      for (var file: files) {
-        totalTime += extractAudioTime(file);
+      for (int i = 0; i < files.size(); i++) {
+        String file = files.get(i);
+        int fileTime = extractAudioTime(file);
+        totalTime += fileTime;
+        
+        if (this.onProgress != null) {
+          final int pos = i;
+          final int time = fileTime;
+          handler.post(() -> this.onProgress.run(pos, time));
+        }
 
         if (!this.running) {
           logw("Task is cancelled: " + this);

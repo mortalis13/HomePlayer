@@ -13,11 +13,16 @@ public abstract class BackgroundProcess<T> {
     void run(K result);
   }
   
+  public interface Progress<K> {
+    void run(K arg1, K arg2);
+  }
+  
   protected final Executor executor;
   protected final Handler handler;
   protected boolean running;
   
   protected Result<T> onFinished;
+  protected Progress<T> onProgress;
   
   public BackgroundProcess(Executor executor, Handler handler) {
     this.executor = executor;
@@ -34,6 +39,10 @@ public abstract class BackgroundProcess<T> {
   public void execute(Result<T> onFinished) {
     this.onFinished = onFinished;
     this.execute();
+  }
+  
+  public void progress(Progress<T> onProgress) {
+    this.onProgress = onProgress;
   }
   
   public void cancel() {
