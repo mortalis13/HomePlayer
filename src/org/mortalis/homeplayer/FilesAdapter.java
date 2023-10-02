@@ -51,7 +51,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   SingleAction<String> afterFileRemovedAction;
   SingleAction<String> infoClickAction;
   SingleAction<ListItem> repeatSelectAction;
-  SingleAction<Integer> itemBeforeBindAction;
+  SingleAction<ListItem> itemBeforeBindAction;
   
   
   public FilesAdapter(List<ListItem> fileList, Context context) {
@@ -78,10 +78,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   @Override
   public void onBindViewHolder(ItemViewHolder holder, int position) {
     ListItem item = this.fileList.get(position);
-    
-    if (item.isFile && item.time == null) {
-      itemBeforeBindAction.execute(position);
-    }
+    itemBeforeBindAction.execute(item);
     
     holder.bind(item);
     if (position == selectedItemPos) {

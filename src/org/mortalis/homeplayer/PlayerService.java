@@ -54,8 +54,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private AudioFocusRequest focusRequest;
 
   private NotificationManagerCompat notificationManager;
-  private NotificationCompat.Builder notifBuilder;
-  private NotificationCompat.Action[] notifActions;
+  private NotificationCompat.Builder notificationBuilder;
+  private NotificationCompat.Action[] notificationActions;
   private PlayerServiceReceiver playerServiceReceiver;
 
   private String audioPath;
@@ -204,7 +204,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-    notifActions = new NotificationCompat.Action[] {
+    notificationActions = new NotificationCompat.Action[] {
       new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
       new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
       new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
@@ -438,25 +438,25 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       Intent intent = new Intent(this, MainActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-      notifBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
-      notifBuilder.setContentTitle(title);
-      notifBuilder.setContentText(text);
+      notificationBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+      notificationBuilder.setContentTitle(title);
+      notificationBuilder.setContentText(text);
 
-      notifBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
-      notifBuilder.setOngoing(true);
-      notifBuilder.setShowWhen(false);
+      notificationBuilder.setSmallIcon(R.drawable.round_audiotrack_black_24);
+      notificationBuilder.setOngoing(true);
+      notificationBuilder.setShowWhen(false);
 
-      notifBuilder.setContentIntent(pendingIntent);
+      notificationBuilder.setContentIntent(pendingIntent);
 
       int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
-      notifBuilder.addAction(notifActions[actionId]);
-      notifBuilder.addAction(notifActions[ACTION_EXIT_ID]);
+      notificationBuilder.addAction(notificationActions[actionId]);
+      notificationBuilder.addAction(notificationActions[ACTION_EXIT_ID]);
 
       MediaStyle style = new MediaStyle();
       style.setShowActionsInCompactView(0, 1);
-      notifBuilder.setStyle(style);
+      notificationBuilder.setStyle(style);
 
-      return notifBuilder.build();
+      return notificationBuilder.build();
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -467,12 +467,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   private void updateNotification(int action) {
     Notification notification = null;
-    if (notifBuilder == null) {
+    if (notificationBuilder == null) {
       notification = buildPlayerNotification();
     }
     else {
-      notifBuilder.mActions.set(0, notifActions[action]);
-      notification = notifBuilder.build();
+      notificationBuilder.mActions.set(0, notificationActions[action]);
+      notification = notificationBuilder.build();
     }
 
     if (notification == null) return;

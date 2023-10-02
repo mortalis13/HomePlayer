@@ -17,11 +17,12 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.view.MotionEvent;
@@ -41,6 +42,7 @@ import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.os.HandlerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -64,14 +66,16 @@ import static org.mortalis.homeplayer.Fun.logw;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jaudiotagger.audio.AudioFile;
@@ -116,10 +120,6 @@ public class MainActivity extends AppCompatActivity {
   
   private AudioInfo currentExtraInfo;
   
-  private LoadCurrentDirTimeTask loadCurrentDirTimeTask;
-  private LoadPLayingDirTimeTask loadPLayingDirTimeTask;
-  private final Queue<Integer> itemsQueue = new ArrayDeque<>(50);
-  
   private AudioManager audioManager;
   private final VolumeReceiver volumeReceiver = new VolumeReceiver();
   
@@ -139,6 +139,12 @@ public class MainActivity extends AppCompatActivity {
   
   private Parcelable listScrollState;
   
+  private final ExecutorService taskExecutor = Executors.newFixedThreadPool(4);
+  private final Handler taskHandler = HandlerCompat.createAsync(Looper.getMainLooper());
+
+  private final LoadDirectoryTimeProcess loadDirectoryTimeTask = new LoadDirectoryTimeProcess(taskExecutor, taskHandler);
+  private final LoadDirectoryTimeProcess loadPlaylistTimeTask = new LoadDirectoryTimeProcess(taskExecutor, taskHandler);
+
   // -- Views
   private HorizontalScrollView titleScroller;
   private TextView activeTitle;
@@ -535,24 +541,12 @@ public class MainActivity extends AppCompatActivity {
     filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
     filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
     filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
-    filesAdapter.itemBeforeBindAction = (position) -> {
-      if (!itemsQueue.contains(position)) {
-        itemsQueue.add(position);
-      }
-      else {
-        logw("itemsQueue already contains position " + position);
-      }
+    filesAdapter.itemBeforeBindAction = (item) -> {
+      if (!item.isFile || item.time != null) return;
+      item.time = Fun.formatTime(extractAudioTime(item.path), false, false);
     };
     
-    listLayoutManager = new LinearLayoutManager(context) {
-      public void onLayoutCompleted(final RecyclerView.State state) {
-        // All visible items are shown and loaded
-        super.onLayoutCompleted(state);
-        if (!itemsQueue.isEmpty()) {
-          new ProcessItemsQueueTask(fileList).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        }
-      }
-    };
+    listLayoutManager = new LinearLayoutManager(context);
     
     itemsListView.setAdapter(filesAdapter);
     itemsListView.setLayoutManager(listLayoutManager);
@@ -1131,10 +1125,9 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Navigation ------------------------------
   private void changeDir(File path, boolean scrollTop) {
     logd("changeDir(): " + path);
-    if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.cancel(true);
+    loadDirectoryTimeTask.cancel();
     
     fileList.clear();
-    itemsQueue.clear();
     
     if (path == null || !path.exists()) path = ROOT_STORAGE;
 
@@ -1166,8 +1159,12 @@ public class MainActivity extends AppCompatActivity {
     
     updateDirStatus();
     
-    loadCurrentDirTimeTask = new LoadCurrentDirTimeTask(fileList);
-    loadCurrentDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    var stream = fileList.stream().filter(item -> item.isFile).map(item -> item.path);
+    loadDirectoryTimeTask.setList(stream);
+    loadDirectoryTimeTask.execute(time -> {
+      textTotalTime.setText(Fun.formatTime(time, true, false));
+      textTotalTime.setVisibility(time > 0 ? View.VISIBLE: View.GONE);
+    });
     
     if (scrollTop) {
       listLayoutManager.scrollToPositionWithOffset(0, 0);
@@ -1603,12 +1600,21 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void reloadPlayingListForDir(File dir) {
+    logd("reloadPlayingListForDir(): " + dir);
     cachePlayingList(dir);
     resetPlayingDirTime();
+    loadPlaylistTime();
+  }
+  
+  private void loadPlaylistTime() {
+    loadPlaylistTimeTask.cancel();
     
-    if (loadPLayingDirTimeTask != null) loadPLayingDirTimeTask.cancel(true);
-    loadPLayingDirTimeTask = new LoadPLayingDirTimeTask(playingList);
-    loadPLayingDirTimeTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    var stream = Stream.of(playingList).filter(item -> item.isFile()).map(File::getPath);
+    loadPlaylistTimeTask.setList(stream);
+    
+    loadPlaylistTimeTask.execute(time -> {
+      textPlayingFolderTime.setText(Fun.formatTime(time, true, false));
+    });
   }
   
   private void validatePlayingList() {
@@ -1666,7 +1672,14 @@ public class MainActivity extends AppCompatActivity {
         
         cachePlayingList(newAudioFile.getParentFile());
         resetPlayingDirTime();
-        if (loadCurrentDirTimeTask != null) loadCurrentDirTimeTask.copyToPlayingDirTime();
+        
+        if (!loadDirectoryTimeTask.isRunning()) {
+          int playlistTime = loadDirectoryTimeTask.getResult();
+          textPlayingFolderTime.setText(Fun.formatTime(playlistTime, true, false));
+        }
+        else {
+          loadPlaylistTime();
+        }
       }
     }
     else {
@@ -2277,115 +2290,42 @@ public class MainActivity extends AppCompatActivity {
   
 
   // ---------------------- Classes ----------------------
-  private class LoadCurrentDirTimeTask extends AsyncTask<Void, Void, Void> {
-    private List<ListItem> items;
+  private class LoadDirectoryTimeProcess extends BackgroundProcess<Integer> {
+    private Stream<String> list;
     private int totalTime;
-    private boolean updatePlayingDir;
-    
-    public LoadCurrentDirTimeTask(List<ListItem> items) {
-      this.items = List.copyOf(items);
-    }
-    
-    public boolean isRunning() {
-      return getStatus() == AsyncTask.Status.RUNNING;
-    }
-    
-    public void copyToPlayingDirTime() {
-      if (isRunning()) {
-        updatePlayingDir = true;
-      }
-      else {
-        String folderTime = Fun.formatTime(totalTime, true, false);
-        textPlayingFolderTime.setText(folderTime);
-      }
-    }
-    
-    protected Void doInBackground(Void... params) {
-      for (var item: items) {
-        if (!item.isFile) continue;
-        
-        int time = extractAudioTime(item.path);
-        totalTime += time;
-        item.time = Fun.formatTime(time, false, false);
-        
-        if (isCancelled()) {
-          logw("Task is cancelled: " + this);
-          break;
-        }
-      }
 
-      return null;
+    public LoadDirectoryTimeProcess(Executor executor, Handler handler) {
+      super(executor, handler);
+    }
+
+    public void setList(Stream<String> list) {
+      this.list = list;
     }
     
-    protected void onPostExecute(Void result) {
-      String folderTime = Fun.formatTime(totalTime, true, false);
-      textTotalTime.setText(folderTime);
-      textTotalTime.setVisibility(totalTime > 0 ? View.VISIBLE: View.GONE);
+    public int getResult() {
+      return totalTime;
+    }
+    
+    protected synchronized void run() {
+      log("Start process loading total directory time");
+      this.running = true;
+      totalTime = 0;
       
-      if (updatePlayingDir) {
-        textPlayingFolderTime.setText(folderTime);
-      }
-    }
-  }
-  
-
-  private class LoadPLayingDirTimeTask extends AsyncTask<Void, Void, Void> {
-    private File[] files;
-    private int totalTime;
-    
-    public LoadPLayingDirTimeTask(File[] files) {
-      this.files = files;
-    }
-    
-    protected Void doInBackground(Void... params) {
+      List<String> files = list.collect(Collectors.toList());
       for (var file: files) {
-        if (!file.isFile()) continue;
-        
-        int time = extractAudioTime(file.getPath());
-        totalTime += time;
-        
-        if (isCancelled()) {
+        totalTime += extractAudioTime(file);
+
+        if (!this.running) {
           logw("Task is cancelled: " + this);
           break;
         }
       }
-
-      return null;
-    }
-    
-    protected void onPostExecute(Void result) {
-      String folderTime = Fun.formatTime(totalTime, true, false);
-      textPlayingFolderTime.setText(folderTime);
-    }
-  }
-  
-
-  private class ProcessItemsQueueTask extends AsyncTask<Void, Void, Void> {
-    private List<ListItem> items;
-    
-    public ProcessItemsQueueTask(List<ListItem> items) {
-      this.items = List.copyOf(items);
-    }
-    
-    protected Void doInBackground(Void... params) {
-      while (!itemsQueue.isEmpty()) {
-        int pos = itemsQueue.remove();
-        if (pos >= this.items.size()) continue;
-        
-        ListItem item = this.items.get(pos);
-        
-        if (item.isFile) {
-          int time = extractAudioTime(item.path);
-          item.time = Fun.formatTime(time, false, false);
-        }
+      
+      if (this.running) {
+        handler.post(() -> this.onFinished.run(totalTime));
       }
       
-      return null;
-    }
-    
-    protected void onPostExecute(Void result) {
-      itemsQueue.clear();
-      filesAdapter.notifyDataSetChanged();
+      this.running = false;
     }
   }
   
