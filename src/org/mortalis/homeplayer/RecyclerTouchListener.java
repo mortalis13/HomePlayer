@@ -21,7 +21,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
         if (viewHolder == null) {
           log("item onLongPress: viewHolder is null");
           return;
-        };
+        }
         viewHolder.processLongPress();
       }
     });

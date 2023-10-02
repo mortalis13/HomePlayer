@@ -86,7 +86,7 @@ public class RangeSliderView extends View {
     if (value >= progressEnd) value = progressEnd - MIN_RANGE;
     
     this.progressStart = value;
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
   
@@ -96,7 +96,7 @@ public class RangeSliderView extends View {
     if (value <= progressStart) value = progressStart + MIN_RANGE;
     
     this.progressEnd = value;
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
   
@@ -116,11 +116,11 @@ public class RangeSliderView extends View {
     
     this.progressStep = (float) this.canvasWidth / this.maxValue;
     
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
   
-  private void rebuildProgess() {
+  private void rebuildProgress() {
     float left   = this.progressStart * this.progressStep;
     float top    = 0;
     float right  = this.progressEnd * this.progressStep;

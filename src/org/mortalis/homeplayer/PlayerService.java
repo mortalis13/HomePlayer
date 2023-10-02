@@ -407,8 +407,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("requestAudioFocus()");
     if (audioManager == null) return false;
 
-    int result = 0;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {  // 26
+    int result;
+    if (Build.VERSION.SDK_INT >= 26) {
       result = audioManager.requestAudioFocus(focusRequest);
     }
     else {
@@ -420,7 +420,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   private void removeAudioFocus() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {  // 26
+    if (Build.VERSION.SDK_INT >= 26) {
       audioManager.abandonAudioFocusRequest(focusRequest);
     }
     else {
@@ -466,7 +466,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   private void updateNotification(int action) {
-    Notification notification = null;
+    Notification notification;
     if (notificationBuilder == null) {
       notification = buildPlayerNotification();
     }

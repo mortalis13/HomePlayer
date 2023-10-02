@@ -352,25 +352,23 @@ public class MainActivity extends AppCompatActivity {
   
   private void requestAppPermissions(Context context) {
     logd("requestAppPermissions()");
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {  // 30
+    if (Build.VERSION.SDK_INT < 30) {
       String permission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
       boolean isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
       if (!isGranted) {
         requestPermissions(new String[] {permission}, Vars.APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE);
       }
     }
-    else {
-      if (!Environment.isExternalStorageManager()) {
-        Uri uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID);
-        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-        startActivity(intent);
-      }
-      else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {  // 33
-        String permission = Manifest.permission.POST_NOTIFICATIONS;
-        boolean isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
-        if (!isGranted) {
-          requestPermissions(new String[] {permission}, Vars.APP_PERMISSION_REQUEST_POST_NOTIFICATIONS);
-        }
+    else if (!Environment.isExternalStorageManager()) {
+      Uri uri = Uri.parse("package:" + BuildConfig.APPLICATION_ID);
+      Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
+      startActivity(intent);
+    }
+    else if (Build.VERSION.SDK_INT >= 33) {
+      String permission = Manifest.permission.POST_NOTIFICATIONS;
+      boolean isGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+      if (!isGranted) {
+        requestPermissions(new String[] {permission}, Vars.APP_PERMISSION_REQUEST_POST_NOTIFICATIONS);
       }
     }
   }
@@ -804,9 +802,7 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    bLooperReset.setOnClickListener(v -> {
-      loopSlider.reset();
-    });
+    bLooperReset.setOnClickListener(v -> loopSlider.reset());
     
     bLoopCycleOffsetStep.setOnClickListener(v -> {
       for (int i = 0; i < Vars.LOOP_OFFSET_STEPS.length; i++) {
@@ -1304,9 +1300,7 @@ public class MainActivity extends AppCompatActivity {
     
     fileList.stream()
       .filter(item -> item.isFile)
-      .forEach(item -> {
-        item.repeat = repeatableFiles.contains(item.path);
-      });
+      .forEach(item -> item.repeat = repeatableFiles.contains(item.path));
   }
   
   private void updateFavoritesStats() {
@@ -1617,7 +1611,7 @@ public class MainActivity extends AppCompatActivity {
   private void loadPlaylistTime() {
     loadPlaylistTimeTask.cancel();
     
-    var stream = Stream.of(playingList).filter(item -> item.isFile()).map(File::getPath);
+    var stream = Stream.of(playingList).filter(File::isFile).map(File::getPath);
     loadPlaylistTimeTask.setList(stream);
     
     loadPlaylistTimeTask.execute(time -> {

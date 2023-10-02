@@ -368,7 +368,7 @@ public class Fun {
   }
 
   public static void createNotificationChannel(Context context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (Build.VERSION.SDK_INT >= 26) {
       String id = Vars.NOTIFICATIONS_CHANNEL_ID;
       CharSequence name = context.getString(R.string.notification_channel_name);
       String description = context.getString(R.string.notification_channel_description);

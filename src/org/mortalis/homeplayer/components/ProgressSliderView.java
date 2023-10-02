@@ -114,7 +114,7 @@ public class ProgressSliderView extends View {
   
   public void setProgress(int value) {
     this.progress = value;
-    rebuildProgess();
+    rebuildProgress();
     rebuildLoopProgress();
     invalidate();
   }
@@ -131,11 +131,11 @@ public class ProgressSliderView extends View {
     
     this.progressStep = (float) this.canvasWidth / this.maxValue;
     
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
   
-  private void rebuildProgess() {
+  private void rebuildProgress() {
     float left   = 0;
     float top    = 0;
     float right  = this.progress * this.progressStep;

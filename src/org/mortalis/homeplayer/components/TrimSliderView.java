@@ -78,7 +78,7 @@ public class TrimSliderView extends View {
     if (value < 0) value = 0;
 
     this.progress = value;
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
   
@@ -88,11 +88,11 @@ public class TrimSliderView extends View {
     if (this.maxValue == 0) setMax(this.canvasWidth);
     if (this.maxValue == 0) return;
     
-    rebuildProgess();
+    rebuildProgress();
     invalidate();
   }
 
-  private void rebuildProgess() {
+  private void rebuildProgress() {
     this.progressStep = (float) this.canvasWidth / this.maxValue;
     float progressPx = this.progress * this.progressStep;
     
