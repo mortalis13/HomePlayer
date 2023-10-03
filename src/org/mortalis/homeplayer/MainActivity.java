@@ -150,6 +150,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView activeTitle;
   
   private ProgressSliderView progressSlider;
+  
+  private RelativeLayout contentContainer;
   private RecyclerView itemsListView;
   
   private TextView textTimeLeft;
@@ -375,9 +377,19 @@ public class MainActivity extends AppCompatActivity {
   
   private void init() {
     log("Screen DPI: " + Fun.getScreenDpi());
+    
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
     audioManager = context.getSystemService(AudioManager.class);
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
+    
+    fileList = new ArrayList<>();
+    filesAdapter = new FilesAdapter(fileList, this);
+    
+    filesAdapter.itemClickAction = (item) -> itemClick(item);
+    filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
+    filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
+    filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
+    filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
     
     trimmedProgressColor = MaterialColors.getColor(context, R.attr.trimSliderProgressColor, Color.TRANSPARENT);
     
@@ -428,8 +440,10 @@ public class MainActivity extends AppCompatActivity {
     titleScroller = findViewById(R.id.titleScroller);
     activeTitle = findViewById(R.id.activeTitle);
     
-    itemsListView = findViewById(R.id.itemsList);
     progressSlider = findViewById(R.id.progressSlider);
+    
+    contentContainer = findViewById(R.id.contentContainer);
+    itemsListView = findViewById(R.id.itemsList);
     
     textTimePlaying = findViewById(R.id.textTimePlaying);
     textTimeLeft = findViewById(R.id.textTimeLeft);
@@ -531,15 +545,6 @@ public class MainActivity extends AppCompatActivity {
     // Init components
     titleScroller.setSmoothScrollingEnabled(false);
     
-    fileList = new ArrayList<>();
-    filesAdapter = new FilesAdapter(fileList, this);
-    
-    filesAdapter.itemClickAction = (item) -> itemClick(item);
-    filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
-    filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
-    filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
-    filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
-    
     listLayoutManager = new LinearLayoutManager(context);
     
     itemsListView.setAdapter(filesAdapter);
@@ -618,6 +623,12 @@ public class MainActivity extends AppCompatActivity {
     // Prevent click through the panels
     extraInfoPanel.setOnClickListener(null);
     extraControlPanel.setOnClickListener(null);
+    
+    contentContainer.setOnTouchListener(new OnSwipeTouchListener(this) {
+      public void onSwipeRight() {
+        changeToParentDir();
+      }
+    });
     
     mainInfo.setOnTouchListener(new OnSwipeTouchListener(this) {
       public void onSwipeLeft() {
@@ -713,7 +724,6 @@ public class MainActivity extends AppCompatActivity {
     volumeSlider.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     updateVolumeLevel();
     
-    
     // Trim
     textTrimMax.setText(Fun.formatTime(Vars.MAX_TRIM * 1000, false, false));
     updateAudioTrimText(0);
@@ -728,7 +738,6 @@ public class MainActivity extends AppCompatActivity {
       // Reset the trimming configuration until new playback is started
       audioTrimEnabled = false;
     });
-    
     
     // Looper
     Action _updateLoop = () -> {
@@ -836,7 +845,6 @@ public class MainActivity extends AppCompatActivity {
       _updateLoop.execute();
       EngineNative.setLoopEnd(loopSlider.getProgressEnd());
     });
-    
     
     // Equalizer
     equalizerView.setupBands(Vars.EQ_BANDS);
@@ -1197,6 +1205,7 @@ public class MainActivity extends AppCompatActivity {
     if (currentPath.equals(ROOT_STORAGE)) {
       log("In the root folder, cannot go to parent");
       listLayoutManager.scrollToPositionWithOffset(0, 0);
+      hideExtraPanels();
       return;
     }
     
