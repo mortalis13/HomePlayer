@@ -1161,8 +1161,8 @@ public class MainActivity extends AppCompatActivity {
       if (pos >= fileList.size()) return;
       fileList.get(pos).time = Fun.formatTime(time, false, false);
       
-      if (pos <= itemsListView.getChildCount()) {
-        filesAdapter.notifyItemChanged(pos);
+      if (pos == listLayoutManager.findLastVisibleItemPosition()) {
+        filesAdapter.notifyDataSetChanged();
       }
     });
     loadDirectoryTimeTask.execute(time -> {
