@@ -1169,7 +1169,7 @@ public class MainActivity extends AppCompatActivity {
       if (pos >= fileList.size()) return;
       fileList.get(pos).time = Fun.formatTime(time, false, false);
       
-      if (pos == listLayoutManager.findLastVisibleItemPosition()) {
+      if (pos == listLayoutManager.findLastVisibleItemPosition() + 1 || pos == fileList.size() - 1) {
         filesAdapter.notifyDataSetChanged();
       }
     });
