@@ -21,6 +21,7 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
     switch (action) {
       case PlayerService.ACTION_PLAY -> receiverListener.onMsgPlay();
       case PlayerService.ACTION_PAUSE -> receiverListener.onMsgPause();
+      case PlayerService.ACTION_NEXT -> receiverListener.onMsgNext();
       case PlayerService.ACTION_EXIT -> receiverListener.onMsgExit();
     }
   }
@@ -28,6 +29,7 @@ public class PlayerServiceReceiver extends BroadcastReceiver {
   public interface ReceiverListener {
     public void onMsgPlay();
     public void onMsgPause();
+    public void onMsgNext();
     public void onMsgExit();
   }
 }

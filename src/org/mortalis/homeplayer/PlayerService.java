@@ -41,11 +41,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   
   public static final String ACTION_PLAY = "org.mortalis.homeplayer.action.PLAY";
   public static final String ACTION_PAUSE = "org.mortalis.homeplayer.action.PAUSE";
+  public static final String ACTION_NEXT = "org.mortalis.homeplayer.action.NEXT";
   public static final String ACTION_EXIT = "org.mortalis.homeplayer.action.EXIT";
 
   private static final int ACTION_PLAY_ID = 0;
   private static final int ACTION_PAUSE_ID = 1;
-  private static final int ACTION_EXIT_ID = 2;
+  private static final int ACTION_NEXT_ID = 2;
+  private static final int ACTION_EXIT_ID = 3;
 
   private final IBinder binder = new PlayerBinder();
   private final HeadphonesPlugReceiver headphonesPlugReceiver = new HeadphonesPlugReceiver();
@@ -74,6 +76,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private Runnable progressRunnable;
 
   public Action exitAction = () -> {};
+  public Action playNextAction = () -> {};
   public SingleAction<Integer> progressSetupAction = (arg) -> {};
   public SingleAction<Integer> progressUpdateAction = (arg) -> {};
   public DoubleAction<Integer> timeInitAction = (arg1, arg2) -> {};
@@ -184,6 +187,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       public void onMsgPause() {
         pause();
       }
+      public void onMsgNext() {
+        playNextAction.execute();
+      }
       public void onMsgExit() {
         stopProgress();
         exitAction.execute();
@@ -193,6 +199,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     IntentFilter serviceFilter = new IntentFilter();
     serviceFilter.addAction(ACTION_PLAY);
     serviceFilter.addAction(ACTION_PAUSE);
+    serviceFilter.addAction(ACTION_NEXT);
     serviceFilter.addAction(ACTION_EXIT);
     ContextCompat.registerReceiver(this, playerServiceReceiver, serviceFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
 
@@ -202,11 +209,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
     PendingIntent playIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PLAY), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     PendingIntent pauseIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_PAUSE), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    PendingIntent nextIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_NEXT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     PendingIntent exitIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_EXIT), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     notificationActions = new NotificationCompat.Action[] {
       new NotificationCompat.Action(R.drawable.baseline_play_arrow_black_24, "Play", playIntent),
       new NotificationCompat.Action(R.drawable.baseline_pause_black_24, "Pause", pauseIntent),
+      new NotificationCompat.Action(R.drawable.baseline_navigate_next_black_24, "Next", nextIntent),
       new NotificationCompat.Action(R.drawable.round_close_black_24, "Exit", exitIntent)
     };
     
@@ -450,6 +459,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
       int actionId = isPlaying() ? ACTION_PAUSE_ID: ACTION_PLAY_ID;
       notificationBuilder.addAction(notificationActions[actionId]);
+      notificationBuilder.addAction(notificationActions[ACTION_NEXT_ID]);
       notificationBuilder.addAction(notificationActions[ACTION_EXIT_ID]);
 
       MediaStyle style = new MediaStyle();

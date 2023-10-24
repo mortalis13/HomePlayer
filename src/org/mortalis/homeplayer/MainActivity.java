@@ -30,6 +30,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.view.WindowManager;
 import android.widget.HorizontalScrollView;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -38,7 +39,6 @@ import android.widget.ScrollView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -400,6 +400,7 @@ public class MainActivity extends AppCompatActivity {
         playerService = binder.getService();
         
         playerService.exitAction = () -> exitApp();
+        playerService.playNextAction = () -> playNextFileAction();
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
         playerService.timeInitAction = (time, timeTotal) -> onPlayingTimeSetup(time, timeTotal);
