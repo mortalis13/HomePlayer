@@ -1508,7 +1508,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void selectPlayingDirOrFile() {
-    if (playerService == null || !playerService.hasAudio()) return;
+    if (playerService == null || !playerService.isPlayerLoaded() || !playerService.hasAudio()) return;
     if (!new File(playerService.getAudioPath()).exists()) return;
     selectItem(playerService.getAudioPath());
   }
