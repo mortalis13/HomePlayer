@@ -44,6 +44,8 @@ public class VolumeSliderView extends View {
   private int moveStartX;
   private int stepsDone;
   
+  private boolean touchCancelled;
+  
   private ProgressChangeListener progressChangeListener;
   
   
@@ -125,12 +127,16 @@ public class VolumeSliderView extends View {
     if (action == MotionEvent.ACTION_DOWN) {
       this.moveStartX = x;
       this.stepsDone = 0;
+      this.touchCancelled = false;
     }
     
     if (action == MotionEvent.ACTION_MOVE) {
+      if (this.touchCancelled) return true;
+      
       // Detect if vertical offset is greater than max and reset the position
       int outerVerticalOffset = (y < 0) ? Math.abs(y): y - this.canvasHeight;
       if (outerVerticalOffset > MAX_VERTICAL_DISTANCE) {
+        this.touchCancelled = true;
         cancelTouch();
         return true;
       }
