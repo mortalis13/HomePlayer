@@ -1777,10 +1777,8 @@ public class MainActivity extends AppCompatActivity {
     String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
     textPlayingPosition.setText(stats);
     
-    String extraData = playerService.getCodecName();
-    if (extraData == null || extraData.length() == 0) {
-      extraData = Fun.formatSize(playingFile.length());
-    }
+    int bitrate = playerService.getBitrate() / 1000;
+    String extraData = bitrate + ((bitrate < 10000) ? " kbps": " k");
     textFileExtraData.setText(extraData);
   }
   

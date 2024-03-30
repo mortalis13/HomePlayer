@@ -7,7 +7,7 @@ public class Vars {
   
   public static final String APP_LOG_TAG = "home_player";
   public static final int NOTIFICATION_ID = 111;
-  public static final String NOTIFICATIONS_CHANNEL_ID = "homeplayer_channel_id";
+  public static final String NOTIFICATION_CHANNEL_ID = "homeplayer";
   
   public static final int APP_PERMISSION_REQUEST_ACCESS_EXTERNAL_STORAGE = 101;
   public static final int APP_PERMISSION_REQUEST_POST_NOTIFICATIONS = 102;

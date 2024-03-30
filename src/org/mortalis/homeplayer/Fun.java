@@ -369,14 +369,13 @@ public class Fun {
 
   public static void createNotificationChannel(Context context) {
     if (Build.VERSION.SDK_INT >= 26) {
-      String id = Vars.NOTIFICATIONS_CHANNEL_ID;
       CharSequence name = context.getString(R.string.notification_channel_name);
       String description = context.getString(R.string.notification_channel_description);
-      int importance = NotificationManager.IMPORTANCE_LOW;
 
-      NotificationChannel channel = new NotificationChannel(id, name, importance);
+      NotificationChannel channel = new NotificationChannel(Vars.NOTIFICATION_CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW);
       channel.setDescription(description);
       channel.setShowBadge(false);
+      
       NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
       notificationManager.createNotificationChannel(channel);
     }

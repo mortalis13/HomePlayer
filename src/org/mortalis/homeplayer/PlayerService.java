@@ -19,8 +19,8 @@ import android.os.Looper;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
+import androidx.core.content.ContextCompat;
 
 import org.mortalis.homeplayer.actions.SingleAction;
 import org.mortalis.homeplayer.actions.DoubleAction;
@@ -447,7 +447,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       Intent intent = new Intent(this, MainActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-      notificationBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATIONS_CHANNEL_ID);
+      notificationBuilder = new NotificationCompat.Builder(this, Vars.NOTIFICATION_CHANNEL_ID);
       notificationBuilder.setContentTitle(title);
       notificationBuilder.setContentText(text);
 
@@ -627,6 +627,26 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   String getCodecName() {
     if (!this.playerLoaded) return null;
     return EngineNative.getCodecName();
+  }
+  
+  int getBitrate() {
+    if (!this.hasAudio()) return 0;
+    int result = 0;
+    
+    var metadata = new MediaMetadataRetriever();
+    try {
+      metadata.setDataSource(this.audioPath);
+      String bitrate = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+      result = bitrate != null ? Integer.parseInt(bitrate): 0;
+    }
+    catch (Exception e) {
+      logw("Could not get audio metadata for: %s => %s", this.audioPath, e);
+    }
+    finally {
+      try {metadata.release();} catch (IOException e) {}
+    }
+    
+    return result;
   }
   
   
