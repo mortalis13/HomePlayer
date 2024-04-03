@@ -336,6 +336,7 @@ public class ProgressSliderView extends View {
   }
   
   public int getWaveformHeight() {
+    if (this.canvasHeight == 0) return 0;
     return this.canvasHeight - WAVEFORM_PAD;
   }
   

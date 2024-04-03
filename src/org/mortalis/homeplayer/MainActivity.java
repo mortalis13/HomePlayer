@@ -290,8 +290,11 @@ public class MainActivity extends AppCompatActivity {
     logd("MainActivity.onResume()");
     super.onResume();
     bindPlayerService();
-    if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) playerService.resetService();
+    if (serviceBound && !playerService.isPlaying() && !playerService.hasProgress()) {
+      playerService.resetService();
+    }
     validateCurrentDir();
+    validateActiveWaveform();
   }
   
   @Override
@@ -2258,15 +2261,17 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    int sliderWidth = progressSlider.getWaveformWidth();
-    int sliderHeight = progressSlider.getWaveformHeight();
+    AudioUtilsNative.waveformData = null;
     
-    if (sliderWidth <= 0 || sliderHeight <= 0) {
-      loge("Incorrect values for waveform %d x %d", sliderWidth, sliderHeight);
+    final int waveformWidth = progressSlider.getWaveformWidth();
+    final int waveformHeight = progressSlider.getWaveformHeight();
+    
+    if (waveformWidth <= 0 || waveformHeight <= 0) {
+      loge("Incorrect values for waveform (%d x %d)", waveformWidth, waveformHeight);
       return;
     }
     
-    log("Building waveform for (%s) and size %d x %d", audioPath, sliderWidth, sliderHeight);
+    log("Building waveform for (%s) and size (%d x %d)", audioPath, waveformWidth, waveformHeight);
     AudioUtilsNative.cancelWaveform();
     
     Thread waveformDecodeThread = new Thread(() -> {
@@ -2274,12 +2279,12 @@ public class MainActivity extends AppCompatActivity {
         log("waveformDecodeThread started");
         currentWaveformFile = null;
         
-        if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != sliderWidth * 2) {
+        if (AudioUtilsNative.waveformData == null || AudioUtilsNative.waveformData.length != waveformWidth * 2) {
           // Waveform is drawn with vertical lines from min to max value for each block, data is sequential [max1, min1, max2, min2, ...]
-          log("Creating new array for waveform data of size %d x 2 values for each pixel", sliderWidth);
-          AudioUtilsNative.waveformData = new short[sliderWidth * 2];
+          log("Creating new array for waveform data of size %d x 2 values for each pixel", waveformWidth);
+          AudioUtilsNative.waveformData = new short[waveformWidth * 2];
         }
-        int result = AudioUtilsNative.buildWaveform(audioPath, sliderWidth, sliderHeight);
+        int result = AudioUtilsNative.buildWaveform(audioPath, waveformWidth, waveformHeight);
         
         if (result == 0 && AudioUtilsNative.waveformData != null) {
           log("Waveform build result (%s): %d, %d values", audioPath, result, AudioUtilsNative.waveformData.length);
@@ -2296,6 +2301,18 @@ public class MainActivity extends AppCompatActivity {
     
     progressSlider.clearWaveform();
     waveformDecodeThread.start();
+  }
+  
+  private void validateActiveWaveform() {
+    if (serviceBound && playerService.isPlayerLoaded()) {
+      if (AudioUtilsNative.waveformData == null) {
+        Fun.toast(this, "Rebuilding waveform on null");
+        logw("Waveform data is null for playing file, but player is loaded. Rebuilding waveform.");
+        progressSlider.post(() -> {
+          updateWaveform(playerService.getAudioPath());
+        });
+      }
+    }
   }
   
 
