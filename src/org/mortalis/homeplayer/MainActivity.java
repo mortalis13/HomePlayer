@@ -942,11 +942,13 @@ public class MainActivity extends AppCompatActivity {
     if (playerService.isPlaying()) {
       playerService.pause();
       audioTrimEnabled = false;
+      validatePlayingList();
     }
     else if (playerService.isPlayerLoaded()) {
       boolean result = playerService.resume();
       if (result) setPlayButtonAsPause();
       else setPlayButtonDefault();
+      validatePlayingList();
     }
     else {
       // If stopped or service is reset, restart audio
@@ -1196,8 +1198,6 @@ public class MainActivity extends AppCompatActivity {
     markFavorites();
     updateFavoritesStats();
     
-    validatePlayingList();
-    
     hideExtraPanels();
   }
   
@@ -1265,6 +1265,10 @@ public class MainActivity extends AppCompatActivity {
     
     File playingFile = getPlayingFile();
     if (playingFile == null) return;
+    if (!playingFile.exists()) {
+      loge("File doesn't exist: " + playingFile);
+      return;
+    }
 
     if (belongsToCurrentDir(playingFile)) {
       int scrollPos = filesAdapter.getItemPosition(playingFile.getPath());
@@ -1481,17 +1485,28 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private File getPrevNextFile(File file, boolean next) {
+    if (playingList == null || playingList.length == 0) return null;
+
+    File result = null;
     int len = playingList.length;
+
     for (int i = 0; i < len; i++) {
       if (playingList[i].equals(file)) {
         if (next) {
-          return playingList[i == len-1 ? 0: i+1];
+          result = playingList[i == len-1 ? 0: i+1];
         }
-        return playingList[i == 0 ? len-1: i-1];
+        else {
+          result = playingList[i == 0 ? len-1: i-1];
+        }
+        break;
       }
     }
     
-    return null;
+    if (result == null) {
+      result = playingList[next ? 0: playingList.length - 1];
+    }
+    
+    return result;
   }
   
   private File getNextRandomFile(File file) {
@@ -1512,7 +1527,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void selectPlayingDirOrFile() {
     if (playerService == null || !playerService.isPlayerLoaded() || !playerService.hasAudio()) return;
-    if (!new File(playerService.getAudioPath()).exists()) return;
+    if (!Fun.fileExists(playerService.getAudioPath())) return;
     selectItem(playerService.getAudioPath());
   }
   
@@ -1609,6 +1624,10 @@ public class MainActivity extends AppCompatActivity {
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
     if (dir == null) return;
+    if (!dir.exists()) {
+      loge("Directory doesn't exist: " + dir);
+    }
+    
     playingList = dir.listFiles(Fun.fileFilter);
     if (playingList == null) return;
     Arrays.sort(playingList, Fun.nocaseComp);
@@ -1622,6 +1641,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void loadPlaylistTime() {
+    if (playingList == null) return;
     loadPlaylistTimeTask.cancel();
     
     var stream = Stream.of(playingList).filter(File::isFile).map(File::getPath);
@@ -1633,11 +1653,14 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void validatePlayingList() {
-    if (playingList == null || playingList.length == 0) return;
-    // Reload cached list if the loaded file list size doesn't match the playlist size and current folder is the playlist folder
-    if (currentPath != null && currentPath.equals(playingList[0].getParentFile()) && playingList.length != fileList.size()) {
-      reloadPlayingListForDir(currentPath);
-      updatePlayingStats();
+    if (playingList == null) return;
+    
+    for (int i = 0; i < playingList.length; i++) {
+      if (!playingList[i].exists()) {
+        reloadPlayingListForDir(playingList[0].getParentFile());
+        updatePlayingStats();
+        break;
+      }
     }
   }
   
@@ -1696,6 +1719,14 @@ public class MainActivity extends AppCompatActivity {
           loadPlaylistTime();
         }
       }
+      else {
+        for (int i = 0; i < playingList.length; i++) {
+          if (!playingList[i].exists()) {
+            reloadPlayingListForDir(newAudioFile.getParentFile());
+            break;
+          }
+        }
+      }
     }
     else {
       reloadPlayingListForDir(newAudioFile.getParentFile());
@@ -1730,7 +1761,7 @@ public class MainActivity extends AppCompatActivity {
     var listCopy = List.copyOf(favoritesList);
     
     for (String favPath: listCopy) {
-      if (!new File(favPath).exists()) {
+      if (!Fun.fileExists(favPath)) {
         favoritesList.remove(favPath);
       }
     }
@@ -1769,6 +1800,13 @@ public class MainActivity extends AppCompatActivity {
     if (playerService == null || !playerService.hasAudio()) return;
     File playingFile = new File(playerService.getAudioPath());
     
+    if (playingList == null) {
+      loge("playingList is null");
+      textPlayingPosition.setText("0/0");
+      textFileExtraData.setText("0");
+      return;
+    }
+    
     int playingItemPos = -1;
     for (int i = 0; i < playingList.length; i++) {
       if (playingFile.equals(playingList[i])) {
@@ -1781,7 +1819,7 @@ public class MainActivity extends AppCompatActivity {
     textPlayingPosition.setText(stats);
     
     int bitrate = playerService.getBitrate() / 1000;
-    String extraData = bitrate + ((bitrate < 10000) ? " kbps": " k");
+    String extraData = bitrate + (bitrate < 10000 ? " kbps": " k");
     textFileExtraData.setText(extraData);
   }
   
@@ -2043,6 +2081,11 @@ public class MainActivity extends AppCompatActivity {
   
   private void showExtraAudioInfo(String filePath) {
     logd("showExtraAudioInfo()");
+    
+    if (!Fun.fileExists(filePath)) {
+      loge("File doesn't exist: " + filePath);
+      return;
+    }
     
     loadExtraAudioInfo(filePath);
     fillAudioInfo();
