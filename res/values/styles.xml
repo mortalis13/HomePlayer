@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-  <style name="AppTheme" parent="Theme.AppCompat.Light">
+  <style name="AppThemeLight" parent="Theme.AppCompat.Light">
     <item name="windowActionBar">false</item>
     <item name="windowNoTitle">true</item>
     <item name="android:forceDarkAllowed">false</item>
   </style>
   
+  <style name="AppThemeDark" parent="Theme.AppCompat">
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+    <item name="android:forceDarkAllowed">false</item>
+  </style>
   
-  <style name="AppTheme.Main" parent="AppTheme">
+  <style name="AppTheme.Light" parent="AppThemeLight">
     <item name="mainBackground">@color/main_background</item>
     <item name="secondaryBackground">@color/secondary_background</item>
     
@@ -97,7 +102,7 @@
   </style>
   
   
-  <style name="AppTheme.Dark" parent="AppTheme.Main">
+  <style name="AppTheme.Dark" parent="AppThemeDark">
     <item name="mainBackground">@color/main_background_dark</item>
     <item name="secondaryBackground">@color/secondary_background_dark</item>
     
@@ -107,9 +112,11 @@
     
     <item name="titleBackground">@color/title_background_dark</item>
     <item name="separatorColor">@color/separator_color_dark</item>
+    <item name="extraIconTintColor">@color/play_control_extra_icon_tint_color</item>
     <item name="scrollbarDefaultBackground">@color/scrollbar_default_background_dark</item>
     <item name="scrollbarPressedBackground">@color/scrollbar_pressed_background_dark</item>
     
+    <item name="sliderBackgroundColor">@color/slider_background_color</item>
     <item name="sliderProgressColor">@color/slider_progress_color_dark</item>
     <item name="sliderBorderColor">@color/slider_border_color_dark</item>
     <item name="sliderWaveformColor">@color/slider_waveform_color_dark</item>
@@ -118,11 +125,14 @@
     <item name="sliderLoopProgressColor">@color/slider_loop_progress_color_dark</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed_dark</item>
+    <item name="controlButtonBackgroundDefault">@color/control_button_background_default</item>
     
     <item name="secondaryButtonBackgroundPressed">@color/secondary_button_background_pressed_dark</item>
+    <item name="secondaryButtonBackgroundDefault">@color/secondary_button_background_default</item>
 
     <item name="listItemBackgroundPressed">@color/list_item_background_pressed_dark</item>
     <item name="listItemBackgroundSelected">@color/list_item_background_selected_dark</item>
+    <item name="listItemBackgroundDefault">@color/list_item_background_default</item>
     
     <item name="listItemButtonBackgroundPressed">@color/list_item_button_background_pressed_dark</item>
     <item name="listItemButtonBackgroundDefault">@color/list_item_button_background_default_dark</item>
@@ -139,13 +149,19 @@
     <item name="dangerButtonBackgroundPressed">@color/danger_button_background_pressed_dark</item>
     <item name="dangerButtonBackgroundDefault">@color/danger_button_background_default_dark</item>
     
+    <item name="favoriveMarkColor">@color/favorive_mark_color</item>
+    
     <item name="toggleButtonBackgroundPressed">@color/toggle_button_background_pressed_dark</item>
     <item name="toggleButtonBackgroundSelected">@color/toggle_button_background_selected_dark</item>
+    <item name="toggleButtonBackgroundDefault">@color/toggle_button_background_default</item>
     
     <item name="panelToggleButtonBackgroundPressed">@color/panel_toggle_button_background_pressed_dark</item>
     <item name="panelToggleButtonBackgroundSelected">@color/panel_toggle_button_background_selected_dark</item>
+    <item name="panelToggleButtonBackgroundDefault">@color/panel_toggle_button_background_default</item>
     
+    <item name="trimSliderBackgroundColor">@color/trim_slider_background_color</item>
     <item name="trimSliderProgressColor">@color/trim_slider_progress_color_dark</item>
+    <item name="trimSliderBorderColor">@color/trim_slider_border_color</item>
     
     <item name="eqBackground">@color/eq_background_dark</item>
     <item name="eqActivationButtonBackground">@color/eq_activation_button_background_dark</item>
@@ -161,6 +177,7 @@
     <item name="volumeSliderProgressColor">@color/volume_slider_progress_color_dark</item>
     <item name="volumeSliderProgressMediumColor">@color/volume_slider_progress_medium_color_dark</item>
     <item name="volumeSliderProgressHighColor">@color/volume_slider_progress_high_color_dark</item>
+    <item name="volumeSliderBackgroundColor">@color/volume_slider_background_color</item>
     <item name="volumeSliderBorderColor">@color/volume_slider_border_color_dark</item>
     
     <item name="rangeSliderBackgroundColor">@color/range_slider_background_color_dark</item>
