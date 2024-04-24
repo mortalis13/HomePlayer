@@ -6,12 +6,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Process;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
+import java.util.Date;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.text.RuleBasedCollator;
 
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 
@@ -38,7 +42,19 @@ public class Fun {
   };
   
   public static Comparator<File> nocaseComp = (item1, item2) -> {
-    if (item1 == null || item2 == null) return 0;
+    // try {
+    //   return new RuleBasedCollator("&'_'< a< z").compare(item1.getName(), item2.getName());
+    //   // return new RuleBasedCollator("&a< b< c< d").compare(item1.getName(), item2.getName());
+    // }
+    // catch (Exception e) {
+    //   e.printStackTrace();
+    //   if (item1 == null || item2 == null) return 0;
+    //   return item1.getName().compareToIgnoreCase(item2.getName());
+    // }
+    
+    // if (item1 == null || item2 == null) return 0;
+    // return item1.getName().compareToIgnoreCase(item2.getName());
+    
     // Custom comparator to sort the names with numbers in natural readable order
     Comparator<String> comparator = CaseInsensitiveSimpleNaturalComparator.getInstance();
     return comparator.compare(item1.getName(), item2.getName());
@@ -289,9 +305,30 @@ public class Fun {
           case ERROR -> Log.e(Vars.APP_LOG_TAG, msg);
         }
       }
+      
+      // log_file(msg, level);
     }
     catch (Exception e) {
       System.out.println(Vars.APP_LOG_TAG + " :: " + msg);
+    }
+  }
+  
+  private static void log_file(String msg, Vars.LogLevel level) {
+    try {
+      File f = new File("/sdcard/_test/temp_log.log");
+      FileOutputStream fout = new FileOutputStream(f, true);
+      
+      fout.write(new Date().toString().getBytes());
+      fout.write((" "+Process.myPid() + " ").getBytes());
+      fout.write((Process.myTid() + " ").getBytes());
+      fout.write(level.name().getBytes());
+      fout.write(" :: ".getBytes());
+      fout.write(msg.getBytes());
+      fout.write(0x0a);
+      fout.close();
+    }
+    catch (Exception e){
+      e.printStackTrace();
     }
   }
   

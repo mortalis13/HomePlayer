@@ -137,8 +137,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("PlayerService.onDestroy()");
     super.onDestroy();
 
-    unregisterReceiver(playerServiceReceiver);
-    unregisterReceiver(headphonesPlugReceiver);
+    // unregisterReceiver(playerServiceReceiver);
+    // unregisterReceiver(headphonesPlugReceiver);
     
     removeAudioFocus();
     EngineNative.stopEngine();
@@ -153,8 +153,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   @Override
   public boolean onUnbind(Intent intent) {
     logd("PlayerService.onUnbind()");
+    
+    unregisterReceiver(playerServiceReceiver);
+    unregisterReceiver(headphonesPlugReceiver);
+    
     stopForeground(true);
     stopSelf();
+    
     return super.onUnbind(intent);
   }
 
