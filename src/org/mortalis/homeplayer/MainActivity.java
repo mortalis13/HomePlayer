@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
   private Set<String> favoritesList;
   private boolean playbackRepeat;
   private boolean nextFilePreloaded;
+  private boolean nextPreloadingFailed;
   private boolean updateTimeEnabled;
   
   private boolean playbackShuffle;
@@ -1004,6 +1005,7 @@ public class MainActivity extends AppCompatActivity {
     logd("playAudio(), time: %d, \"%s\"", time, filePath);
     updateTimeEnabled = false;
     nextFilePreloaded = false;
+    nextPreloadingFailed = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
@@ -1016,6 +1018,8 @@ public class MainActivity extends AppCompatActivity {
     File playingFile = new File(filePath);
     if (!playingFile.exists()) {
       loge("The file does not exist: " + filePath);
+      progressSlider.disable();
+      setPlayButtonDefault();
       return;
     }
     
@@ -1053,7 +1057,10 @@ public class MainActivity extends AppCompatActivity {
   
   private void syncNextFile(String filePath) {
     logd("syncNextFile(), \"%s\"", filePath);
+    
     nextFilePreloaded = false;
+    nextPreloadingFailed = false;
+    
     if (filePath == null || filePath.length() == 0) return;
     
     File playingFile = new File(filePath);
@@ -1415,20 +1422,25 @@ public class MainActivity extends AppCompatActivity {
     updatePlayingTime(playingTime, totalTime);
     
     // Preload file when 10s or less is left until the current audio end
-    if (Vars.ENABLE_NEXT_FILE_PRELOADING && !nextFilePreloaded && !playbackShuffle) {
+    if (Vars.ENABLE_NEXT_FILE_PRELOADING && !nextFilePreloaded && !nextPreloadingFailed && !playbackShuffle) {
       int timeLeft = totalTime - playingTime;
       boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
       
       if (nearAudioEnd) {
         File currentFile = new File(playerService.getAudioPath());
         File file = getNextPlaylistFile(currentFile);
-        log("preloading next file: " + file);
-        if (file != null) {
-          nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
-          log("preloading result: " + nextFilePreloaded);
+        
+        nextPreloadingFailed = true;
+        if (file == null) {
+          logw("Next file is null. Cannot preload it");
+        }
+        else if (!file.exists()) {
+          logw("Next file doesn't exist. Cannot preload it: " + file);
         }
         else {
-          logw("Next file is null. Cannot preload it");
+          log("Preloading next file: " + file);
+          nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+          nextPreloadingFailed = !nextFilePreloaded;
         }
       }
     }
