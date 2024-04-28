@@ -552,6 +552,7 @@ public class MainActivity extends AppCompatActivity {
     
     listLayoutManager = new LinearLayoutManager(context);
     
+    itemsListView.getItemAnimator().setChangeDuration(0);
     itemsListView.setAdapter(filesAdapter);
     itemsListView.setLayoutManager(listLayoutManager);
     itemsListView.addOnItemTouchListener(new RecyclerTouchListener(itemsListView));
