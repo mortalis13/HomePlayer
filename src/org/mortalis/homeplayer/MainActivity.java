@@ -1042,6 +1042,13 @@ public class MainActivity extends AppCompatActivity {
     playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat || fileRepeat);
     
     startService(playerIntent);
+    // try {
+    // > check loading with screen off
+    //   startService(playerIntent);
+    // }
+    // catch (Exception e) {
+    //   // e.printStackTrace();
+    // }
     log("playerService started");
     updateTimeEnabled = true;
     
