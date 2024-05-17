@@ -134,6 +134,10 @@ public class Fun {
     return parent;
   }
   
+  public static String getFolder(String file) {
+    return new File(file).getParent();
+  }
+  
   public static String formatTime(int time, boolean withHours, boolean withMs) {  // time in ms
     int _time  = time < 0 ? -time: time;
     String sign = time < 0 ? "-": "";

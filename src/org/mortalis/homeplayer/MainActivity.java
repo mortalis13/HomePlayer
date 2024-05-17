@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
   
   private Parcelable listScrollState;
   
-  private final ExecutorService taskExecutor = Executors.newFixedThreadPool(4);
+  private final ExecutorService taskExecutor = Executors.newFixedThreadPool(8);
   private final Handler taskHandler = HandlerCompat.createAsync(Looper.getMainLooper());
 
   private final LoadDirectoryTimeProcess loadDirectoryTimeTask = new LoadDirectoryTimeProcess(taskExecutor, taskHandler);
@@ -1180,8 +1180,9 @@ public class MainActivity extends AppCompatActivity {
     
     updateDirStatus();
     
-    var stream = fileList.stream().filter(item -> item.isFile).map(item -> item.path);
-    loadDirectoryTimeTask.setList(stream);
+    List<String> list = fileList.stream().filter(item -> item.isFile).map(item -> item.path).collect(Collectors.toList());
+    loadDirectoryTimeTask.setList(list);
+    
     loadDirectoryTimeTask.progress((pos, time) -> {
       int dirsCount = 0;
       if (dirs != null) dirsCount = dirs.length;
@@ -1664,8 +1665,8 @@ public class MainActivity extends AppCompatActivity {
     if (playingList == null) return;
     loadPlaylistTimeTask.cancel();
     
-    var stream = Stream.of(playingList).filter(File::isFile).map(File::getPath);
-    loadPlaylistTimeTask.setList(stream);
+    List<String> list = Stream.of(playingList).filter(File::isFile).map(File::getPath).collect(Collectors.toList());
+    loadPlaylistTimeTask.setList(list);
     
     loadPlaylistTimeTask.execute(time -> {
       textPlayingFolderTime.setText(Fun.formatTime(time, true, false));
@@ -2381,14 +2382,14 @@ public class MainActivity extends AppCompatActivity {
 
   // ---------------------- Classes ----------------------
   private class LoadDirectoryTimeProcess extends BackgroundProcess<Integer> {
-    private Stream<String> list;
+    private List<String> list;
     private int totalTime;
 
     public LoadDirectoryTimeProcess(Executor executor, Handler handler) {
       super(executor, handler);
     }
 
-    public void setList(Stream<String> list) {
+    public void setList(List<String> list) {
       this.list = list;
     }
     
@@ -2397,11 +2398,21 @@ public class MainActivity extends AppCompatActivity {
     }
     
     protected synchronized void run() {
-      log("Start process loading total directory time");
+      if (this.list == null) {
+        loge("The list of files for total time calc is null");
+        return;
+      }
+      
+      String dir = "[empty]";
+      if (this.list.size() > 0) {
+        dir = Fun.getFolder(this.list.get(0));
+        log("Start process loading total directory time: %s", dir);
+      }
+      
       this.running = true;
       totalTime = 0;
       
-      List<String> files = list.collect(Collectors.toList());
+      List<String> files = new ArrayList<>(this.list);
       for (int i = 0; i < files.size(); i++) {
         String file = files.get(i);
         int fileTime = extractAudioTime(file);
@@ -2414,7 +2425,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (!this.running) {
-          logw("Task is cancelled: " + this);
+          logw("Task is cancelled [%x]: %s", this.hashCode(), dir);
           break;
         }
       }
