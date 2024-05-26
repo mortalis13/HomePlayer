@@ -555,7 +555,11 @@ public class MainActivity extends AppCompatActivity {
     itemsListView.getItemAnimator().setChangeDuration(0);
     itemsListView.setAdapter(filesAdapter);
     itemsListView.setLayoutManager(listLayoutManager);
-    itemsListView.addOnItemTouchListener(new RecyclerTouchListener(itemsListView));
+    itemsListView.addOnItemTouchListener(new RecyclerTouchListener(itemsListView) {
+      public void onSwipeRight() {
+        changeToParentDir();
+      }
+    });
     
     Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/consolas.ttf");
     textTimePlaying.setTypeface(typeface);
