@@ -32,9 +32,6 @@ public class OnSwipeTouchListener implements OnTouchListener {
   
   
   private final class GestureListener extends SimpleOnGestureListener {
-    private static final int SWIPE_THRESHOLD = 100;
-    private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-    
     @Override
     public void onLongPress(MotionEvent event) {
       processLongPress();
@@ -55,29 +52,23 @@ public class OnSwipeTouchListener implements OnTouchListener {
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
       try {
-        float diffY = event2.getY() - event1.getY();
-        float diffX = event2.getX() - event1.getX();
-        
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-          if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-            if (diffX > 0) {
-              onSwipeRight();
-            }
-            else {
-              onSwipeLeft();
-            }
-            
-            return true;
-          }
+        if (Gestures.isSwipedLeft(event1, event2, velocityX, velocityY)) {
+          onSwipeLeft();
+          return true;
         }
-        else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-          if (diffY > 0) {
-            onSwipeDown();
-          }
-          else {
-            onSwipeUp();
-          }
-          
+        
+        if (Gestures.isSwipedRight(event1, event2, velocityX, velocityY)) {
+          onSwipeRight();
+          return true;
+        }
+        
+        if (Gestures.isSwipedUp(event1, event2, velocityX, velocityY)) {
+          onSwipeUp();
+          return true;
+        }
+        
+        if (Gestures.isSwipedDown(event1, event2, velocityX, velocityY)) {
+          onSwipeDown();
           return true;
         }
       }

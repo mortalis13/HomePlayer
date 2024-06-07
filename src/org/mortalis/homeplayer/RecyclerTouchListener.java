@@ -19,9 +19,6 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   public RecyclerTouchListener(final RecyclerView recyclerView) {
     gestureDetector = new GestureDetectorCompat(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
-      private static final int SWIPE_THRESHOLD = 100;
-      private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-      
       public void onLongPress(MotionEvent event) {
         var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());
         if (viewHolder == null) {
@@ -31,7 +28,6 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
         viewHolder.processLongPress();
       }
       
-      @Override
       public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
         try {
           if (Gestures.isSwipedRight(event1, event2, velocityX, velocityY)) {
