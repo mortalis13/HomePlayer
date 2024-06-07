@@ -34,24 +34,9 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
       @Override
       public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
         try {
-          float diffY = event2.getY() - event1.getY();
-          float diffX = event2.getX() - event1.getX();
-          
-          if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-              if (diffX > 0) {
-                onSwipeRight();
-                
-                var viewHolder = getViewHolder(recyclerView, event1.getX(), event1.getY());
-                if (viewHolder == null) {
-                  loge("item onLongPress: viewHolder is null");
-                }
-                else {
-                  viewHolder.setItemSwiped();
-                }
-              }
-              return true;
-            }
+          if (Gestures.isSwipedRight(event1, event2, velocityX, velocityY)) {
+            onSwipeRight();
+            return true;
           }
         }
         catch (Exception e) {
@@ -64,10 +49,13 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   }
   
   public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent event) {
-    gestureDetector.onTouchEvent(event);
+    boolean gestureDone = gestureDetector.onTouchEvent(event);
+    if (gestureDone) return true;
 
     int action = event.getAction();
+    
     if (action == MotionEvent.ACTION_DOWN) {
+      // Hide item item on any item touch
       boolean hideMenu = true;
 
       var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());

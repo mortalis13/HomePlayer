@@ -214,7 +214,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     private boolean isRemovePressed;
     private boolean itemLongPressed;
-    private boolean itemSwiped;
     
     public ItemViewHolder(View rootView) {
       super(rootView);
@@ -274,10 +273,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       holderWithMenu = this;
     }
     
-    public void setItemSwiped() {
-      itemSwiped = true;
-    }
-    
     private boolean processOnTouch(View view, MotionEvent event) {
       if (this.item == null) return false;
       int action = event.getAction();
@@ -292,15 +287,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       else if (action == MotionEvent.ACTION_CANCEL) {
         view.setPressed(false);
         itemLongPressed = false;
-        itemSwiped = false;
       }
       else if (action == MotionEvent.ACTION_UP) {
         view.setPressed(false);
-        if (!itemLongPressed && !itemSwiped) {
+        if (!itemLongPressed) {
           itemClickAction.execute(this.item);
         }
         itemLongPressed = false;
-        itemSwiped = false;
       }
       
       return true;
