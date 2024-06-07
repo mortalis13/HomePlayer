@@ -21,14 +21,14 @@ public class OnSwipeTouchListener implements OnTouchListener {
     return gestureDetector.onTouchEvent(event);
   }
   
-  public void processLongPress() {}
-  public void processDoubleTap(MotionEvent e) {}
-  public void processDown() {}
+  protected void processLongPress() {}
+  protected void processDoubleTap(MotionEvent e) {}
+  protected void processDown() {}
   
-  public void onSwipeRight() {}
-  public void onSwipeLeft() {}
-  public void onSwipeUp() {}
-  public void onSwipeDown() {}
+  protected void onSwipeRight() {}
+  protected void onSwipeLeft() {}
+  protected void onSwipeUp() {}
+  protected void onSwipeDown() {}
   
   
   private final class GestureListener extends SimpleOnGestureListener {

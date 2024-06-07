@@ -15,7 +15,7 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   private final GestureDetectorCompat gestureDetector;
   
-  public void onSwipeRight() {}
+  protected void onSwipeRight() {}
   
   public RecyclerTouchListener(final RecyclerView recyclerView) {
     gestureDetector = new GestureDetectorCompat(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
