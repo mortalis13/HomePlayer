@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayer.events;
 
 import android.content.Context;
 import android.view.GestureDetector;

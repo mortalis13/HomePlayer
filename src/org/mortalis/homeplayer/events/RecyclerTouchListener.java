@@ -1,4 +1,4 @@
-package org.mortalis.homeplayer;
+package org.mortalis.homeplayer.events;
 
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -6,6 +6,8 @@ import android.view.View;
 
 import androidx.core.view.GestureDetectorCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import org.mortalis.homeplayer.FilesAdapter;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.loge;

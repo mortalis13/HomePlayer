@@ -22,6 +22,7 @@ import com.google.android.material.color.MaterialColors;
 
 import org.mortalis.homeplayer.actions.SingleAction;
 import org.mortalis.homeplayer.components.IconOverlayView;
+import org.mortalis.homeplayer.models.ListItem;
 
 import static org.mortalis.homeplayer.Fun.log;
 
@@ -204,7 +205,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     TextView itemText;
     TextView itemTime;
     ImageView fileRepeatIcon;
-    RelativeLayout itemMenuPanel;
+    public RelativeLayout itemMenuPanel;
     
     ImageButton bRemoveFile;
     ImageButton bFileInfo;

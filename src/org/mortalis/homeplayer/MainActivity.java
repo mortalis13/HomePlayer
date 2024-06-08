@@ -56,8 +56,14 @@ import org.mortalis.homeplayer.components.TrimSliderView;
 import org.mortalis.homeplayer.components.EqualizerView;
 import org.mortalis.homeplayer.components.RangeSliderView;
 
+import org.mortalis.homeplayer.events.OnSwipeTouchListener;
+import org.mortalis.homeplayer.events.RecyclerTouchListener;
+
 import org.mortalis.homeplayer.jni.AudioUtilsNative;
 import org.mortalis.homeplayer.jni.EngineNative;
+
+import org.mortalis.homeplayer.models.AudioInfo;
+import org.mortalis.homeplayer.models.ListItem;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
