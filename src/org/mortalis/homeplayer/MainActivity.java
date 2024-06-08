@@ -636,6 +636,11 @@ public class MainActivity extends AppCompatActivity {
     bFastRewind.setOnClickListener(v -> fastRewindAction());
     bFastForward.setOnClickListener(v -> fastForwardAction());
     
+    bNextFile.setOnLongClickListener(v -> {
+      playRandomFile();
+      return true;
+    });
+    
     // Prevent click through the panels
     extraInfoPanel.setOnClickListener(null);
     extraControlPanel.setOnClickListener(null);
@@ -980,6 +985,12 @@ public class MainActivity extends AppCompatActivity {
     playNextFile(startPlayback);
   }
   
+  private void playRandomFile() {
+    if (playerService == null) return;
+    boolean startPlayback = playerService.isPlaying();
+    playNextFile(startPlayback, true);
+  }
+  
   private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
     playerService.fastRewind(5);
@@ -1114,12 +1125,16 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void playNextFile(boolean startPlayback) {
+    playNextFile(startPlayback, false);
+  }
+  
+  private void playNextFile(boolean startPlayback, boolean random) {
     logd("playNextFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
     File currentFile = new File(playerService.getAudioPath());
     File file = null;
-    if (playbackShuffle) {
+    if (playbackShuffle || random) {
       file = getNextRandomFile(currentFile);
     }
     
