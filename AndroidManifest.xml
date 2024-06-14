@@ -29,5 +29,12 @@
         </activity>
         
         <service android:name=".PlayerService"/>
+        
+        <receiver android:name=".MediaButtonReceiver">
+            <intent-filter android:priority="10000" >
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+       
     </application>
 </manifest>

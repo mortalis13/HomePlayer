@@ -39,6 +39,7 @@ import android.widget.ScrollView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.app.PendingIntent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
   
   private AudioManager audioManager;
   private final VolumeReceiver volumeReceiver = new VolumeReceiver();
+  private PendingIntent mediaButtonIntent;
   
   private final Object lock = new Object();
   private String currentWaveformFile;
@@ -324,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     unregisterReceiver(volumeReceiver);
+    if (audioManager != null) audioManager.unregisterMediaButtonEventReceiver(mediaButtonIntent);
   }
   
   @Override
@@ -390,7 +393,28 @@ public class MainActivity extends AppCompatActivity {
     
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
     audioManager = context.getSystemService(AudioManager.class);
+    
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
+    
+    MediaButtonReceiver.receiverListener = new MediaButtonReceiver.ReceiverListener() {
+      public void onMsgTogglePlay() {
+        log("Toggle play media action received");
+        playPauseAction();
+      }
+      public void onMsgPrev() {
+        log("Play prev media action received");
+        playPrevFileAction();
+      }
+      public void onMsgNext() {
+        log("Play next media action received");
+        playNextFileAction();
+      }
+    };
+    
+    Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+    intent.setClass(this, MediaButtonReceiver.class);
+    mediaButtonIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+    audioManager.registerMediaButtonEventReceiver(mediaButtonIntent);
     
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
@@ -2466,6 +2490,7 @@ public class MainActivity extends AppCompatActivity {
   
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
+      logd("VolumeReceiver");
       if (intent.getAction() != null &&
           intent.getAction().equals(VOLUME_CHANGED_ACTION) &&
           intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC)
