@@ -54,6 +54,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   private AudioManager audioManager;
   private AudioFocusRequest focusRequest;
+  
+  private PendingIntent mediaButtonIntent;
+  private boolean mediaButtonsRegistered;
 
   private NotificationManagerCompat notificationManager;
   private NotificationCompat.Builder notificationBuilder;
@@ -76,6 +79,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   private Runnable progressRunnable;
 
   public Action exitAction = () -> {};
+  public Action playPrevAction = () -> {};
   public Action playNextAction = () -> {};
   public SingleAction<Integer> progressSetupAction = (arg) -> {};
   public SingleAction<Integer> progressUpdateAction = (arg) -> {};
@@ -137,10 +141,6 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("PlayerService.onDestroy()");
     super.onDestroy();
 
-    // unregisterReceiver(playerServiceReceiver);
-    // unregisterReceiver(headphonesPlugReceiver);
-    
-    removeAudioFocus();
     EngineNative.stopEngine();
   }
 
@@ -154,6 +154,9 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public boolean onUnbind(Intent intent) {
     logd("PlayerService.onUnbind()");
     
+    removeAudioFocus();
+    
+    unregisterMediaButtonsReceiver();
     unregisterReceiver(playerServiceReceiver);
     unregisterReceiver(headphonesPlugReceiver);
     
@@ -235,7 +238,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       loge("Audio focus is not granted");
       return;
     }
-
+    
+    // Called after the focus was previously lost and receiver was unregistered
+    if (!this.mediaButtonsRegistered) {
+      registerMediaButtonsReceiver();
+    }
+    
     EngineNative.playAudio();
     updateNotification(ACTION_PAUSE_ID);
   }
@@ -252,6 +260,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       EngineNative.startEngine();
     }
 
+    if (!this.mediaButtonsRegistered) {
+      registerMediaButtonsReceiver();
+    }
+
     boolean result = EngineNative.resumeAudio();
     if (!result) {
       loge("Could not resume audio");
@@ -262,7 +274,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       startProgress();
       enableUpdateTime();
     }
-
+    
     updateNotification(ACTION_PAUSE_ID);
     sendPlayerResumed();
     return true;
@@ -655,6 +667,58 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
   
   
+  public void registerMediaButtonsReceiver() {
+    logd("registerMediaButtonsReceiver()");
+    MediaButtonReceiver.receiverListener = new MediaButtonReceiver.ReceiverListener() {
+      public void onMsgTogglePlay() {
+        if (!mediaButtonsRegistered) {
+          loge("Media button event received for unregistered receiver");
+          return;
+        }
+        
+        log("Toggle play media action received");
+        if (isPlaying()) {
+          pause();
+        }
+        else {
+          resume();
+        }
+      }
+      
+      public void onMsgPrev() {
+        if (!mediaButtonsRegistered) {
+          loge("Media button event received for unregistered receiver");
+          return;
+        }
+        
+        log("Play prev media action received");
+        playPrevAction.execute();
+      }
+      
+      public void onMsgNext() {
+        if (!mediaButtonsRegistered) {
+          loge("Media button event received for unregistered receiver");
+          return;
+        }
+        
+        log("Play next media action received");
+        playNextAction.execute();
+      }
+    };
+    
+    Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+    intent.setClass(this, MediaButtonReceiver.class);
+    mediaButtonIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+    
+    audioManager.registerMediaButtonEventReceiver(mediaButtonIntent);
+    this.mediaButtonsRegistered = true;
+  }
+  
+  public void unregisterMediaButtonsReceiver() {
+    audioManager.unregisterMediaButtonEventReceiver(mediaButtonIntent);
+    this.mediaButtonsRegistered = false;
+  }
+  
   public void registerHeadphonesReceiver() {
     logd("registerHeadphonesReceiver()");
     IntentFilter headphonesFilter = new IntentFilter();
@@ -678,9 +742,20 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     
     switch (focusChange) {
       case AudioManager.AUDIOFOCUS_GAIN -> log("AUDIOFOCUS_GAIN");
-      case AudioManager.AUDIOFOCUS_LOSS -> {log("AUDIOFOCUS_LOSS"); pause();}
-      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {log("AUDIOFOCUS_LOSS_TRANSIENT"); pause();}
-      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK"); pause();}
+      case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> log("AUDIOFOCUS_GAIN_TRANSIENT");
+      case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE -> log("AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE");
+      case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK -> log("AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+      case AudioManager.AUDIOFOCUS_LOSS -> log("AUDIOFOCUS_LOSS");
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> log("AUDIOFOCUS_LOSS_TRANSIENT");
+      case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+    }
+    
+    if (focusChange == AudioManager.AUDIOFOCUS_LOSS ||
+        focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
+        focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+    {
+      unregisterMediaButtonsReceiver();
+      pause();
     }
   }
   

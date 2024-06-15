@@ -130,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
   
   private AudioManager audioManager;
   private final VolumeReceiver volumeReceiver = new VolumeReceiver();
-  private PendingIntent mediaButtonIntent;
   
   private final Object lock = new Object();
   private String currentWaveformFile;
@@ -326,7 +325,6 @@ public class MainActivity extends AppCompatActivity {
     }
     
     unregisterReceiver(volumeReceiver);
-    if (audioManager != null) audioManager.unregisterMediaButtonEventReceiver(mediaButtonIntent);
   }
   
   @Override
@@ -396,26 +394,6 @@ public class MainActivity extends AppCompatActivity {
     
     registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
     
-    MediaButtonReceiver.receiverListener = new MediaButtonReceiver.ReceiverListener() {
-      public void onMsgTogglePlay() {
-        log("Toggle play media action received");
-        playPauseAction();
-      }
-      public void onMsgPrev() {
-        log("Play prev media action received");
-        playPrevFileAction();
-      }
-      public void onMsgNext() {
-        log("Play next media action received");
-        playNextFileAction();
-      }
-    };
-    
-    Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-    intent.setClass(this, MediaButtonReceiver.class);
-    mediaButtonIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-    audioManager.registerMediaButtonEventReceiver(mediaButtonIntent);
-    
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
     
@@ -434,6 +412,7 @@ public class MainActivity extends AppCompatActivity {
         playerService = binder.getService();
         
         playerService.exitAction = () -> exitApp();
+        playerService.playPrevAction = () -> playPrevFileAction();
         playerService.playNextAction = () -> playNextFileAction();
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
