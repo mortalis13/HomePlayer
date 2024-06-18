@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
   
   // Define constants from AudioManager available in the source but not in the SDK
   private static final String VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION";
+  private static final String STREAM_DEVICES_CHANGED_ACTION = "android.media.STREAM_DEVICES_CHANGED_ACTION";
   private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
   
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
@@ -392,7 +393,10 @@ public class MainActivity extends AppCompatActivity {
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
     audioManager = context.getSystemService(AudioManager.class);
     
-    registerReceiver(volumeReceiver, new IntentFilter(VOLUME_CHANGED_ACTION));
+    IntentFilter volumeFilter = new IntentFilter();
+    volumeFilter.addAction(VOLUME_CHANGED_ACTION);
+    volumeFilter.addAction(STREAM_DEVICES_CHANGED_ACTION);
+    registerReceiver(volumeReceiver, volumeFilter);
     
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
@@ -2469,14 +2473,15 @@ public class MainActivity extends AppCompatActivity {
   
   private class VolumeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
-      logd("VolumeReceiver");
-      if (intent.getAction() != null &&
-          intent.getAction().equals(VOLUME_CHANGED_ACTION) &&
-          intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC)
-      {
-        int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        log("Volume changed => " + volume);
-        updateVolumeLevel();
+      try {
+        if (intent.getIntExtra(EXTRA_VOLUME_STREAM_TYPE, 0) == AudioManager.STREAM_MUSIC) {
+          int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+          log("Volume changed => " + volume);
+          updateVolumeLevel();
+        }
+      }
+      catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
