@@ -355,6 +355,15 @@ public class MainActivity extends AppCompatActivity {
     return super.onKeyDown(keyCode, event);
   }
   
+  @Override
+  protected void onNewIntent(Intent intent) {
+    String action = intent.getAction();
+    logd("onNewIntent() " + action);
+    if (action != null && action.equals(Intent.ACTION_VOICE_COMMAND)) {
+      playNextFileAction();
+    }
+  }
+  
   
   // -----------------------------------------------------------
   private void bindPlayerService() {

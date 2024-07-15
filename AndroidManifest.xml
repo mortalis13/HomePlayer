@@ -26,6 +26,11 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:priority="2147483647">
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.speech.action.VOICE_SEARCH_HANDS_FREE"/>
+                <action android:name="android.intent.action.VOICE_COMMAND"/>
+            </intent-filter>
         </activity>
         
         <service android:name=".PlayerService"/>
