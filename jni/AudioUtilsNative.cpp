@@ -27,8 +27,7 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWa
   string audioPath(path_bytes);
   env->ReleaseStringUTFChars(jaudio_path, path_bytes);
   
-  // buffer for N pairs of (min, max) values for each sample group
-  int data_size = view_width * 2;
+  int data_size = view_width;
   float* pixel_data = new float[data_size];
   memset(pixel_data, 0, data_size * sizeof(float));
   
@@ -44,8 +43,7 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWa
 
   jshort* waveformData = env->GetShortArrayElements(data_array, NULL);
   for (size_t i = 0; i < data_size; i++) {
-    short value = (short) (pixel_data[i] * view_height / 2);
-    waveformData[i] = value;
+    waveformData[i] = (short) (pixel_data[i] * view_height / 2);
   }
   env->ReleaseShortArrayElements(data_array, waveformData, 0);
   
