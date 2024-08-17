@@ -7,8 +7,9 @@ import static org.mortalis.homeplayer.Fun.log;
 public class Gestures {
   
   private static final int SWIPE_THRESHOLD = 100;
-  private static final int SWIPE_LIMIT_WINDOW = 100;
   private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+  
+  public static final int SWIPE_LIMIT_WINDOW = 100;  // vertical limit for horizontal swipe and horizontal limit for vertical swipe
   
   public static boolean isSwipedLeft(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
     float diffY = event2.getY() - event1.getY();

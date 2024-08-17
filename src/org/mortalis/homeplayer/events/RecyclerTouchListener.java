@@ -17,10 +17,14 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
   
   private final GestureDetectorCompat gestureDetector;
   
+  private boolean swipeCancelled;
+  private float downStartY;
+  
   protected void onSwipeRight() {}
   
   public RecyclerTouchListener(final RecyclerView recyclerView) {
     gestureDetector = new GestureDetectorCompat(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+      
       public void onLongPress(MotionEvent event) {
         var viewHolder = getViewHolder(recyclerView, event.getX(), event.getY());
         if (viewHolder == null) {
@@ -43,14 +47,38 @@ public class RecyclerTouchListener extends RecyclerView.SimpleOnItemTouchListene
         
         return false;
       }
+      
     });
   }
   
   public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent event) {
-    boolean gestureDone = gestureDetector.onTouchEvent(event);
-    if (gestureDone) return true;
-
     int action = event.getAction();
+    boolean processGesture = true;
+    
+    if (action == MotionEvent.ACTION_UP && this.swipeCancelled) {
+      processGesture = false;
+      this.swipeCancelled = false;
+      this.downStartY = 0;
+    }
+    
+    if (processGesture) {
+      boolean gestureDone = gestureDetector.onTouchEvent(event);
+      if (gestureDone) return true;
+    }
+
+    if (action == MotionEvent.ACTION_MOVE) {
+      if (!this.swipeCancelled) {
+        if (Math.abs(event.getY() - this.downStartY) > Gestures.SWIPE_LIMIT_WINDOW) {
+          this.swipeCancelled = true;
+          log("Cancelling swipe on exceeding vertical limit");
+        }
+      }
+    }
+    
+    if (action == MotionEvent.ACTION_DOWN) {
+      this.swipeCancelled = false;
+      this.downStartY = event.getY();
+    }
     
     if (action == MotionEvent.ACTION_DOWN) {
       // Hide item item on any item touch
