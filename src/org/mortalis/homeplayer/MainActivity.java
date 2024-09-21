@@ -1523,7 +1523,7 @@ public class MainActivity extends AppCompatActivity {
     if (belongsToCurrentDir(playingFile)) {
       if (playingFile.getPath().equals(filePath)) {
         log("Playing file has been deleted, selecting next file");
-        playNextFile(false);
+        playNextFile(playerService.isPlaying());
       }
       
       reloadPlayingListForDir(playingFile.getParentFile());
