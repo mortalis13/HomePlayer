@@ -24,15 +24,17 @@ import static org.mortalis.homeplayer.Fun.loge;
 
 public class EqualizerView extends View {
   
-  private static final int MIN_BANDS = 6;
+  private static final int MIN_BANDS = 5;
   private static final int MAX_BANDS = 10;
-  private static final float MAX_MAIN_GAIN = 20f;  // 20dB
-  private static final float MAX_UNITS = 20f;  // 20dB
+  private static final float MAX_MAIN_GAIN = 10f;  // 20dB
+  private static final float MAX_UNITS = 10f;  // 20dB
   
   private static final float SIDE_MARGIN = Fun.dpToPx(8);
   private static final float CENTRAL_MARK_WIDTH = Fun.dpToPx(4);
   private static final float GAIN_ZERO_GAP = Fun.dpToPx(4);
   private static final float BAND_ZERO_GAP = Fun.dpToPx(32);
+  
+  private static final int MAX_BAND_MARGIN = (int) Fun.dpToPx(8);
   
   private boolean enabled;
   
@@ -191,9 +193,7 @@ public class EqualizerView extends View {
     
     band.progressRect = new RectF(progressX, progressY, progressX + progressWidth, progressY + this.bandHeight);
     
-    String sign = (band.gain > 0) ? "+": "";
-    band.gainText = String.format("%s%.1f dB", sign, band.gain);
-    
+    band.gainText = formatGain(band.gain);
     band.gainTextX = band.rect.right - SIDE_MARGIN - this.bandTextPaint.measureText(band.gainText);
     band.gainTextY = band.rect.centerY() + bandTextYOffset;
   }
@@ -211,9 +211,7 @@ public class EqualizerView extends View {
     
     this.mainGainProgressRect.set(progressX, progressY, progressR, progressB);
     
-    String sign = (mainGain > 0) ? "+": "";
-    mainGainText = String.format("%s%.1f dB", sign, mainGain);
-    
+    mainGainText = formatGain(mainGain);
     mainGainTextX = this.mainGainRect.centerX();
     float textOffset = (mainGainTextPaint.descent() - mainGainTextPaint.ascent()) / 2 - mainGainTextPaint.descent();
     mainGainTextY = mainGainRect.centerY() + textOffset;
@@ -221,13 +219,24 @@ public class EqualizerView extends View {
   
   private void rebuildUI() {
     this.bandGainStep = (float) this.canvasWidth / 2 / MAX_UNITS;
-    this.margin = (int) ((float) (this.canvasHeight - this.buttonHeight - bands.size() * this.bandHeight) / bands.size());
     
+    int emptySpace = this.canvasHeight - this.buttonHeight - bands.size() * this.bandHeight;
+    this.margin = (int) ((float) emptySpace / bands.size());
+    
+    if (margin == 1) {
+      this.margin = (int) ((float) emptySpace / (bands.size() - 1));
+    }
+
     if (margin < 0) {
       if (Math.abs(margin) < this.bandHeight / 2) {
         this.bandHeight = Math.round(this.bandHeight - Math.abs(margin));
       }
-      margin = 0;
+      this.margin = 0;
+    }
+    
+    if (margin > MAX_BAND_MARGIN) {
+      this.bandHeight += (int) (this.margin / 2);
+      this.margin = MAX_BAND_MARGIN;
     }
     
     this.bandsAreaY = this.buttonHeight;
@@ -251,17 +260,7 @@ public class EqualizerView extends View {
       float bandY = this.activationButtonRect.bottom + i * (this.bandHeight + margin);
       band.rect = new RectF(0, bandY, this.canvasWidth, bandY + this.bandHeight);
       
-      if (band.frequency >= 1000) {
-        String format = "%.1f kHz";
-        if (band.frequency % 1000 == 0) format = "%.0f kHz";
-        band.frequencyText = String.format(format, band.frequency / 1000);
-      }
-      else {
-        String format = "%.1f Hz";
-        if (band.frequency == (int) band.frequency) format = "%.0f Hz";
-        band.frequencyText = String.format(format, band.frequency);
-      }
-      
+      band.frequencyText = formatFrequency(band.frequency);
       band.frequencyTextX = SIDE_MARGIN;
       band.frequencyTextY = band.rect.centerY() + bandTextYOffset;
       
@@ -511,8 +510,44 @@ public class EqualizerView extends View {
     return resolveSizeAndState(size, measureSpec, 0);
   }
   
+  private String formatFrequency(float frequency) {
+    String result = "";
+    if (frequency >= 1000) {
+      String format = "%.1f kHz";
+      if (frequency % 1000 == 0) format = "%.0f kHz";
+      result = String.format(format, frequency / 1000);
+    }
+    else {
+      String format = "%.1f Hz";
+      if (frequency == (int) frequency) format = "%.0f Hz";
+      result = String.format(format, frequency);
+    }
+    return result;
+  }
+  
+  private String formatGain(float gain) {
+    String sign = (gain > 0) ? "+": "";
+    String result = String.format("%s%.1f dB", sign, gain);
+    return result;
+  }
+  
   
   private void fillBandFrequencies() {
+    if (bands.size() == 5) {
+      bands.get(0).frequency = 60f;
+      bands.get(1).frequency = 230f;
+      bands.get(2).frequency = 910f;
+      bands.get(3).frequency = 3600f;
+      bands.get(4).frequency = 14000f;
+    }
+    if (bands.size() == 6) {
+      bands.get(0).frequency = 60f;
+      bands.get(1).frequency = 150f;
+      bands.get(2).frequency = 400f;
+      bands.get(3).frequency = 1000f;
+      bands.get(4).frequency = 2400f;
+      bands.get(5).frequency = 15000f;
+    }
     if (bands.size() == 8) {
       bands.get(0).frequency = 31f;
       bands.get(1).frequency = 73f;
@@ -522,6 +557,29 @@ public class EqualizerView extends View {
       bands.get(5).frequency = 2348f;
       bands.get(6).frequency = 5583f;
       bands.get(7).frequency = 13280f;
+    }
+    if (bands.size() == 9) {
+      bands.get(0).frequency = 63f;
+      bands.get(1).frequency = 125f;
+      bands.get(2).frequency = 250f;
+      bands.get(3).frequency = 500f;
+      bands.get(4).frequency = 1000f;
+      bands.get(5).frequency = 2000f;
+      bands.get(6).frequency = 4000f;
+      bands.get(7).frequency = 8000f;
+      bands.get(8).frequency = 16000f;
+    }
+    if (bands.size() == 10) {
+      bands.get(0).frequency = 32f;
+      bands.get(1).frequency = 64f;
+      bands.get(2).frequency = 125f;
+      bands.get(3).frequency = 250f;
+      bands.get(4).frequency = 500f;
+      bands.get(5).frequency = 1000f;
+      bands.get(6).frequency = 2000f;
+      bands.get(7).frequency = 4000f;
+      bands.get(8).frequency = 8000f;
+      bands.get(9).frequency = 16000f;
     }
   }
   
