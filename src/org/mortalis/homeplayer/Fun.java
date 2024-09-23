@@ -24,8 +24,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import java.text.RuleBasedCollator;
 
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
-
 
 public class Fun {
   
@@ -41,23 +39,90 @@ public class Fun {
     return (file.isFile() && !file.isHidden() && isAudio);
   };
   
-  public static Comparator<File> nocaseComp = (item1, item2) -> {
-    // try {
-    //   return new RuleBasedCollator("&'_'< a< z").compare(item1.getName(), item2.getName());
-    //   // return new RuleBasedCollator("&a< b< c< d").compare(item1.getName(), item2.getName());
-    // }
-    // catch (Exception e) {
-    //   e.printStackTrace();
-    //   if (item1 == null || item2 == null) return 0;
-    //   return item1.getName().compareToIgnoreCase(item2.getName());
-    // }
+  public static Comparator<File> nocaseComp = new Comparator<File>() {
+    private static char[] special = {' ', '!', '#', '$', '%', '&', '\'', '(', ')', '+', ',', '-', '.', ';', '=', '@', '[', ']', '^', '_', '`', '{', '}', '~'};
     
-    // if (item1 == null || item2 == null) return 0;
-    // return item1.getName().compareToIgnoreCase(item2.getName());
+    public int compare(File item1, File item2) {
+      String name1 = item1.getName().toLowerCase();
+      String name2 = item2.getName().toLowerCase();
+      
+      int len1 = name1.length();
+      int len2 = name2.length();
+      int idx1 = 0;
+      int idx2 = 0;
+
+      while (idx1 < len1 && idx2 < len2) {
+        char c1 = name1.charAt(idx1++);
+        char c2 = name2.charAt(idx2++);
+        
+        boolean isSpecial1 = isSpecial(c1);
+        boolean isSpecial2 = isSpecial(c2);
+          
+        if (isSpecial1 && !isSpecial2) return -1;
+        if (!isSpecial1 && isSpecial2) return 1;
+
+        boolean isDigit1 = isDigit(c1);
+        boolean isDigit2 = isDigit(c2);
+        
+        if (isDigit1 && !isDigit2) return -1;
+        if (!isDigit1 && isDigit2) return 1;
+        
+        if (!isDigit1 && !isDigit2) {
+          if (c1 == c2) continue;
+          return c1 - c2;
+        }
+        
+        // compare numbers
+        long num1 = parse(c1);
+        while (idx1 < len1) {
+          char digit = name1.charAt(idx1++);
+          if (isDigit(digit)) {
+            num1 = num1 * 10 + parse(digit);
+          }
+          else {
+            idx1--;
+            break;
+          }
+        }
+
+        long num2 = parse(c2);
+        while (idx2 < len2) {
+          char digit = name2.charAt(idx2++);
+          if (isDigit(digit)) {
+            num2 = num2 * 10 + parse(digit);
+          }
+          else {
+            idx2--;
+            break;
+          }
+        }
+
+        if (num1 != num2) {
+          if (num1 + Long.MIN_VALUE < num2 + Long.MIN_VALUE) return -1;
+          if (num1 + Long.MIN_VALUE != num2 + Long.MIN_VALUE) return 1;
+          return 0;
+        }
+      }
+
+      if (idx1 < len1) return 1;
+      if (idx2 < len2) return -1;
+      return 0;
+    }
     
-    // Custom comparator to sort the names with numbers in natural readable order
-    Comparator<String> comparator = CaseInsensitiveSimpleNaturalComparator.getInstance();
-    return comparator.compare(item1.getName(), item2.getName());
+    private long parse(char c1) {
+      return c1 - '0';
+    }
+
+    private boolean isDigit(char c) {
+      return '0' <= c & c <= '9';
+    }
+
+    private boolean isSpecial(char c) {
+      for (char sp: special) {
+        if (c == sp) return true;
+      }
+      return false;
+    }
   };
   
   
