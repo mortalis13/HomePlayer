@@ -48,69 +48,81 @@ public class Fun {
       
       int len1 = name1.length();
       int len2 = name2.length();
-      int idx1 = 0;
-      int idx2 = 0;
-
-      while (idx1 < len1 && idx2 < len2) {
-        char c1 = name1.charAt(idx1++);
-        char c2 = name2.charAt(idx2++);
+      int id1 = 0;
+      int id2 = 0;
+      
+      boolean isNumber = false;
+      int num1 = 0;
+      int num2 = 0;
+      
+      boolean isEnd1 = false;
+      boolean isEnd2 = false;
+      
+      char char1 = 0;
+      char char2 = 0;
+      
+      while (true) {
+        if (id1 >= len1) {
+          isEnd1 = true;
+        }
+        else {
+          char1 = name1.charAt(id1);
+        }
         
-        boolean isSpecial1 = isSpecial(c1);
-        boolean isSpecial2 = isSpecial(c2);
+        if (id2 >= len2) {
+          isEnd2 = true;
+        }
+        else {
+          char2 = name2.charAt(id2);
+        }
+        
+        id1++;
+        id2++;
+        
+        boolean isDigit1 = isDigit(char1);
+        boolean isDigit2 = isDigit(char2);
+        
+        if (!isNumber) {
+          if (isEnd1 && isEnd2) return 0;
           
-        if (isSpecial1 && !isSpecial2) return -1;
-        if (!isSpecial1 && isSpecial2) return 1;
-
-        boolean isDigit1 = isDigit(c1);
-        boolean isDigit2 = isDigit(c2);
-        
-        if (isDigit1 && !isDigit2) return -1;
-        if (!isDigit1 && isDigit2) return 1;
-        
-        if (!isDigit1 && !isDigit2) {
-          if (c1 == c2) continue;
-          return c1 - c2;
+          boolean isSpecial1 = isSpecial(char1);
+          boolean isSpecial2 = isSpecial(char2);
+          
+          if (isSpecial1 && !isSpecial2) return -1;
+          if (!isSpecial1 && isSpecial2) return 1;
+          
+          if (isDigit1 && isDigit2) {
+            isNumber = true;
+            id1 = id2 = id2 - 1;
+            continue;
+          }
+          
+          if (isDigit1 && !isDigit2) return -1;
+          if (!isDigit1 && isDigit2) return 1;
+          
+          if (char1 != char2) return char1 - char2;
         }
         
-        // compare numbers
-        long num1 = parse(c1);
-        while (idx1 < len1) {
-          char digit = name1.charAt(idx1++);
-          if (isDigit(digit)) {
-            num1 = num1 * 10 + parse(digit);
+        else {
+          if (isEnd1 && isEnd2
+              || isEnd1 && !isDigit2
+              || isEnd2 && !isDigit1
+              || !isDigit1 && !isDigit2 && num1 != num2
+          ) {
+            return num1 - num2;
           }
-          else {
-            idx1--;
-            break;
+          
+          if (!isDigit1 && !isDigit2) {
+            isNumber = false;
+            id1 = id2 = id2 - 1;
+            num1 = num2 = 0;
+            continue;
           }
-        }
-
-        long num2 = parse(c2);
-        while (idx2 < len2) {
-          char digit = name2.charAt(idx2++);
-          if (isDigit(digit)) {
-            num2 = num2 * 10 + parse(digit);
-          }
-          else {
-            idx2--;
-            break;
-          }
-        }
-
-        if (num1 != num2) {
-          if (num1 + Long.MIN_VALUE < num2 + Long.MIN_VALUE) return -1;
-          if (num1 + Long.MIN_VALUE != num2 + Long.MIN_VALUE) return 1;
-          return 0;
+          
+          if (!isEnd1 && isDigit1) num1 = num1 * 10 + (char1 - '0');
+          if (!isEnd2 && isDigit2) num2 = num2 * 10 + (char2 - '0');
         }
       }
-
-      if (idx1 < len1) return 1;
-      if (idx2 < len2) return -1;
-      return 0;
-    }
-    
-    private long parse(char c1) {
-      return c1 - '0';
     }
 
     private boolean isDigit(char c) {
