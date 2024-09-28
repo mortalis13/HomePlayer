@@ -78,6 +78,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.HashSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -146,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
   
   private Set<String> repeatableFiles;
   
-  private Parcelable listScrollState;
+  private Stack<Parcelable> scrollStack;
   
   private final ExecutorService taskExecutor = Executors.newFixedThreadPool(8);
   private final Handler taskHandler = HandlerCompat.createAsync(Looper.getMainLooper());
@@ -409,6 +410,9 @@ public class MainActivity extends AppCompatActivity {
     
     fileList = new ArrayList<>();
     filesAdapter = new FilesAdapter(fileList, this);
+    scrollStack = new Stack<>();
+    
+    repeatableFiles = new HashSet<>();
     
     filesAdapter.itemClickAction = (item) -> itemClick(item);
     filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
@@ -456,8 +460,6 @@ public class MainActivity extends AppCompatActivity {
     };
     
     bindPlayerService();
-    
-    repeatableFiles = new HashSet<>();
     
     loopOffsetStep = Vars.LOOP_OFFSET_STEP_DEFAULT;
   }
@@ -1195,7 +1197,9 @@ public class MainActivity extends AppCompatActivity {
 
     boolean isChangeToChild = (currentPath != null && currentPath.equals(path.getParentFile()));
     if (isChangeToChild) {
-      listScrollState = listLayoutManager.onSaveInstanceState();
+      if (scrollStack != null) {
+        scrollStack.push(listLayoutManager.onSaveInstanceState());
+      }
     }
 
     currentPath = path;
@@ -1273,12 +1277,12 @@ public class MainActivity extends AppCompatActivity {
     String prevPath = currentPath.getPath();
     
     boolean scrollTop = true;
-    if (listScrollState != null) scrollTop = false;
+    if (scrollStack != null && !scrollStack.empty()) scrollTop = false;
     changeDir(currentPath.getParentFile(), scrollTop);
     
-    if (listScrollState != null) {
-      listLayoutManager.onRestoreInstanceState(listScrollState);
-      listScrollState = null;
+    if (scrollStack != null && !scrollStack.empty()) {
+      Parcelable entry = scrollStack.pop();
+      listLayoutManager.onRestoreInstanceState(entry);
     }
     else {
       int scrollPos = filesAdapter.getItemPosition(prevPath);
@@ -1336,6 +1340,7 @@ public class MainActivity extends AppCompatActivity {
     }
     else {
       changeDir(playingFile.getParentFile());
+      Fun.emptyStack(scrollStack);
     }
   }
   

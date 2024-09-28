@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Stream;
 import java.text.RuleBasedCollator;
 
@@ -260,6 +261,12 @@ public class Fun {
     
   public static int getRandomInt(int from, int to) {
     return from + new Random().nextInt(to - from + 1);
+  }
+  
+  public static void emptyStack(Stack stack) {
+    while (stack != null && !stack.empty()) {
+      stack.pop();
+    }
   }
   
   public static void saveSharedPref(Context context, String key, String value) {
