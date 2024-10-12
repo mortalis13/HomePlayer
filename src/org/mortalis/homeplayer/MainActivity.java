@@ -1579,7 +1579,7 @@ public class MainActivity extends AppCompatActivity {
   private File getNextRandomFile(File file) {
     logd("getNextRandomFile(): " + file);
     
-    if (shuffleList == null || shuffleList.size() == 0) {
+    if (shuffleList == null || shuffleList.size() == 0 || !belongsToShuffleList(file)) {
       generateShuffleList(file);
     }
     
@@ -1660,10 +1660,15 @@ public class MainActivity extends AppCompatActivity {
     if (!playbackShuffle) return;
     logd("updateShuffleList(): " + audioFile);
     
-    String currentAudioPath = playerService.getAudioPath();
-    if (currentAudioPath == null || audioFile.getParent() != null && !audioFile.getParent().equals(new File(currentAudioPath).getParent())) {
+    if (!belongsToShuffleList(audioFile)) {
       generateShuffleList(audioFile);
     }
+  }
+  
+  private boolean belongsToShuffleList(File audioFile) {
+    if (shuffleList == null || shuffleList.size() == 0) return false;
+    if (audioFile == null) return false;
+    return audioFile.getParent().equals(shuffleList.get(0).getParent());
   }
   
   private void fullStop() {
