@@ -37,7 +37,7 @@ public class Fun {
   
   public static FileFilter fileFilter = (file) -> {
     boolean isAudio = Stream.of(Vars.AUDIO_EXTS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
-    return (file.isFile() && !file.isHidden() && isAudio);
+    return (file.isFile() && isAudio);
   };
   
   public static Comparator<File> nocaseComp = new Comparator<File>() {
