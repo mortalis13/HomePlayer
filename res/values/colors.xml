@@ -37,7 +37,8 @@
   <color name="item_toggle_button_background_default">#e5e5e5</color>
   
   <color name="list_item_text_color_error">#922</color>
-  <color name="list_item_icon_color">#888</color>
+  <color name="list_item_icon_color">#a5a5a5</color>
+  <color name="list_item_icon_color_folder">#868686</color>
   <color name="list_item_icon_color_highlight">#a45353</color>
   <color name="list_item_separator_color">#bbb</color>
   
@@ -137,7 +138,8 @@
   <color name="item_toggle_button_background_default_dark">#2c2c2c</color>
 
   <color name="list_item_text_color_error_dark">#e17070</color>
-  <color name="list_item_icon_color_dark">#999</color>
+  <color name="list_item_icon_color_dark">#777</color>
+  <color name="list_item_icon_color_folder_dark">#adadad</color>
   <color name="list_item_icon_color_highlight_dark">#bc5757</color>
   <color name="list_item_separator_color_dark">#565656</color>
   

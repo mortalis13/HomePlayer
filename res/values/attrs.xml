@@ -39,6 +39,7 @@
   <attr name="itemToggleButtonBackgroundDefault" format="color"/>
   
   <attr name="listItemIconColor" format="color"/>
+  <attr name="listItemIconColorFolder" format="color"/>
   <attr name="listItemIconColorHighlight" format="color"/>
   <attr name="listItemTextColorError" format="color"/>
   <attr name="listItemSeparatorColor" format="color"/>

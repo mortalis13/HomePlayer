@@ -54,6 +54,7 @@
     
     <item name="listItemTextColorError">@color/list_item_text_color_error</item>
     <item name="listItemIconColor">@color/list_item_icon_color</item>
+    <item name="listItemIconColorFolder">@color/list_item_icon_color_folder</item>
     <item name="listItemIconColorHighlight">@color/list_item_icon_color_highlight</item>
     <item name="listItemSeparatorColor">@color/list_item_separator_color</item>
     
@@ -143,6 +144,7 @@
     
     <item name="listItemTextColorError">@color/list_item_text_color_error_dark</item>
     <item name="listItemIconColor">@color/list_item_icon_color_dark</item>
+    <item name="listItemIconColorFolder">@color/list_item_icon_color_folder_dark</item>
     <item name="listItemIconColorHighlight">@color/list_item_icon_color_highlight_dark</item>
     <item name="listItemSeparatorColor">@color/list_item_separator_color_dark</item>
     

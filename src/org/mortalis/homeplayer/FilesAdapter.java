@@ -30,6 +30,8 @@ import static org.mortalis.homeplayer.Fun.log;
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
   
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
+  private static final int ITEM_ICON_FOLDER = R.drawable.round_folder_black_36;
+  private static final int ITEM_ICON_FILE = R.drawable.round_audio_file_black_36;
   
   private final List<ListItem> fileList;
   private RecyclerView recyclerView;
@@ -40,6 +42,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private ItemViewHolder holderWithMenu;
 
   private final int item_icon_color_default;
+  private final int item_icon_color_folder;
   private final int item_icon_color_lastplayed;
   private final int text_color_default;
   private final int text_color_error;
@@ -56,6 +59,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     this.fileList = fileList;
     
     item_icon_color_default = MaterialColors.getColor(context, R.attr.listItemIconColor, Color.TRANSPARENT);
+    item_icon_color_folder = MaterialColors.getColor(context, R.attr.listItemIconColorFolder, Color.TRANSPARENT);
     item_icon_color_lastplayed = MaterialColors.getColor(context, R.attr.listItemIconColorHighlight, Color.TRANSPARENT);
     text_color_default = MaterialColors.getColor(context, R.attr.primaryTextColor, Color.TRANSPARENT);
     text_color_error = MaterialColors.getColor(context, R.attr.listItemTextColorError, Color.TRANSPARENT);
@@ -359,9 +363,19 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       fileRepeatIcon.setVisibility(item.isFile && item.repeat ? View.VISIBLE: View.GONE);
       bRepeatFile.setSelected(item.isFile && item.repeat);
       
+      int icon = 0;
+      if (item.isFile && item.path != null) {
+        icon = ITEM_ICON_FILE;
+      }
+      else if (!item.isFile) {
+        icon = ITEM_ICON_FOLDER;
+      }
+      
       int iconColor = item_icon_color_default;
       if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
-      itemIcon.setImageResource(item.icon);
+      if (!item.isFile) iconColor = item_icon_color_folder;
+
+      itemIcon.setImageResource(icon);
       itemIcon.setColorFilter(iconColor);
     }
   } // ItemViewHolder
