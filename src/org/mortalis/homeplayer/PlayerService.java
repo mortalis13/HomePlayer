@@ -233,10 +233,12 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   // ----------------------- Actions
   private void play() {
-    boolean audioFocusGranted = requestAudioFocus();
-    if (!audioFocusGranted) {
-      loge("Audio focus is not granted");
-      return;
+    if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
+      boolean audioFocusGranted = requestAudioFocus();
+      if (!audioFocusGranted) {
+        loge("Audio focus is not granted");
+        return;
+      }
     }
     
     // Called after the focus was previously lost and receiver was unregistered
@@ -249,19 +251,21 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public boolean resume() {
-    boolean audioFocusGranted = requestAudioFocus();
-    if (!audioFocusGranted) {
-      loge("Audio focus is not granted");
-      return false;
+    if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
+      boolean audioFocusGranted = requestAudioFocus();
+      if (!audioFocusGranted) {
+        loge("Audio focus is not granted");
+        return false;
+      }
+    }
+    
+    if (!this.mediaButtonsRegistered) {
+      registerMediaButtonsReceiver();
     }
     
     if (EngineNative.isStreamClosed() && !EngineNative.isStreamRestarting()) {
       log("Stream closed. Restarting");
       EngineNative.startEngine();
-    }
-
-    if (!this.mediaButtonsRegistered) {
-      registerMediaButtonsReceiver();
     }
 
     boolean result = EngineNative.resumeAudio();
@@ -750,12 +754,14 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> log("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
     }
     
-    if (focusChange == AudioManager.AUDIOFOCUS_LOSS ||
-        focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
-        focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
-    {
-      unregisterMediaButtonsReceiver();
-      pause();
+    if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
+      if (focusChange == AudioManager.AUDIOFOCUS_LOSS ||
+          focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
+          focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+      {
+        unregisterMediaButtonsReceiver();
+        pause();
+      }
     }
   }
   
