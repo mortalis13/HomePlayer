@@ -775,7 +775,7 @@ public class MainActivity extends AppCompatActivity {
       onAudioTrimChanged(value);
       audioTrimSeconds = value;
       // Reset the trimming configuration until new playback is started
-      audioTrimEnabled = false;
+      this.audioTrimEnabled = false;
     });
     
     // Looper
@@ -976,7 +976,6 @@ public class MainActivity extends AppCompatActivity {
     
     if (playerService.isPlaying()) {
       playerService.pause();
-      audioTrimEnabled = false;
       validatePlayingList();
     }
     else if (playerService.isPlayerLoaded()) {
@@ -1011,11 +1010,13 @@ public class MainActivity extends AppCompatActivity {
   
   private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
+    this.audioTrimEnabled = false;
     playerService.fastRewind(5);
   }
   
   private void fastForwardAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
+    this.audioTrimEnabled = false;
     playerService.fastForward(5);
   }
   
