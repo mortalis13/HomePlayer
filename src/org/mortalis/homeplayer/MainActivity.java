@@ -101,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
   private static final String STREAM_DEVICES_CHANGED_ACTION = "android.media.STREAM_DEVICES_CHANGED_ACTION";
   private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
   
+  private static final int MAX_FILES_FOR_DIR_RESCAN = 50;
+  
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
   
   private Context context;
@@ -1308,7 +1310,9 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    refreshCurrentDir(false);
+    if (this.loadDirectoryTimeTask.getListSize() < MAX_FILES_FOR_DIR_RESCAN) {
+      refreshCurrentDir(false);
+    }
   }
   
   private File getPlayingFile() {
@@ -2434,6 +2438,7 @@ public class MainActivity extends AppCompatActivity {
   // ---------------------- Classes ----------------------
   private class LoadDirectoryTimeProcess extends BackgroundProcess<Integer> {
     private List<String> list;
+    private int listSize;
     private int totalTime;
 
     public LoadDirectoryTimeProcess(Executor executor, Handler handler) {
@@ -2448,11 +2453,17 @@ public class MainActivity extends AppCompatActivity {
       return totalTime;
     }
     
+    public int getListSize() {
+      return listSize;
+    }
+    
     protected synchronized void run() {
       if (this.list == null) {
         loge("The list of files for total time calc is null");
         return;
       }
+      
+      this.listSize = this.list.size();
       
       String dir = "[empty]";
       if (this.list.size() > 0) {
