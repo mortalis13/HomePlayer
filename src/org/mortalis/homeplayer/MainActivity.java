@@ -605,7 +605,7 @@ public class MainActivity extends AppCompatActivity {
       }
       public void onChanged(int value) {
         if (!serviceBound) return;
-        audioTrimEnabled = false;
+        disableAudioTrim();
         playerService.seekTo(value);
         playerService.enableUpdateTime();
       }
@@ -777,7 +777,7 @@ public class MainActivity extends AppCompatActivity {
       onAudioTrimChanged(value);
       audioTrimSeconds = value;
       // Reset the trimming configuration until new playback is started
-      this.audioTrimEnabled = false;
+      disableAudioTrim();
     });
     
     // Looper
@@ -1012,13 +1012,13 @@ public class MainActivity extends AppCompatActivity {
   
   private void fastRewindAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    this.audioTrimEnabled = false;
+    disableAudioTrim();
     playerService.fastRewind(5);
   }
   
   private void fastForwardAction() {
     if (playerService == null || !playerService.isPlayerLoaded()) return;
-    this.audioTrimEnabled = false;
+    disableAudioTrim();
     playerService.fastForward(5);
   }
   
@@ -1066,7 +1066,13 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    this.audioTrimEnabled = (this.audioTrimSeconds > 0 && time == 0);
+    if (this.audioTrimSeconds > 0 && time == 0) {
+      enableAudioTrim();
+    }
+    else {
+      disableAudioTrim();
+    }
+    
     if (loopEnabled) disableLoop();
     
     progressSlider.reset();
@@ -1115,7 +1121,12 @@ public class MainActivity extends AppCompatActivity {
     
     File playingFile = new File(filePath);
     
-    this.audioTrimEnabled = (this.audioTrimSeconds > 0);
+    if (this.audioTrimSeconds > 0) {
+      enableAudioTrim();
+    }
+    else {
+      disableAudioTrim();
+    }
     if (loopEnabled) disableLoop();
     
     updateWaveform(filePath);
@@ -2106,13 +2117,16 @@ public class MainActivity extends AppCompatActivity {
     if (playExtraIconTrim.getVisibility() != visibility) {
       playExtraIconTrim.setVisibility(visibility);
     }
-    
-    if (trimEnabled) {
-      progressSlider.changeProgressColor(trimmedProgressColor);
-    }
-    else {
-      progressSlider.restoreProgressColor();
-    }
+  }
+  
+  private void disableAudioTrim() {
+    this.audioTrimEnabled = false;
+    progressSlider.restoreProgressColor();
+  }
+  
+  private void enableAudioTrim() {
+    this.audioTrimEnabled = true;
+    progressSlider.changeProgressColor(trimmedProgressColor);
   }
   
   private void exitApp() {
