@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
   private static final String STREAM_DEVICES_CHANGED_ACTION = "android.media.STREAM_DEVICES_CHANGED_ACTION";
   private static final String EXTRA_VOLUME_STREAM_TYPE = "android.media.EXTRA_VOLUME_STREAM_TYPE";
   
-  private static final int MAX_FILES_FOR_DIR_RESCAN = 50;
+  private static final int MAX_FILES_FOR_SCANNING = 50;
   
   private static final File ROOT_STORAGE = Environment.getExternalStorageDirectory();
   
@@ -1207,7 +1207,7 @@ public class MainActivity extends AppCompatActivity {
     
     fileList.clear();
     
-    if (path == null || !path.exists()) path = ROOT_STORAGE;
+    if (path == null || !path.exists() || !path.isDirectory()) path = ROOT_STORAGE;
 
     boolean isChangeToChild = (currentPath != null && currentPath.equals(path.getParentFile()));
     if (isChangeToChild) {
@@ -1321,7 +1321,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    if (this.loadDirectoryTimeTask.getListSize() < MAX_FILES_FOR_DIR_RESCAN) {
+    if (this.loadDirectoryTimeTask.getListSize() < this.MAX_FILES_FOR_SCANNING) {
       refreshCurrentDir(false);
     }
   }
@@ -1740,15 +1740,39 @@ public class MainActivity extends AppCompatActivity {
     });
   }
   
-  private void validatePlayingList() {
-    if (playingList == null) return;
+  private boolean isPlayingListInconsistent() {
+    if (playingList == null) return false;
     
     for (int i = 0; i < playingList.length; i++) {
       if (!playingList[i].exists()) {
-        reloadPlayingListForDir(playingList[0].getParentFile());
-        updatePlayingStats();
-        break;
+        return true;
       }
+    }
+    return false;
+  }
+  
+  private void validatePlayingList() {
+    if (playingList == null) return;
+    File playingListDir = playingList[0].getParentFile();
+    
+    // >> Check if files are added
+    
+    if (playingList.length > this.MAX_FILES_FOR_SCANNING) {
+      new Thread(() -> {
+        if (isPlayingListInconsistent()) {
+          runOnUiThread(() -> {
+            reloadPlayingListForDir(playingListDir);
+            updatePlayingStats();
+          });
+        }
+      }).start();
+      
+      return;
+    }
+    
+    if (isPlayingListInconsistent()) {
+      reloadPlayingListForDir(playingListDir);
+      updatePlayingStats();
     }
   }
   
@@ -1808,12 +1832,7 @@ public class MainActivity extends AppCompatActivity {
         }
       }
       else {
-        for (int i = 0; i < playingList.length; i++) {
-          if (!playingList[i].exists()) {
-            reloadPlayingListForDir(newAudioFile.getParentFile());
-            break;
-          }
-        }
+        validatePlayingList();
       }
     }
     else {
