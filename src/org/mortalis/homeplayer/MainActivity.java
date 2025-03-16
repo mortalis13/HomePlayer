@@ -2436,6 +2436,7 @@ public class MainActivity extends AppCompatActivity {
           log("Creating new array for waveform data of size %d values for each pixel", waveformWidth);
           AudioUtilsNative.waveformData = new short[waveformWidth];
         }
+        
         int result = AudioUtilsNative.buildWaveform(audioPath, waveformWidth, waveformHeight);
         
         if (result == 0 && AudioUtilsNative.waveformData != null) {
@@ -2444,6 +2445,7 @@ public class MainActivity extends AppCompatActivity {
           currentWaveformFile = audioPath;
         }
         else if (result < 0) {
+          loge("Waveform build result (%s): %d", audioPath, result);
           AudioUtilsNative.waveformData = null;
         }
         

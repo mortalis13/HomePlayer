@@ -543,7 +543,8 @@ void AudioDecoder::printCodecParameters(AVCodecParameters* codecParams) {
 
 int AudioDecoder::compressSamples(string filePath, float* compressed_data, int dest_size) {
   LOGD("compressSamples() -start- -> %d", dest_size);
-  compressing = true;
+  this->compressing = true;
+  
   int result;
   clock_t start_time = clock();
   
@@ -582,11 +583,11 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   if (estimated_samples < dest_size * block_size) block_size = 1;
   bool group_frames = (estimated_frames > dest_size);
   
-  LOGI("[compress] duration: %f", (double) formatContext->duration / AV_TIME_BASE);
-  LOGI("[compress] frame_size: %d", codecContext->frame_size);
-  LOGI("[compress] estimated_samples: %ld", estimated_samples);
-  LOGI("[compress] estimated_frames: %ld", estimated_frames);
-  LOGI("[compress] block_size: %s", (group_frames) ? "auto": to_string(block_size).c_str());
+  LOGD("[compress] duration: %f", (double) formatContext->duration / AV_TIME_BASE);
+  LOGD("[compress] frame_size: %d", codecContext->frame_size);
+  LOGD("[compress] estimated_samples: %ld", estimated_samples);
+  LOGD("[compress] estimated_frames: %ld", estimated_frames);
+  LOGD("[compress] block_size: %s", (group_frames) ? "auto": to_string(block_size).c_str());
   
   int size = FFMAX(estimated_frames + 100, (int64_t) dest_size);
   vector<float> packed_buffer;
@@ -660,8 +661,8 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
     }
   }
   
-  if (!compressing) {
-    LOGI("Compression stopped");
+  if (!this->compressing) {
+    LOGW("Compression stopped");
     av_frame_free(&audioFrame);
     av_packet_free(&audioPacket);
     this->cleanup();
@@ -669,7 +670,7 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   }
   
   int total_buf_size = packed_buffer.size();
-  LOGI("[compress] total_buf_size: %d", total_buf_size);
+  LOGD("[compress] total_buf_size: %d", total_buf_size);
   
   // Fill result buffer
   if (total_buf_size > dest_size) {
@@ -681,9 +682,9 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
     // only elements that are 'step' away will be taken
     float step = (float) (total_buf_size - 1) / (total_buf_size - over_size - 1);
     
-    LOGI("[compress] unit_size: %d", unit_size);
-    LOGI("[compress] over_size: %d", over_size);
-    LOGI("[compress] step: %f", step);
+    LOGD("[compress] unit_size: %d", unit_size);
+    LOGD("[compress] over_size: %d", over_size);
+    LOGD("[compress] step: %f", step);
     
     int data_id = 0;
     float block_sum = 0;
@@ -714,7 +715,12 @@ int AudioDecoder::compressSamples(string filePath, float* compressed_data, int d
   av_packet_free(&audioPacket);
   this->cleanup();
   
-  compressing = false;
+  if (!this->compressing) {
+    LOGW("Compression stopped");
+    return 1;
+  }
+  
+  this->compressing = false;
   LOGD("compressSamples() -end- (%.2f s)", double(clock() - start_time) / CLOCKS_PER_SEC);
   return 0;
 }

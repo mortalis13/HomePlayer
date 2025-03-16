@@ -40,6 +40,12 @@ JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_AudioUtilsNative_buildWa
   
   jfieldID data_field = env->GetStaticFieldID(cls, "waveformData", "[S");
   jshortArray data_array = static_cast<jshortArray>(env->GetStaticObjectField(cls, data_field));
+  
+  if (!data_array) {
+    LOGE("Static field waveformData is null in the linked class AudioUtilsNative. The waveform data could not be assigned to the array.");
+    delete[] pixel_data;
+    return -1;
+  }
 
   jshort* waveformData = env->GetShortArrayElements(data_array, NULL);
   for (size_t i = 0; i < data_size; i++) {
