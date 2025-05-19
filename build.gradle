@@ -28,7 +28,7 @@ android {
   compileSdkVersion 34
   
   defaultConfig {
-    namespace "org.mortalis.homeplayer"
+    namespace 'org.mortalis.homeplayer'
     vectorDrawables.useSupportLibrary = true
     
     versionCode 40
@@ -36,12 +36,12 @@ android {
     
     minSdkVersion 30
     
-    resValue "string", "app_version", versionName
+    resValue 'string', 'app_version', versionName
     
     externalNativeBuild {
       cmake {
-        arguments "-DANDROID_STL=c++_shared"
-        cppFlags "-g"
+        arguments '-DANDROID_STL=c++_shared'
+        cppFlags '-g'
       }
     }
   }
@@ -58,10 +58,10 @@ android {
   
   signingConfigs {
     release {
-      storeFile file("release/homeplayer-release-key.jks")
-      storePassword "homeplayer"
-      keyAlias "homeplayer-alias"
-      keyPassword "homeplayer"
+      storeFile file('release/homeplayer-release-key.jks')
+      storePassword 'homeplayer'
+      keyAlias 'homeplayer-alias'
+      keyPassword 'homeplayer'
     }
   }
   
@@ -97,7 +97,7 @@ android {
   lintOptions {
     // checkReleaseBuilds false
     // abortOnError false
-    disable "ReferenceType"
+    disable 'ReferenceType'
   }
 }
 
@@ -106,20 +106,18 @@ dependencies {
   implementation fileTree(dir: 'libs', include: ['*.aar'])
     
   implementation 'androidx.appcompat:appcompat:1.6.1'
-  implementation "androidx.media:media:1.6.0"
+  implementation 'androidx.media:media:1.6.0'
   implementation 'androidx.recyclerview:recyclerview:1.3.1'
-  
-  implementation 'com.google.android.material:material:1.8.0'
   
   // https://bitbucket.org/ijabz/jaudiotagger
   implementation 'net.jthink:jaudiotagger:3.0.1'
-
-  implementation "com.google.oboe:oboe:1.7.0"
+  implementation 'com.google.android.material:material:1.8.0'
+  implementation 'com.google.oboe:oboe:1.7.0'
 }
 
 def appStart() {
   // install allowing version downgrade: adb install -d debug.apk
-  return "adb shell am start -n ${android.namespace}/.MainActivity".split()
+  return String.format('adb shell am start -n %s/.MainActivity', android.namespace).split()
 }
 
 task appStart(type: Exec, dependsOn: 'installDebug') {
