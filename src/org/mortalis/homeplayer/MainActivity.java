@@ -1386,7 +1386,7 @@ public class MainActivity extends AppCompatActivity {
       .filter(item -> !item.isFile)
       .forEach(item -> {
         String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + item.path);
-        item.isVisited = lastFile != null;
+        item.isVisited = Fun.fileExists(lastFile);
       });
   }
   
