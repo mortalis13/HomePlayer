@@ -1005,25 +1005,13 @@ public class MainActivity extends AppCompatActivity {
   private void playNextFileAction() {
     if (playerService == null) return;
     boolean startPlayback = playerService.isPlaying();
-    
-    if (this.cueIsPlaying) {
-      playNextCueTrack(startPlayback);
-    }
-    else {
-      playNextFile(startPlayback);
-    }
+    playNextFile(startPlayback);
   }
   
   private void playPrevFileAction() {
     if (playerService == null) return;
     boolean startPlayback = playerService.isPlaying();
-    
-    if (this.cueIsPlaying) {
-      playPrevCueTrack(startPlayback);
-    }
-    else {
-      playPrevFile(startPlayback);
-    }
+    playPrevFile(startPlayback);
   }
   
   private void playRandomFile() {
@@ -1104,7 +1092,6 @@ public class MainActivity extends AppCompatActivity {
     updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
-    updateShuffleList(filePath);
     
     if (isSameFile) {
       playerService.seekTo(time);
@@ -1134,7 +1121,8 @@ public class MainActivity extends AppCompatActivity {
     this.updateTimeEnabled = true;
     
     updateCurrentTrack(filePath);
-    removeFromShuffleList(filePath);
+    updateShuffleList();
+    removeFromShuffleList(this.currentTrack);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
@@ -1208,21 +1196,23 @@ public class MainActivity extends AppCompatActivity {
     if (playerService == null || !playerService.hasAudio()) return;
     
     String currentFile = playerService.getAudioPath();
-    String file = null;
+    Track track = null;
     if (playbackShuffle || random) {
-      file = getNextRandomFile(currentFile);
+      track = getNextRandomTrack();
     }
     
-    if (file == null) {
-      file = getNextPlaylistFile(currentFile);
+    if (track == null) {
+      track = getNextPlaylistTrack();
     }
     
-    if (file != null) {
-      log("Next file: " + file);
-      playAudio(file, startPlayback);
+    if (track != null) {
+      log("Next track: " + track.path);
+      int time = 0;
+      if (track instanceof CueTrack) time = ((CueTrack) track).startTime;
+      playAudio(track.path, time, startPlayback);
     }
     else {
-      loge("Next file is null");
+      loge("Next track is null");
     }
   }
   
@@ -1230,43 +1220,16 @@ public class MainActivity extends AppCompatActivity {
     logd("playPrevFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
-    String currentFile = playerService.getAudioPath();
-    String file = getPrevPlaylistFile(currentFile);
-    
-    if (file != null) {
-      log("Previous file: " + file);
-      playAudio(file, startPlayback);
-    }
-    else {
-      loge("Previous file is null");
-    }
-  }
-  
-  private void playNextCueTrack(boolean startPlayback) {
-    logd("playNextCueTrack()");
-    if (playerService == null || !playerService.hasAudio()) return;
-    CueTrack track = getNextCueTrack(getCurrentCueTime());
+    Track track = getPrevPlaylistTrack();
     
     if (track != null) {
-      log("Next CUE track: \"%s\", start time: %d", track.name, track.startTime);
-      playAudio(playerService.getAudioPath(), track.startTime, startPlayback);
+      log("Previous track: " + track.path);
+      int time = 0;
+      if (track instanceof CueTrack) time = ((CueTrack) track).startTime;
+      playAudio(track.path, time, startPlayback);
     }
     else {
-      logw("Could not find next CUE track for " + playerService.getAudioPath());
-    }
-  }
-  
-  private void playPrevCueTrack(boolean startPlayback) {
-    logd("playPrevCueTrack()");
-    if (playerService == null || !playerService.hasAudio()) return;
-    CueTrack track = getPrevCueTrack(getCurrentCueTime());
-    
-    if (track != null) {
-      log("Previous CUE track: \"%s\", start time: %d", track.name, track.startTime);
-      playAudio(playerService.getAudioPath(), track.startTime, startPlayback);
-    }
-    else {
-      logw("Could not find previous CUE track for " + playerService.getAudioPath());
+      loge("Previous track is null");
     }
   }
   
@@ -1690,19 +1653,18 @@ public class MainActivity extends AppCompatActivity {
       boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
       
       if (nearAudioEnd) {
-        String currentFile = playerService.getAudioPath();
-        String nextFile = getNextPlaylistFile(currentFile);
+        Track track = getNextPlaylistTrack();
         
         nextPreloadingFailed = true;
-        if (nextFile == null) {
+        if (track == null) {
           logw("Next file is null. Cannot preload it");
         }
-        else if (!Fun.fileExists(nextFile)) {
-          logw("Next file doesn't exist. Cannot preload it: " + nextFile);
+        else if (!Fun.fileExists(track.path)) {
+          logw("Next file doesn't exist. Cannot preload it: " + track.path);
         }
         else {
-          log("Preloading next file: " + nextFile);
-          nextFilePreloaded = EngineNative.bufferNextAudio(nextFile);
+          log("Preloading next file: " + track.path);
+          nextFilePreloaded = EngineNative.bufferNextAudio(track.path);
           nextPreloadingFailed = !nextFilePreloaded;
         }
       }
@@ -1752,42 +1714,31 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Audio Utils ------------------------------
-  private String getPrevPlaylistFile(String file) {
-    return getPrevNextFile(file, false);
+  private Track getNextPlaylistTrack() {
+    if (this.playingList.isEmpty()) return null;
+    if (this.currentTrack == null) return null;
+    
+    int len = this.playingList.size();
+    
+    int currentIndex = this.playingList.indexOf(currentTrack);
+    int nextIndex = (currentIndex == len - 1) ? 0: currentIndex + 1;
+    return this.playingList.get(nextIndex);
   }
   
-  private String getNextPlaylistFile(String file) {
-    return getPrevNextFile(file, true);
+  private Track getPrevPlaylistTrack() {
+    if (this.playingList.isEmpty()) return null;
+    if (this.currentTrack == null) return null;
+    
+    int len = this.playingList.size();
+    
+    int currentIndex = this.playingList.indexOf(currentTrack);
+    int prevIndex = (currentIndex == 0) ? len - 1: currentIndex - 1;
+    return this.playingList.get(prevIndex);
   }
   
-  private String getPrevNextFile(String file, boolean next) {
-    Track result = null;
-    int len = playingList.size();
-
-    for (int i = 0; i < len; i++) {
-      if (playingList.get(i).path.equals(file)) {
-        if (next) {
-          result = playingList.get(i == len-1 ? 0: i+1);
-        }
-        else {
-          result = playingList.get(i == 0 ? len-1: i-1);
-        }
-        break;
-      }
-    }
-    
-    if (result == null) {
-      result = playingList.get(next ? 0: len - 1);
-    }
-    
-    return result.path;
-  }
-  
-  private String getNextRandomFile(String file) {
-    logd("getNextRandomFile(): " + file);
-    
-    if (shuffleList.isEmpty() || !belongsToShuffleList(file)) {
-      generateShuffleList(file);
+  private Track getNextRandomTrack() {
+    if (shuffleList.isEmpty()) {
+      generateShuffleList();
     }
     
     if (shuffleList.isEmpty()) {
@@ -1795,40 +1746,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     int nextId = randShuffle.nextInt(shuffleList.size());
-    String result = shuffleList.get(nextId).path;
-    return result;
-  }
-  
-  private CueTrack getNextCueTrack(int time) {
-    int size = this.cuePlayingList.size();
-    
-    for (int i = 0; i < size; i++) {
-      var item = this.cuePlayingList.get(i);
-    
-      if (time >= item.startTime && time < item.endTime) {
-        int nextId = i + 1;
-        if (nextId >= size) nextId = 0;
-        return this.cuePlayingList.get(nextId);
-      }
-    }
-    
-    return null;
-  }
-  
-  private CueTrack getPrevCueTrack(int time) {
-    int size = this.cuePlayingList.size();
-    
-    for (int i = 0; i < size; i++) {
-      var item = this.cuePlayingList.get(i);
-    
-      if (time >= item.startTime && time < item.endTime) {
-        int prevId = i - 1;
-        if (prevId < 0) prevId = size - 1;
-        return this.cuePlayingList.get(prevId);
-      }
-    }
-    
-    return null;
+    return shuffleList.get(nextId);
   }
   
   private void selectPlayingDirOrFile() {
@@ -1888,38 +1806,38 @@ public class MainActivity extends AppCompatActivity {
     return time;
   }
   
-  private void generateShuffleList(String audioFile) {
-    logd("generateShuffleList(): " + audioFile);
-    if (playingList.isEmpty()) return;
-    shuffleList = new ArrayList<>(playingList);
-    removeFromShuffleList(audioFile);
+  private void generateShuffleList() {
+    logd("generateShuffleList()");
+    if (this.playingList.isEmpty()) return;
+    this.shuffleList = new ArrayList<>(this.playingList);
   }
   
-  private void removeFromShuffleList(String audioFile) {
+  private void removeFromShuffleList(Track track) {
     if (!playbackShuffle) return;
-    logd("removeFromShuffleList(): " + audioFile);
+    if (track == null) return;
+    logd("removeFromShuffleList(): " + track.path);
     
-    for (Track track: shuffleList) {
-      if (track.path.equals(audioFile)) {
-        shuffleList.remove(track);
+    for (Track shuffleTrack: shuffleList) {
+      if (shuffleTrack.path.equals(track.path)) {
+        shuffleList.remove(shuffleTrack);
         return;
       }
     }
   }
   
-  private void updateShuffleList(String audioFile) {
+  private void updateShuffleList() {
     if (!playbackShuffle) return;
-    logd("updateShuffleList(): " + audioFile);
+    logd("updateShuffleList()");
     
-    if (!belongsToShuffleList(audioFile)) {
-      generateShuffleList(audioFile);
+    if (!belongsToShuffleList(this.currentTrack)) {
+      generateShuffleList();
     }
   }
   
-  private boolean belongsToShuffleList(String audioFile) {
+  private boolean belongsToShuffleList(Track track) {
     if (shuffleList.isEmpty()) return false;
-    if (audioFile == null) return false;
-    return Fun.getFolder(audioFile).equals(Fun.getFolder(shuffleList.get(0).path));
+    if (track == null) return false;
+    return Fun.getFolder(track.path).equals(Fun.getFolder(shuffleList.get(0).path));
   }
   
   private void fullStop() {
