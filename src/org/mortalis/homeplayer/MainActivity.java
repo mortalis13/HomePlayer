@@ -154,9 +154,6 @@ public class MainActivity extends AppCompatActivity {
   
   private boolean extraInfoIsForCurrentFile;
   
-  private boolean cueIsPlaying;
-  private List<CueTrack> cuePlayingList = new ArrayList<>();
-  
   private Set<String> repeatableFiles;
   
   private Stack<Parcelable> scrollStack;
@@ -446,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
         playerService.progressSetupAction = (time) -> initProgress(time);
         playerService.progressUpdateAction = (time) -> updateProgress(time);
         playerService.timeInitAction = (time, timeTotal) -> onPlayingTimeSetup(time, timeTotal);
-        playerService.timeUpdateAction = (time, timeTotal) -> onPlayedTimeChanged(time, timeTotal);
+        playerService.timeUpdateAction = (time, timeTotal) -> onPlayingTimeChanged(time, timeTotal);
         playerService.onPlayerPreloadedAction = () -> onPlayerPreloaded();
         playerService.onPlayerStartedAction = () -> onPlayerStarted();
         playerService.onPlayerPausedAction = () -> onPlayerPaused();
@@ -1054,11 +1051,10 @@ public class MainActivity extends AppCompatActivity {
   
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
-    logd("playAudio(), time: %d, \"%s\"", time, filePath);
+    logd("playAudio(), \"%s\" %d", filePath, time);
     this.updateTimeEnabled = false;
     this.nextFilePreloaded = false;
     this.nextPreloadingFailed = false;
-    this.cueIsPlaying = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
@@ -1069,6 +1065,7 @@ public class MainActivity extends AppCompatActivity {
     boolean isSameFile = (playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
     if (!isSameFile) {
       playerService.stopProgress();
+      progressSlider.reset();
     }
     
     File playingFile = new File(filePath);
@@ -1088,13 +1085,12 @@ public class MainActivity extends AppCompatActivity {
     
     if (loopEnabled) disableLoop();
     
-    progressSlider.reset();
     updateWaveform(filePath);
-    
     processPlayingDirChange(playingFile);
     
     if (isSameFile) {
       playerService.seekTo(time);
+      updateProgress(time);
       if (startPlayback && !playerService.isPlaying()) playerService.resume();
       updatePlayingStats();
     }
@@ -1120,7 +1116,7 @@ public class MainActivity extends AppCompatActivity {
     
     this.updateTimeEnabled = true;
     
-    updateCurrentTrack(filePath);
+    updateCurrentTrack(filePath, time);
     updateShuffleList();
     removeFromShuffleList(this.currentTrack);
     
@@ -1128,18 +1124,9 @@ public class MainActivity extends AppCompatActivity {
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
     markItem(filePath);
-    selectItem(filePath);
+    selectCurrentTrack();
     
     if (!startPlayback) setPlayButtonDefault();
-    
-    var item = filesAdapter.getItemByPath(filePath);
-    if (item != null && item.isCue) {
-      filesAdapter.selectCueTrack(item, time);
-
-      if (this.cuePlayingList.isEmpty()) makeCuePlayingList(item);
-    }
-    
-    this.cueIsPlaying = isCueTrackPlaying(filePath);
   }
   
   private void syncNextFile(String filePath) {
@@ -1170,11 +1157,13 @@ public class MainActivity extends AppCompatActivity {
     boolean fileRepeat = repeatableFiles.contains(filePath);
     EngineNative.setRepeat(playbackRepeat || fileRepeat);
     
+    updateCurrentTrack(filePath);
+    
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
 
     markItem(filePath);
-    selectItem(filePath);
+    filesAdapter.selectItem(filePath);
   }
   
   private void playAudio(String filePath, boolean startPlayback) {
@@ -1272,7 +1261,7 @@ public class MainActivity extends AppCompatActivity {
     lastFolder = path.getPath();
     Fun.saveSharedPref(context, "PREF_LAST_FOLDER", lastFolder);
     
-    selectPlayingDirOrFile();
+    selectCurrentTrack();
     resetCurrentDirTime();
 
     markLastPlayedFileInDir(currentPath);
@@ -1604,7 +1593,7 @@ public class MainActivity extends AppCompatActivity {
     else {
       boolean forceLoadNext = true;
       
-      // Multiple conditions for preloading,global setting enabled, file previously preloaded and current backend audio path is not the same as the current audio in the player service
+      // Multiple conditions for preloading, global setting enabled, file previously preloaded and current backend audio path is not the same as the current audio in the player service
       if (Vars.ENABLE_NEXT_FILE_PRELOADING && nextFilePreloaded) {
         nextFilePreloaded = false;
         String filePath = EngineNative.getAudioPath();
@@ -1635,7 +1624,7 @@ public class MainActivity extends AppCompatActivity {
     updatePlayingTime(playingTime, totalTime);
   }
   
-  private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
+  private void onPlayingTimeChanged(int playingTime, int totalTime) {  // time in ms
     if (!this.updateTimeEnabled) return;
     updatePlayingTime(playingTime, totalTime);
     
@@ -1644,13 +1633,14 @@ public class MainActivity extends AppCompatActivity {
       if (this.currentTrack != track) {
         this.currentTrack = track;
         updatePlayingStats();
+        selectCurrentTrack();
       }
     }
     
     // Preload file when 10s or less is left until the current audio end
     if (Vars.ENABLE_NEXT_FILE_PRELOADING && !nextFilePreloaded && !nextPreloadingFailed && !playbackShuffle) {
       int timeLeft = totalTime - playingTime;
-      boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
+      boolean nearAudioEnd = timeLeft < Vars.NEXT_PRELOADING_TIME && timeLeft > 200 && !isPlayingLastFile();
       
       if (nearAudioEnd) {
         Track track = getNextPlaylistTrack();
@@ -1749,25 +1739,15 @@ public class MainActivity extends AppCompatActivity {
     return shuffleList.get(nextId);
   }
   
-  private void selectPlayingDirOrFile() {
-    if (playerService == null || !playerService.isPlayerLoaded() || !playerService.hasAudio()) return;
-    var audioPath = playerService.getAudioPath();
-    if (!Fun.fileExists(audioPath)) return;
+  private void selectCurrentTrack() {
+    logd("selectCurrentTrack()");
+    if (this.currentTrack == null) return;
     
-    selectItem(audioPath);
-    
-    var item = filesAdapter.getItemByPath(audioPath);
-    if (item != null && item.isCue) {
-      filesAdapter.selectCueTrack(item, getCurrentCueTime());
+    if (this.currentTrack instanceof CueTrack) {
+      filesAdapter.selectCueTrack(this.currentTrack.path, ((CueTrack) this.currentTrack).startTime);
     }
-  }
-  
-  private void selectItem(String filePath) {
-    int playingItemPos = filesAdapter.getPositionForSubpath(filePath);
-    
-    if (playingItemPos != -1) {
-      log("Selecting item or its folder: " + filePath);
-      filesAdapter.selectItem(playingItemPos);
+    else {
+      filesAdapter.selectItem(this.currentTrack.path);
     }
   }
   
@@ -1866,11 +1846,9 @@ public class MainActivity extends AppCompatActivity {
   private int getCurrentCueTime() {
     if (playerService == null) return 0;
     // Adjust CUE track time as seek can offset the real time by some ms
-    return playerService.getPlayingTime() + 50;
-  }
-  
-  private boolean isCueTrackPlaying(String path) {
-    return this.cuePlayingList.size() > 0 && this.cuePlayingList.get(0).path.equals(path);
+    int time = playerService.getPlayingTime();
+    int result = (time == 0) ? 0: time + 50;
+    return result;
   }
   
   private boolean isPlayingCueTrack() {
@@ -1915,24 +1893,6 @@ public class MainActivity extends AppCompatActivity {
     
     playingList.clear();
     playingList.addAll(cleanList);
-  }
-  
-  private void makeCuePlayingList(ListItem sourceItem) {
-    if (sourceItem == null) return;
-    logd("makeCuePlayingList(): " + sourceItem.path);
-    if (isCueTrackPlaying(sourceItem.path)) return;
-    
-    this.cuePlayingList.clear();
-    var cueItems = filesAdapter.getCueList(sourceItem);
-    
-    for (var cueItem: cueItems) {
-      this.cuePlayingList.add(new CueTrack(
-        cueItem.text,
-        cueItem.cueSource.path,
-        cueItem.cueStartTime,
-        cueItem.cueEndTime
-      ));
-    }
   }
   
   private void reloadPlayingListForDir(File dir) {
@@ -1986,27 +1946,34 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void updateCurrentTrack(String filePath) {
-    this.currentTrack = getPlayingTrack(filePath);
+  private void updateCurrentTrack(String path) {
+    this.updateCurrentTrack(path, 0);
+  }
+  
+  private void updateCurrentTrack(String path, int time) {
+    this.currentTrack = getPlayingTrack(path, time);
+    if (this.currentTrack != null && this.currentTrack instanceof CueTrack) {
+      logd("updateCurrentTrack(): \"%s\" \"%s\" [%d]", this.currentTrack.name, path, time);
+    }
   }
   
   private Track getPlayingTrack() {
     if (playerService == null || !playerService.hasAudio()) return null;
-    return getPlayingTrack(playerService.getAudioPath());
+    return getPlayingTrack(playerService.getAudioPath(), 0);
   }
   
-  private Track getPlayingTrack(String filePath) {
+  private Track getPlayingTrack(String path, int time) {
     int pos = -1;
     boolean posFound = false;
     
-    int total = this.playingList.size();
-    for (int i = 0; i < total; i++) {
+    int size = this.playingList.size();
+    for (int i = 0; i < size; i++) {
       var track = this.playingList.get(i);
-      if (!filePath.equals(track.path)) continue;
+      if (!path.equals(track.path)) continue;
       
       if (track instanceof CueTrack) {
         var cueTrack = (CueTrack) track;
-        var cueTime = getCurrentCueTime();
+        var cueTime = (time != 0) ? time: getCurrentCueTime();
         if (cueTime < cueTrack.endTime) posFound = true;
       }
       else {
@@ -2416,19 +2383,6 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateProgress(int time) {
     progressSlider.setProgress(time);
-    
-    if (this.cueIsPlaying) {
-      if (playerService == null || !playerService.hasAudio()) return;
-      String audioPath = playerService.getAudioPath();
-      
-      var currentTrack = filesAdapter.getPlayingCueTrack(audioPath);
-      if (currentTrack == null) return;
-      
-      int cueTime = getCurrentCueTime();
-      if (cueTime < currentTrack.cueStartTime || cueTime > currentTrack.cueEndTime) {
-        filesAdapter.selectCueTrack(currentTrack.cueSource, cueTime);
-      }
-    }
   }
   
   private void setupLooper() {

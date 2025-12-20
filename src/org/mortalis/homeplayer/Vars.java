@@ -23,6 +23,7 @@ public class Vars {
   public static final String PREF_LAST_TIME_IN_FOLDER = "PREF_LAST_TIME_";
   
   public static final int MIN_PLAYABLE_TIME = 2000;  // ms
+  public static final int NEXT_PRELOADING_TIME = 10000;  // ms
   public static final int MAX_TRIM = 300;  // s
   
   public static final int LOOP_OFFSET_STEP_DEFAULT = 100;  // ms

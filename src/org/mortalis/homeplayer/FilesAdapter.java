@@ -137,6 +137,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     return getPositionForSubpath(new File(filePath).getParent());
   }
   
+  public void selectItem(String path) {
+    int pos = getPositionForSubpath(path);
+    if (pos != -1) {
+      log("Selecting item: " + path);
+      selectItem(pos);
+    }
+  }
+  
   public void selectItem(int itemPos) {
     selectedItemPos = itemPos;
     if (lastItemSelectedPos != -1) {
@@ -147,17 +155,18 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     notifyItemChanged(selectedItemPos);
   }
   
-  public void selectCueTrack(ListItem sourceItem, int time) {
-    if (sourceItem == null || !sourceItem.isCue) return;
-    logd("selectCueTrack \"%s\" %d", sourceItem.path, time);
+  public void selectCueTrack(String path, int startTime) {
+    if (path == null) return;
+    logd("selectCueTrack \"%s\" %d", path, startTime);
+    
     int size = this.fileList.size();
     boolean itemFound = false;
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (!item.isCueTrack || item.cueSource != sourceItem) continue;
+      if (!item.isCueTrack || !item.cueSource.path.equals(path)) continue;
       
-      if (!itemFound && time < item.cueEndTime) {
+      if (!itemFound && item.cueStartTime == startTime) {
         if (!item.isCurrentCueTrack) {
           item.isCurrentCueTrack = true;
           notifyItemChanged(i);
@@ -169,6 +178,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
         notifyItemChanged(i);
       }
     }
+    
+    // Select a parent folder of the CUE track
+    if (!itemFound) selectItem(path);
   }
   
   public void markLastPlayedItem(String filePath) {
@@ -229,50 +241,6 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
     
     return -1;
-  }
-  
-  public ListItem getItemByPath(String path) {
-    int size = this.fileList.size();
-    
-    for (int i = 0; i < size; i++) {
-      ListItem item = this.fileList.get(i);
-      if (item.path != null && item.path.equals(path)) {
-        return item;
-      }
-    }
-    
-    return null;
-  }
-  
-  public ListItem getPlayingCueTrack(String path) {
-    int size = this.fileList.size();
-    
-    for (int i = 0; i < size; i++) {
-      ListItem item = this.fileList.get(i);
-      if (!item.isCurrentCueTrack || !item.isCueTrack) continue;
-      if (item.cueSource == null) continue;
-      
-      if (item.cueSource.path != null && item.cueSource.path.equals(path)) {
-        return item;
-      }
-    }
-    
-    return null;
-  }
-  
-  public List<ListItem> getCueList(ListItem source) {
-    int size = this.fileList.size();
-    List<ListItem> result = new ArrayList<>();
-    
-    for (int i = 0; i < size; i++) {
-      ListItem item = this.fileList.get(i);
-      if (!item.isCueTrack) continue;
-      if (item.cueSource == source) {
-        result.add(item);
-      }
-    }
-    
-    return result;
   }
   
   public void hideActiveItemMenu() {
