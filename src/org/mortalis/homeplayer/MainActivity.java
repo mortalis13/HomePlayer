@@ -121,10 +121,13 @@ public class MainActivity extends AppCompatActivity {
   private File currentPath;
   
   private List<Track> playingList = new ArrayList<>();
+  private Track currentTrack;
+  
   private String lastFolder;
   private String lastAudio;
   private int lastAudioTime;
   private Set<String> favoritesList;
+  
   private boolean playbackRepeat;
   private boolean nextFilePreloaded;
   private boolean nextPreloadingFailed;
@@ -1075,7 +1078,10 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    playerService.stopProgress();
+    boolean isSameFile = (playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
+    if (!isSameFile) {
+      playerService.stopProgress();
+    }
     
     File playingFile = new File(filePath);
     if (!playingFile.exists()) {
@@ -1100,25 +1106,34 @@ public class MainActivity extends AppCompatActivity {
     processPlayingDirChange(playingFile);
     updateShuffleList(filePath);
     
-    Intent playerIntent = new Intent(this, PlayerService.class);
-    playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
-    playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
-    playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
+    if (isSameFile) {
+      playerService.seekTo(time);
+      if (startPlayback && !playerService.isPlaying()) playerService.resume();
+      updatePlayingStats();
+    }
+    else {
+      Intent playerIntent = new Intent(this, PlayerService.class);
+      playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
+      playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
+      playerIntent.putExtra(Vars.EXTRA_START_PLAYBACK, startPlayback);
+      
+      boolean fileRepeat = repeatableFiles.contains(filePath);
+      playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat || fileRepeat);
+      
+      startService(playerIntent);
+      // try {
+      // > check loading with screen off
+      //   startService(playerIntent);
+      // }
+      // catch (Exception e) {
+      //   // e.printStackTrace();
+      // }
+      log("playerService started");
+    }
     
-    boolean fileRepeat = repeatableFiles.contains(filePath);
-    playerIntent.putExtra(Vars.EXTRA_PLAYBACK_REPEAT, playbackRepeat || fileRepeat);
-    
-    startService(playerIntent);
-    // try {
-    // > check loading with screen off
-    //   startService(playerIntent);
-    // }
-    // catch (Exception e) {
-    //   // e.printStackTrace();
-    // }
-    log("playerService started");
     this.updateTimeEnabled = true;
     
+    updateCurrentTrack(filePath);
     removeFromShuffleList(filePath);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
@@ -1658,8 +1673,16 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onPlayedTimeChanged(int playingTime, int totalTime) {  // time in ms
-    if (!updateTimeEnabled) return;
+    if (!this.updateTimeEnabled) return;
     updatePlayingTime(playingTime, totalTime);
+    
+    if (isPlayingCueTrack()) {
+      var track = getPlayingTrack();
+      if (this.currentTrack != track) {
+        this.currentTrack = track;
+        updatePlayingStats();
+      }
+    }
     
     // Preload file when 10s or less is left until the current audio end
     if (Vars.ENABLE_NEXT_FILE_PRELOADING && !nextFilePreloaded && !nextPreloadingFailed && !playbackShuffle) {
@@ -1932,6 +1955,10 @@ public class MainActivity extends AppCompatActivity {
     return this.cuePlayingList.size() > 0 && this.cuePlayingList.get(0).path.equals(path);
   }
   
+  private boolean isPlayingCueTrack() {
+    return this.currentTrack != null && this.currentTrack instanceof CueTrack;
+  }
+  
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
     if (dir == null) return;
@@ -2041,14 +2068,52 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void itemClick(ListItem item) {
-    logd("itemClick() %s [%s]", item.text, item.path);
+  private void updateCurrentTrack(String filePath) {
+    this.currentTrack = getPlayingTrack(filePath);
+  }
+  
+  private Track getPlayingTrack() {
+    if (playerService == null || !playerService.hasAudio()) return null;
+    return getPlayingTrack(playerService.getAudioPath());
+  }
+  
+  private Track getPlayingTrack(String filePath) {
+    int pos = -1;
+    boolean posFound = false;
     
+    int total = this.playingList.size();
+    for (int i = 0; i < total; i++) {
+      var track = this.playingList.get(i);
+      if (!filePath.equals(track.path)) continue;
+      
+      if (track instanceof CueTrack) {
+        var cueTrack = (CueTrack) track;
+        var cueTime = getCurrentCueTime();
+        if (cueTime < cueTrack.endTime) posFound = true;
+      }
+      else {
+        posFound = true;
+      }
+      
+      if (posFound) {
+        pos = i;
+        break;
+      }
+    }
+    
+    if (pos == -1) return null;
+
+    return this.playingList.get(pos);
+  }
+  
+  private void itemClick(ListItem item) {
     try {
       String path = item.path;
       if (item.isCueTrack && item.cueSource != null) {
         path = item.cueSource.path;
       }
+      
+      logd("itemClick() \"%s\" [%s]", item.text, path);
       
       File clickedFile = new File(path);
       if (clickedFile.isDirectory()) {
@@ -2185,22 +2250,17 @@ public class MainActivity extends AppCompatActivity {
     logd("updatePlayingStats()");
     if (playerService == null || !playerService.hasAudio()) return;
     
-    if (playingList.isEmpty()) {
+    if (this.playingList.isEmpty()) {
       loge("playingList is empty");
       textPlayingPosition.setText("0/0");
       textFileExtraData.setText("0");
       return;
     }
     
-    int playingItemPos = -1;
-    for (int i = 0; i < playingList.size(); i++) {
-      if (playerService.getAudioPath().equals(playingList.get(i).path)) {
-        playingItemPos = i;
-        break;
-      }
-    }
+    var currentTrack = getPlayingTrack();
+    int currentPos = (currentTrack != null) ? this.playingList.indexOf(currentTrack): -1;
     
-    String stats = String.format("%d/%d", playingItemPos + 1, playingList.size());
+    String stats = String.format("%d/%d", currentPos + 1, this.playingList.size());
     textPlayingPosition.setText(stats);
     
     int bitrate = playerService.getBitrate() / 1000;
