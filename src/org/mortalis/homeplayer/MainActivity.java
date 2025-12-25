@@ -613,7 +613,7 @@ public class MainActivity extends AppCompatActivity {
       public void onChanged(int value) {
         if (!serviceBound) return;
         disableAudioTrim();
-        playerService.seekTo(value);
+        playerService.changePlayPosition(value);
         playerService.enableUpdateTime();
       }
       public void onCancelled() {
@@ -1090,8 +1090,7 @@ public class MainActivity extends AppCompatActivity {
     processPlayingDirChange(playingFile);
     
     if (isSameFile) {
-      playerService.seekTo(time);
-      updateProgress(time);
+      playerService.changePlayPosition(time);
       if (startPlayback && !playerService.isPlaying()) playerService.resume();
       updatePlayingStats();
     }
@@ -1636,7 +1635,7 @@ public class MainActivity extends AppCompatActivity {
     if (!this.updateTimeEnabled) return;
     updatePlayingTime(playingTime, totalTime);
     
-    if (isPlayingCueTrack()) {
+    if (this.isPlayingCueTrack()) {
       var track = getPlayingTrack();
       if (this.currentTrack != track) {
         this.currentTrack = track;

@@ -591,7 +591,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     sendUpdateProgress();
   }
   
-  public void seekTo(int time) {  // ms
+  private void seekTo(int time) {  // ms
     logd("seekTo() " + time);
     EngineNative.seekTo(time);
   }
