@@ -327,7 +327,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
     
     public void processLongPress() {
-      if (this.item.isFolder) return;
+      if (this.item.isFolder || this.item.isCueTrack) return;
       itemLongPressed = true;
       showItemMenu();
       holderWithMenu = this;

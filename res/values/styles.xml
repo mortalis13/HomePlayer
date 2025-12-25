@@ -34,6 +34,7 @@
     <item name="sliderWaveformProgressColor">@color/slider_waveform_progress_color</item>
     <item name="sliderLoopPointsColor">@color/slider_loop_points_color</item>
     <item name="sliderLoopProgressColor">@color/slider_loop_progress_color</item>
+    <item name="sliderSectionColor">@color/slider_section_color</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed</item>
     <item name="controlButtonBackgroundDefault">@color/control_button_background_default</item>
@@ -129,6 +130,7 @@
     <item name="sliderWaveformProgressColor">@color/slider_waveform_progress_color_dark</item>
     <item name="sliderLoopPointsColor">@color/slider_loop_points_color_dark</item>
     <item name="sliderLoopProgressColor">@color/slider_loop_progress_color_dark</item>
+    <item name="sliderSectionColor">@color/slider_section_color_dark</item>
     
     <item name="controlButtonBackgroundPressed">@color/control_button_background_pressed_dark</item>
     <item name="controlButtonBackgroundDefault">@color/control_button_background_default</item>

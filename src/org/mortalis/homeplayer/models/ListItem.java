@@ -59,5 +59,9 @@ public class ListItem {
     item.cueEndTime = endTime;
     return item;
   }
+  
+  public String toString() {
+    return String.format("ListItem: [\"%s\"] \"%s\", %s, isFile: %b, isFolder: %b, isCue: %b, isCueTrack: %b", text, path, time, isFile, isFolder, isCue, isCueTrack);
+  }
 
 }

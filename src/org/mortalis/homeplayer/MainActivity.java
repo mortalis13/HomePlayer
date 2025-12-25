@@ -1066,6 +1066,7 @@ public class MainActivity extends AppCompatActivity {
     if (!isSameFile) {
       playerService.stopProgress();
       progressSlider.reset();
+      progressSlider.clearSections();
     }
     
     File playingFile = new File(filePath);
@@ -1573,6 +1574,13 @@ public class MainActivity extends AppCompatActivity {
     if (progressSlider.atMaxProgress()) {
       progressSlider.disable();
     }
+    
+    if (this.currentTrack != null && this.currentTrack instanceof CueTrack) {
+      int[] cueTimes = this.playingList.stream().filter(track -> {
+        return track instanceof CueTrack && track.path.equals(this.currentTrack.path);
+      }).skip(1).mapToInt(track -> ((CueTrack) track).startTime).toArray();
+      progressSlider.setSections(cueTimes);
+    }
   }
   
   private void onPlayerPaused() {
@@ -1906,7 +1914,7 @@ public class MainActivity extends AppCompatActivity {
     if (playingList.isEmpty()) return;
     loadPlaylistTimeTask.cancel();
     
-    List<String> list = playingList.stream().map(item -> item.path).collect(Collectors.toList());
+    List<String> list = playingList.stream().map(item -> item.path).distinct().collect(Collectors.toList());
     loadPlaylistTimeTask.setList(list);
     
     loadPlaylistTimeTask.execute(time -> {

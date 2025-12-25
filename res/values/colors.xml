@@ -7,7 +7,6 @@
   <color name="blue">#00f</color>
   <color name="yellow">#ff0</color>
   
-  
   <!-- Default -->
   <color name="overscroll_edge_color">@color/red</color>
   
@@ -73,6 +72,7 @@
   <color name="slider_waveform_progress_color">#666</color>
   <color name="slider_loop_points_color">@color/range_slider_progress_color</color>
   <color name="slider_loop_progress_color">#9fc9c0</color>
+  <color name="slider_section_color">#9fc9c0</color>
   
   <color name="trim_slider_background_color">@color/transparent</color>
   <color name="trim_slider_progress_color">#c0b4c6</color>
@@ -127,6 +127,7 @@
   <color name="slider_waveform_progress_color_dark">#aaa</color>
   <color name="slider_loop_points_color_dark">@color/range_slider_progress_color_dark</color>
   <color name="slider_loop_progress_color_dark">#46625b</color>
+  <color name="slider_section_color_dark">#99c9b0d9</color>
 
   <color name="control_button_background_pressed_dark">#111</color>
   

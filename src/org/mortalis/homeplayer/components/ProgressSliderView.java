@@ -3,6 +3,7 @@ package org.mortalis.homeplayer.components;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -21,6 +22,8 @@ public class ProgressSliderView extends View {
   private static final float MAX_VERTICAL_DISTANCE = Fun.dpToPx(100);
   private static final int WAVEFORM_PAD = (int) Fun.dpToPx(6);
   private static final float LOOP_EDGE_WIDTH_05 = Fun.dpToPx(1);
+  private static final int SECTION_SEPARATOR_HEIGHT = (int) Fun.dpToPx(6);
+  private static final int SECTION_SEPARATOR_WIDTH = (int) Fun.dpToPx(2);
   
   private boolean sliderEnabled;
   private boolean touchEnabled;
@@ -29,9 +32,11 @@ public class ProgressSliderView extends View {
   private Paint progressPaint;
   private Paint waveformPaint;
   private Paint waveformProgressPaint;
+  private Paint sectionPaint;
   
   private RectF canvasRect;
   private RectF progressRect;
+  private Rect[][] sections;
   
   private boolean showLoop;
   private Paint loopPaint;
@@ -92,6 +97,10 @@ public class ProgressSliderView extends View {
     this.loopProgressPaint = new Paint();
     this.loopProgressPaint.setColor(MaterialColors.getColor(this, R.attr.sliderLoopProgressColor));
     this.loopProgressPaint.setStyle(Paint.Style.FILL);
+    
+    this.sectionPaint = new Paint();
+    this.sectionPaint.setColor(MaterialColors.getColor(this, R.attr.sliderSectionColor));
+    this.sectionPaint.setStyle(Paint.Style.FILL);
     
     this.canvasRect = new RectF();
     this.progressRect = new RectF();
@@ -207,6 +216,13 @@ public class ProgressSliderView extends View {
       canvas.drawRect(this.loopStartRect, this.loopPaint);
       canvas.drawRect(this.loopEndRect, this.loopPaint);
     }
+    
+    if (this.sections != null) {
+      for (int i = 0; i < this.sections.length; i++) {
+        canvas.drawRect(this.sections[i][0], this.sectionPaint);
+        canvas.drawRect(this.sections[i][1], this.sectionPaint);
+      }
+    }
   }
   
   @Override
@@ -308,6 +324,31 @@ public class ProgressSliderView extends View {
       if (right > loopEndRect.left && loopEndRect.left != 0) right = loopEndRect.left;
       loopProgressRect.set(loopStartRect.left, 0, right, this.canvasHeight);
     }
+  }
+  
+  
+  public void setSections(int[] times) {
+    if (times == null || times.length == 0) return;
+    // 2 rects per section, at the top and bottom of the slider
+    this.sections = new Rect[times.length][2];
+    
+    for (int i = 0; i < times.length; i++) {
+      int left = (int) (times[i] * this.progressStep);
+      int top1 = 0;
+      int right = left + SECTION_SEPARATOR_WIDTH;
+      int bottom1 = top1 + SECTION_SEPARATOR_HEIGHT;
+      
+      int bottom2 = this.canvasHeight;
+      int top2 = bottom2 - SECTION_SEPARATOR_HEIGHT;
+      this.sections[i][0] = new Rect(left, top1, right, bottom1);
+      this.sections[i][1] = new Rect(left, top2, right, bottom2);
+    }
+    
+    invalidate();
+  }
+  
+  public void clearSections() {
+    this.sections = null;
   }
   
   
