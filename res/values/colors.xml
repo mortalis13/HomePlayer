@@ -28,6 +28,9 @@
   <color name="list_item_background_selected">#cdcdcd</color>
   <color name="list_item_background_default">@color/transparent</color>
   
+  <color name="list_item_cue_background_pressed">#bfd0d7</color>
+  <color name="list_item_cue_background_selected">#aaa</color>
+  
   <color name="list_item_button_background_pressed">#eee</color>
   <color name="list_item_button_background_default">#e5e5e5</color>
   
@@ -35,14 +38,12 @@
   <color name="item_toggle_button_background_selected">#bacad1</color>
   <color name="item_toggle_button_background_default">#e5e5e5</color>
   
-  <color name="list_item_cue_background_pressed">#bfd0d7</color>
-  <color name="list_item_cue_background_selected">#aaa</color>
-  
   <color name="list_item_text_color_error">#922</color>
   <color name="list_item_icon_color">#a5a5a5</color>
   <color name="list_item_icon_color_folder">#868686</color>
   <color name="list_item_icon_color_highlight">#a45353</color>
   <color name="list_item_icon_color_cue_highlight">#895da3</color>
+  
   <color name="list_item_separator_color">#bbb</color>
   <color name="list_item_cue_separator_color">#5d435d</color>
   
@@ -136,23 +137,24 @@
   <color name="list_item_background_pressed_dark">#333</color>
   <color name="list_item_background_selected_dark">#444</color>
 
+  <color name="list_item_cue_background_pressed_dark">#222</color>
+  <color name="list_item_cue_background_selected_dark">#3b383e</color>
+
   <color name="list_item_button_background_pressed_dark">#111</color>
   <color name="list_item_button_background_default_dark">#2c2c2c</color>
 
   <color name="item_toggle_button_background_pressed_dark">#4b585e</color>
   <color name="item_toggle_button_background_selected_dark">#516066</color>
   <color name="item_toggle_button_background_default_dark">#2c2c2c</color>
-
-  <color name="list_item_cue_background_pressed_dark">#222</color>
-  <color name="list_item_cue_background_selected_dark">#181818</color>
   
   <color name="list_item_text_color_error_dark">#e17070</color>
   <color name="list_item_icon_color_dark">#777</color>
   <color name="list_item_icon_color_folder_dark">#adadad</color>
   <color name="list_item_icon_color_highlight_dark">#bc5757</color>
-  <color name="list_item_icon_color_cue_highlight_dark">#895da3</color>
+  <color name="list_item_icon_color_cue_highlight_dark">#9557bc</color>
+  
   <color name="list_item_separator_color_dark">#565656</color>
-  <color name="list_item_cue_separator_color_dark">#5d435d</color>
+  <color name="list_item_cue_separator_color_dark">#4d3e56</color>
   
   <color name="danger_button_background_pressed_dark">#4e2c2c</color>
   <color name="danger_button_background_default_dark">#874646</color>
