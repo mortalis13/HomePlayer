@@ -191,6 +191,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
       if (item.isFolder) continue;
+      if (item.isCueTrack) continue;
     
       if (item.path != null && item.path.equals(filePath)) {
         item.isLastPlayed = true;
@@ -203,17 +204,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
   }
   
-  public void markAsFavorite(String filePath) {
-    int size = this.fileList.size();
+  public void markAsFavorite(ListItem item) {
+    if (item == null) return;
+    if (item.isFavorite) return;
     
-    for (int i = 0; i < size; i++) {
-      ListItem item = this.fileList.get(i);
-
-      if (item.path != null && item.path.equals(filePath)) {
-        item.isFavorite = true;
-        notifyItemChanged(i);
-      }
-    }
+    item.isFavorite = true;
+    
+    int itemId = this.fileList.indexOf(item);
+    notifyItemChanged(itemId);
   }
   
   public void markError(String filePath) {

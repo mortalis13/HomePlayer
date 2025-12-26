@@ -51,7 +51,7 @@ public class ListItem {
   }
 
   public static ListItem newCueTrack(String text, ListItem source, String time, int startTime, int endTime) {
-    ListItem item = new ListItem(text);
+    ListItem item = new ListItem(text, source.path);
     item.isCueTrack = true;
     item.cueSource = source;
     item.time = time;

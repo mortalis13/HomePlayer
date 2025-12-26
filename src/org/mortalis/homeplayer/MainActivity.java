@@ -424,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
     repeatableFiles = new HashSet<>();
     
     filesAdapter.itemClickAction = (item) -> itemClick(item);
-    filesAdapter.iconClickAction = (item) -> updateItemFavorite(item.path, item.isFavorite);
+    filesAdapter.iconClickAction = (item) -> updateItemFavorite(item);
     filesAdapter.afterFileRemovedAction = (path) -> onItemRemoved(path);
     filesAdapter.infoClickAction = (path) -> showExtraAudioInfo(path);
     filesAdapter.repeatSelectAction = (item) -> updateFileRepeat(item.path, item.repeat);
@@ -1511,8 +1511,11 @@ public class MainActivity extends AppCompatActivity {
     if (fileList == null) return;
     
     fileList.stream()
-      .filter(item -> favoritesList.contains(item.path))
-      .forEach(item -> filesAdapter.markAsFavorite(item.path));
+      .filter(item -> {
+        String key = (item.isCueTrack) ? item.path + ":" + item.text: item.path;
+        return favoritesList.contains(key);
+      })
+      .forEach(item -> filesAdapter.markAsFavorite(item));
   }
   
   private void markVisitedFolders() {
@@ -1538,7 +1541,10 @@ public class MainActivity extends AppCompatActivity {
     if (fileList == null) return;
     
     long totalFavorites = fileList.stream()
-      .filter(item -> favoritesList.contains(item.path))
+      .filter(item -> {
+        String key = (item.isCueTrack) ? item.path + ":" + item.text: item.path;
+        return favoritesList.contains(key);
+      })
       .count();
     
     textTotalFavorites.setText(String.valueOf(totalFavorites));
@@ -2001,10 +2007,6 @@ public class MainActivity extends AppCompatActivity {
   private void itemClick(ListItem item) {
     try {
       String path = item.path;
-      if (item.isCueTrack && item.cueSource != null) {
-        path = item.cueSource.path;
-      }
-      
       logd("itemClick() \"%s\" [%s]", item.text, path);
       
       File clickedFile = new File(path);
@@ -2023,10 +2025,9 @@ public class MainActivity extends AppCompatActivity {
           if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
         }
       }
-      else {
-        if (item.isCueTrack) {
-          time = item.cueStartTime;
-        }
+      
+      if (item.isCueTrack) {
+        time = item.cueStartTime;
       }
       
       playAudio(path, time, true);
@@ -2099,24 +2100,27 @@ public class MainActivity extends AppCompatActivity {
     if (favoritesList == null) return;
     var listCopy = List.copyOf(favoritesList);
     
-    for (String favPath: listCopy) {
-      if (!Fun.fileExists(favPath)) {
-        favoritesList.remove(favPath);
+    for (String key: listCopy) {
+      String path = (key.contains(":")) ? key.split(":")[0]: key;
+      if (!Fun.fileExists(path)) {
+        favoritesList.remove(key);
       }
     }
     
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
   }
   
-  private void updateItemFavorite(String filePath, boolean isFavorite) {
-    if (filePath == null) return;
+  private void updateItemFavorite(ListItem item) {
+    if (item == null || item.path == null) return;
     
-    if (isFavorite) {
-      favoritesList.add(filePath);
+    String key = (item.isCueTrack) ? item.path + ":" + item.text: item.path;
+    if (item.isFavorite) {
+      favoritesList.add(key);
     }
     else {
-      favoritesList.remove(filePath);
+      favoritesList.remove(key);
     }
+    
     Fun.saveSharedPref(context, "PREF_FAVORITES_LIST", favoritesList);
     updateFavoritesStats();
   }
