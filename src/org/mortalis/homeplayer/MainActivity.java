@@ -609,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
       public void onChanging(int value) {
         if (!serviceBound) return;
         playerService.disableUpdateTime();
-        updatePlayingTime(value, playerService.getTotalTime());
+        updatePlayingTimeText(value, playerService.getTotalTime());
       }
       public void onChanged(int value) {
         if (!serviceBound) return;
@@ -1093,7 +1093,7 @@ public class MainActivity extends AppCompatActivity {
     if (isSameFile) {
       playerService.changePlayPosition(time);
       if (startPlayback && !playerService.isPlaying()) playerService.resume();
-      updatePlayingStats();
+      updatePlaylistStatsText();
     }
     else {
       Intent playerIntent = new Intent(this, PlayerService.class);
@@ -1563,7 +1563,7 @@ public class MainActivity extends AppCompatActivity {
   private void onPlayerPreloaded() {
     logd("onPlayerPreloaded()");
     progressSlider.enable();
-    updatePlayingStats();
+    updatePlaylistStatsText();
     
     setupLooper();
     if (loopEnabled) EngineNative.setLoop(true);
@@ -1641,7 +1641,8 @@ public class MainActivity extends AppCompatActivity {
       var track = getPlayingTrack();
       if (this.currentTrack != track) {
         this.currentTrack = track;
-        updatePlayingStats();
+        updatePlaylistStatsText();
+        updatePlayingTime(playingTime, totalTime);
         selectCurrentTrack();
       }
     }
@@ -1702,7 +1703,7 @@ public class MainActivity extends AppCompatActivity {
       }
       
       reloadPlayingListForDir(playingFile.getParentFile());
-      updatePlayingStats();
+      updatePlaylistStatsText();
       
       if (playingList.isEmpty()) {
         log("Playing list is empty, resetting the player UI");
@@ -1713,6 +1714,29 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Audio Utils ------------------------------
+  private void updatePlayingTime(int playingTime, int totalTime) {  // time in ms
+    if (playingTime == -1 || totalTime == -1) {
+      loge("updatePlayingTime(): playingTime: %d, totalTime: %d", playingTime, totalTime);
+      return;
+    }
+    
+    Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingTime);
+    this.lastAudioTime = playingTime;
+    
+    if (playingTime == 0 && totalTime == 0) {
+      updatePlayingTimeText(playingTime, totalTime);
+      return;
+    }
+    
+    if (this.currentTrack instanceof CueTrack) {
+      var track = (CueTrack) this.currentTrack;
+      playingTime = playingTime - track.startTime;
+      totalTime = track.endTime - track.startTime;
+    }
+    
+    updatePlayingTimeText(playingTime, totalTime);
+  }
+  
   private Track getNextPlaylistTrack() {
     if (this.playingList.isEmpty()) return null;
     if (this.currentTrack == null) return null;
@@ -1845,7 +1869,7 @@ public class MainActivity extends AppCompatActivity {
     progressSlider.disable();
     setPlayButtonDefault();
     
-    updatePlayingStats();
+    updatePlaylistStatsText();
     updatePlayingTime(0, 0);
   }
   
@@ -1941,7 +1965,7 @@ public class MainActivity extends AppCompatActivity {
         if (isPlayingListInconsistent()) {
           runOnUiThread(() -> {
             reloadPlayingListForDir(playingListDir);
-            updatePlayingStats();
+            updatePlaylistStatsText();
           });
         }
       }).start();
@@ -1951,7 +1975,7 @@ public class MainActivity extends AppCompatActivity {
     
     if (isPlayingListInconsistent()) {
       reloadPlayingListForDir(playingListDir);
-      updatePlayingStats();
+      updatePlaylistStatsText();
     }
   }
   
@@ -2047,7 +2071,7 @@ public class MainActivity extends AppCompatActivity {
         log("Directory changed");
         
         Fun.saveSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + currentAudioParent, lastAudioTime);
-        log("Saved %d to TIME_%s", lastAudioTime, currentAudioParent);
+        log("Saved %d to PREF_LAST_TIME_%s", lastAudioTime, currentAudioParent);
         
         cachePlayingList(newAudioFile.getParentFile());
         resetPlayingDirTime();
@@ -2138,8 +2162,8 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void updatePlayingStats() {
-    logd("updatePlayingStats()");
+  private void updatePlaylistStatsText() {
+    logd("updatePlaylistStatsText()");
     if (playerService == null || !playerService.hasAudio()) return;
     
     if (this.playingList.isEmpty()) {
@@ -2160,15 +2184,7 @@ public class MainActivity extends AppCompatActivity {
     textFileExtraData.setText(extraData);
   }
   
-  private void updatePlayingTime(int playingTime, int totalTime) {
-    if (playingTime == -1 || totalTime == -1) {
-      loge("updatePlayingTime(): time is -1, playingTime: %d, totalTime: %d", playingTime, totalTime);
-      return;
-    }
-    
-    Fun.saveSharedPref(context, "PREF_LAST_AUDIO_TIME", playingTime);
-    lastAudioTime = playingTime;
-    
+  private void updatePlayingTimeText(int playingTime, int totalTime) {  // time in ms
     String timePlaying;
     String timeLeft;
     String timeTotal;
