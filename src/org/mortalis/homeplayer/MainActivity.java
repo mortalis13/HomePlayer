@@ -1087,7 +1087,6 @@ public class MainActivity extends AppCompatActivity {
     
     if (loopEnabled) disableLoop();
     
-    updateWaveform(filePath);
     processPlayingDirChange(playingFile);
     
     if (isSameFile) {
@@ -1096,6 +1095,8 @@ public class MainActivity extends AppCompatActivity {
       updatePlaylistStatsText();
     }
     else {
+      updateWaveform(filePath);
+      
       Intent playerIntent = new Intent(this, PlayerService.class);
       playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
       playerIntent.putExtra(Vars.EXTRA_AUDIO_TIME, time);
