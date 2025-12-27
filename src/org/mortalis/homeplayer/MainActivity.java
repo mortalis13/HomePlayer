@@ -314,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
     }
     validateCurrentDir();
     validateActiveWaveform();
+    validateCueSections();
   }
   
   @Override
@@ -1580,12 +1581,7 @@ public class MainActivity extends AppCompatActivity {
       progressSlider.disable();
     }
     
-    if (this.currentTrack != null && this.currentTrack instanceof CueTrack) {
-      int[] cueTimes = this.playingList.stream().filter(track -> {
-        return track instanceof CueTrack && track.path.equals(this.currentTrack.path);
-      }).skip(1).mapToInt(track -> ((CueTrack) track).startTime).toArray();
-      progressSlider.setSections(cueTimes);
-    }
+    updateCueSections();
   }
   
   private void onPlayerPaused() {
@@ -2720,6 +2716,34 @@ public class MainActivity extends AppCompatActivity {
           updateWaveform(playerService.getAudioPath());
         });
       }
+    }
+  }
+  
+  private void updateCueSections() {
+    if (this.currentTrack == null) return;
+    if (!(this.currentTrack instanceof CueTrack)) return;
+    if (this.playingList.size() <= 1) return;
+    
+    int[] cueTimes = this.playingList.stream()
+      .filter(track -> {
+        return track instanceof CueTrack && track.path.equals(this.currentTrack.path);
+      })
+      .skip(1)
+      .mapToInt(track -> ((CueTrack) track).startTime)
+      .toArray();
+    
+    progressSlider.setSections(cueTimes);
+  }
+  
+  private void validateCueSections() {
+    if (this.currentTrack == null) return;
+    if (progressSlider == null) return;
+    if (!(this.currentTrack instanceof CueTrack)) return;
+    
+    if (!progressSlider.hasSections()) {
+      progressSlider.post(() -> {
+        updateCueSections();
+      });
     }
   }
   

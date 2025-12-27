@@ -14,7 +14,11 @@ import com.google.android.material.color.MaterialColors;
 import org.mortalis.homeplayer.Fun;
 import org.mortalis.homeplayer.R;
 
+import java.util.Arrays;
+
 import static org.mortalis.homeplayer.Fun.log;
+import static org.mortalis.homeplayer.Fun.logd;
+import static org.mortalis.homeplayer.Fun.logw;
 
 
 public class ProgressSliderView extends View {
@@ -329,6 +333,13 @@ public class ProgressSliderView extends View {
   
   public void setSections(int[] times) {
     if (times == null || times.length == 0) return;
+    logd("setSections() -> [%d] %s", times.length, Arrays.toString(times));
+    
+    if (this.progressStep == 0) {
+      logw("progressStep is not initialized, cannot setup sections");
+      return;
+    }
+    
     // 2 rects per section, at the top and bottom of the slider
     this.sections = new Rect[times.length][2];
     
@@ -340,6 +351,7 @@ public class ProgressSliderView extends View {
       
       int bottom2 = this.canvasHeight;
       int top2 = bottom2 - SECTION_SEPARATOR_HEIGHT;
+      
       this.sections[i][0] = new Rect(left, top1, right, bottom1);
       this.sections[i][1] = new Rect(left, top2, right, bottom2);
     }
@@ -376,6 +388,10 @@ public class ProgressSliderView extends View {
   public int getWaveformHeight() {
     if (this.canvasHeight == 0) return 0;
     return this.canvasHeight - WAVEFORM_PAD;
+  }
+  
+  public boolean hasSections() {
+    return this.sections != null;
   }
   
 
