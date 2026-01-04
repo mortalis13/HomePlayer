@@ -138,7 +138,7 @@
   <color name="list_item_background_selected_dark">#444</color>
 
   <color name="list_item_cue_background_pressed_dark">#222</color>
-  <color name="list_item_cue_background_selected_dark">#3b383e</color>
+  <color name="list_item_cue_background_selected_dark">#3f3c42</color>
 
   <color name="list_item_button_background_pressed_dark">#111</color>
   <color name="list_item_button_background_default_dark">#2c2c2c</color>
