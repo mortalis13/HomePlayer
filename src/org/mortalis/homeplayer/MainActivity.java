@@ -1063,7 +1063,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     
-    boolean isSameFile = (playerService.hasAudio() && playerService.getAudioPath().equals(filePath));
+    boolean isSameFile = (playerService.hasAudio() && playerService.getAudioPath().equals(filePath) && playerService.isPlayerLoaded());
     if (!isSameFile) {
       playerService.stopProgress();
       progressSlider.reset();
