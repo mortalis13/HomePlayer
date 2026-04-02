@@ -251,6 +251,7 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   }
 
   public boolean resume() {
+    logd("resume()");
     if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
       boolean audioFocusGranted = requestAudioFocus();
       if (!audioFocusGranted) {

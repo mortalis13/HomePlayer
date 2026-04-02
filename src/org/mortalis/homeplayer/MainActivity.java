@@ -1895,12 +1895,14 @@ public class MainActivity extends AppCompatActivity {
   
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
+    playingList.clear();
+
     if (dir == null) return;
     if (!dir.exists()) {
       loge("Directory doesn't exist: " + dir);
+      return;
     }
     
-    playingList.clear();
     File[] files = dir.listFiles(Fun.fileFilter);
     
     Stream.of(files).sorted(Fun.nocaseComp)
