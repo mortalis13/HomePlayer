@@ -1034,7 +1034,7 @@ public class MainActivity extends AppCompatActivity {
     playbackShuffle = !playbackShuffle;
     Fun.saveSharedPref(context, "PLAYBACK_SHUFFLE", playbackShuffle);
     playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
-    shuffleList.clear();
+    resetShuffleList();
   }
   
   private void playbackRepeatAction() {
@@ -1848,6 +1848,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void resetShuffleList() {
+    shuffleList.clear();
+  }
+  
   private boolean belongsToShuffleList(Track track) {
     if (shuffleList.isEmpty()) return false;
     if (track == null) return false;
@@ -2074,6 +2078,7 @@ public class MainActivity extends AppCompatActivity {
         Fun.saveSharedPref(context, Vars.PREF_LAST_TIME_IN_FOLDER + currentAudioParent, lastAudioTime);
         log("Saved %d to PREF_LAST_TIME_%s", lastAudioTime, currentAudioParent);
         
+        resetShuffleList();
         cachePlayingList(newAudioFile.getParentFile());
         resetPlayingDirTime();
         
