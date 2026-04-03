@@ -144,6 +144,8 @@ public class Fun {
   }
   
   public static boolean removeFile(String filePath) {
+    if (filePath == null) return true;
+    
     try {
       return new File(filePath).delete();
     }
@@ -164,11 +166,11 @@ public class Fun {
     return file != null ? file.getPath(): null;
   }
   
-  public static File getPrevFile(File file) {
+  private static File getPrevFile(File file) {
     return getPrevNextFile(file, false);
   }
   
-  public static File getNextFile(File file) {
+  private static File getNextFile(File file) {
     return getPrevNextFile(file, true);
   }
   
@@ -213,6 +215,7 @@ public class Fun {
   }
   
   public static String getFolder(String file) {
+    if (file == null) return null;
     return new File(file).getParent();
   }
   

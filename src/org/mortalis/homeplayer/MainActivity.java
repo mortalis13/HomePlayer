@@ -65,6 +65,7 @@ import org.mortalis.homeplayer.jni.EngineNative;
 
 import org.mortalis.homeplayer.models.AudioInfo;
 import org.mortalis.homeplayer.models.ListItem;
+import org.mortalis.homeplayer.models.Track;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -75,6 +76,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -116,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
   private List<ListItem> fileList;
   private File currentPath;
   
-  private File[] playingList;
+  private List<Track> playingList = new ArrayList<>();
   private String lastFolder;
   private String lastAudio;
   private int lastAudioTime;
@@ -127,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
   private boolean updateTimeEnabled;
   
   private boolean playbackShuffle;
-  private List<File> shuffleList;
+  private List<Track> shuffleList = new ArrayList<>();
   private final Random randShuffle = new Random();
   
   private AudioInfo currentExtraInfo;
@@ -154,8 +156,8 @@ public class MainActivity extends AppCompatActivity {
   private final ExecutorService taskExecutor = Executors.newFixedThreadPool(8);
   private final Handler taskHandler = HandlerCompat.createAsync(Looper.getMainLooper());
 
-  private final LoadDirectoryTimeProcess loadDirectoryTimeTask = new LoadDirectoryTimeProcess(taskExecutor, taskHandler);
-  private final LoadDirectoryTimeProcess loadPlaylistTimeTask = new LoadDirectoryTimeProcess(taskExecutor, taskHandler);
+  private final LoadDirectoryTimeProcess<ListItem> loadDirectoryTimeTask = new LoadDirectoryTimeProcess<>(taskExecutor, taskHandler);
+  private final LoadDirectoryTimeProcess<String> loadPlaylistTimeTask = new LoadDirectoryTimeProcess<>(taskExecutor, taskHandler);
 
   // -- Views
   private HorizontalScrollView titleScroller;
@@ -1026,8 +1028,7 @@ public class MainActivity extends AppCompatActivity {
     playbackShuffle = !playbackShuffle;
     Fun.saveSharedPref(context, "PLAYBACK_SHUFFLE", playbackShuffle);
     playExtraIconShuffle.setVisibility(playbackShuffle ? View.VISIBLE: View.GONE);
-    
-    if (shuffleList != null) shuffleList.clear();
+    shuffleList.clear();
   }
   
   private void playbackRepeatAction() {
@@ -1079,7 +1080,7 @@ public class MainActivity extends AppCompatActivity {
     updateWaveform(filePath);
     
     processPlayingDirChange(playingFile);
-    updateShuffleList(playingFile);
+    updateShuffleList(filePath);
     
     Intent playerIntent = new Intent(this, PlayerService.class);
     playerIntent.putExtra(Vars.EXTRA_AUDIO_PATH, filePath);
@@ -1100,7 +1101,7 @@ public class MainActivity extends AppCompatActivity {
     log("playerService started");
     updateTimeEnabled = true;
     
-    removeFromShuffleList(playingFile);
+    removeFromShuffleList(filePath);
     
     Fun.saveSharedPref(context, "PREF_LAST_AUDIO", filePath);
     Fun.saveSharedPref(context, Vars.PREF_LAST_FILE_IN_FOLDER + playingFile.getParent(), filePath);
@@ -1164,8 +1165,8 @@ public class MainActivity extends AppCompatActivity {
     logd("playNextFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
-    File currentFile = new File(playerService.getAudioPath());
-    File file = null;
+    String currentFile = playerService.getAudioPath();
+    String file = null;
     if (playbackShuffle || random) {
       file = getNextRandomFile(currentFile);
     }
@@ -1176,7 +1177,7 @@ public class MainActivity extends AppCompatActivity {
     
     if (file != null) {
       log("Next file: " + file);
-      playAudio(file.getPath(), startPlayback);
+      playAudio(file, startPlayback);
     }
     else {
       loge("Next file is null");
@@ -1187,12 +1188,12 @@ public class MainActivity extends AppCompatActivity {
     logd("playPrevFile()");
     if (playerService == null || !playerService.hasAudio()) return;
     
-    File currentFile = new File(playerService.getAudioPath());
-    File file = getPrevPlaylistFile(currentFile);
+    String currentFile = playerService.getAudioPath();
+    String file = getPrevPlaylistFile(currentFile);
     
     if (file != null) {
       log("Previous file: " + file);
-      playAudio(file.getPath(), startPlayback);
+      playAudio(file, startPlayback);
     }
     else {
       loge("Previous file is null");
@@ -1239,14 +1240,9 @@ public class MainActivity extends AppCompatActivity {
     
     updateDirStatus();
     
-    List<String> list = fileList.stream().filter(item -> item.isFile).map(item -> item.path).collect(Collectors.toList());
-    loadDirectoryTimeTask.setList(list);
+    loadDirectoryTimeTask.setList(fileList);
     
     loadDirectoryTimeTask.progress((pos, time) -> {
-      int dirsCount = 0;
-      if (dirs != null) dirsCount = dirs.length;
-      pos += dirsCount;
-      
       if (pos >= fileList.size()) return;
       fileList.get(pos).time = Fun.formatTime(time, false, false);
       
@@ -1498,19 +1494,19 @@ public class MainActivity extends AppCompatActivity {
       boolean nearAudioEnd = timeLeft < 10000 && timeLeft > 200 && !isPlayingLastFile();
       
       if (nearAudioEnd) {
-        File currentFile = new File(playerService.getAudioPath());
-        File file = getNextPlaylistFile(currentFile);
+        String currentFile = playerService.getAudioPath();
+        String nextFile = getNextPlaylistFile(currentFile);
         
         nextPreloadingFailed = true;
-        if (file == null) {
+        if (nextFile == null) {
           logw("Next file is null. Cannot preload it");
         }
-        else if (!file.exists()) {
-          logw("Next file doesn't exist. Cannot preload it: " + file);
+        else if (!Fun.fileExists(nextFile)) {
+          logw("Next file doesn't exist. Cannot preload it: " + nextFile);
         }
         else {
-          log("Preloading next file: " + file);
-          nextFilePreloaded = EngineNative.bufferNextAudio(file.getPath());
+          log("Preloading next file: " + nextFile);
+          nextFilePreloaded = EngineNative.bufferNextAudio(nextFile);
           nextPreloadingFailed = !nextFilePreloaded;
         }
       }
@@ -1535,6 +1531,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void onItemRemoved(String filePath) {
+    if (filePath == null) return;
     log("File removed: " + filePath);
     refreshCurrentDir(false);
     
@@ -1550,7 +1547,7 @@ public class MainActivity extends AppCompatActivity {
       reloadPlayingListForDir(playingFile.getParentFile());
       updatePlayingStats();
       
-      if (playingList.length == 0) {
+      if (playingList.isEmpty()) {
         log("Playing list is empty, resetting the player UI");
         fullStop();
       }
@@ -1559,53 +1556,51 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Audio Utils ------------------------------
-  private File getPrevPlaylistFile(File file) {
+  private String getPrevPlaylistFile(String file) {
     return getPrevNextFile(file, false);
   }
   
-  private File getNextPlaylistFile(File file) {
+  private String getNextPlaylistFile(String file) {
     return getPrevNextFile(file, true);
   }
   
-  private File getPrevNextFile(File file, boolean next) {
-    if (playingList == null || playingList.length == 0) return null;
-
-    File result = null;
-    int len = playingList.length;
+  private String getPrevNextFile(String file, boolean next) {
+    Track result = null;
+    int len = playingList.size();
 
     for (int i = 0; i < len; i++) {
-      if (playingList[i].equals(file)) {
+      if (playingList.get(i).path.equals(file)) {
         if (next) {
-          result = playingList[i == len-1 ? 0: i+1];
+          result = playingList.get(i == len-1 ? 0: i+1);
         }
         else {
-          result = playingList[i == 0 ? len-1: i-1];
+          result = playingList.get(i == 0 ? len-1: i-1);
         }
         break;
       }
     }
     
     if (result == null) {
-      result = playingList[next ? 0: playingList.length - 1];
+      result = playingList.get(next ? 0: len - 1);
     }
     
-    return result;
+    return result.path;
   }
   
-  private File getNextRandomFile(File file) {
+  private String getNextRandomFile(String file) {
     logd("getNextRandomFile(): " + file);
     
-    if (shuffleList == null || shuffleList.size() == 0 || !belongsToShuffleList(file)) {
+    if (shuffleList.isEmpty() || !belongsToShuffleList(file)) {
       generateShuffleList(file);
     }
     
-    if (shuffleList == null || shuffleList.size() == 0) {
+    if (shuffleList.isEmpty()) {
       return null;
     }
     
     int nextId = randShuffle.nextInt(shuffleList.size());
-    file = shuffleList.get(nextId);
-    return file;
+    String result = shuffleList.get(nextId).path;
+    return result;
   }
   
   private void selectPlayingDirOrFile() {
@@ -1632,8 +1627,9 @@ public class MainActivity extends AppCompatActivity {
   
   private boolean isPlayingLastFile() {
     if (playerService == null || !playerService.hasAudio()) return true;
-    File lastFile = playingList[playingList.length - 1];
-    return playerService.getAudioPath().equals(lastFile.getPath());
+    if (playingList.isEmpty()) return true;
+    String lastFile = playingList.get(playingList.size() - 1).path;
+    return playerService.getAudioPath().equals(lastFile);
   }
   
   private int extractAudioTime(String filePath) {
@@ -1657,22 +1653,26 @@ public class MainActivity extends AppCompatActivity {
     return time;
   }
   
-  private void generateShuffleList(File audioFile) {
+  private void generateShuffleList(String audioFile) {
     logd("generateShuffleList(): " + audioFile);
-    if (playingList == null) return;
-    shuffleList = new ArrayList<>(Arrays.asList(playingList));
+    if (playingList.isEmpty()) return;
+    shuffleList = new ArrayList<>(playingList);
     removeFromShuffleList(audioFile);
   }
   
-  private void removeFromShuffleList(File audioFile) {
+  private void removeFromShuffleList(String audioFile) {
     if (!playbackShuffle) return;
     logd("removeFromShuffleList(): " + audioFile);
-    if (shuffleList == null) return;
-
-    shuffleList.remove(audioFile);
+    
+    for (Track track: shuffleList) {
+      if (track.path.equals(audioFile)) {
+        shuffleList.remove(track);
+        return;
+      }
+    }
   }
   
-  private void updateShuffleList(File audioFile) {
+  private void updateShuffleList(String audioFile) {
     if (!playbackShuffle) return;
     logd("updateShuffleList(): " + audioFile);
     
@@ -1681,10 +1681,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private boolean belongsToShuffleList(File audioFile) {
-    if (shuffleList == null || shuffleList.size() == 0) return false;
+  private boolean belongsToShuffleList(String audioFile) {
+    if (shuffleList.isEmpty()) return false;
     if (audioFile == null) return false;
-    return audioFile.getParent().equals(shuffleList.get(0).getParent());
+    return Fun.getFolder(audioFile).equals(Fun.getFolder(shuffleList.get(0).path));
   }
   
   private void fullStop() {
@@ -1716,9 +1716,13 @@ public class MainActivity extends AppCompatActivity {
       loge("Directory doesn't exist: " + dir);
     }
     
-    playingList = dir.listFiles(Fun.fileFilter);
-    if (playingList == null) return;
-    Arrays.sort(playingList, Fun.nocaseComp);
+    playingList.clear();
+    File[] files = dir.listFiles(Fun.fileFilter);
+    
+    Stream.of(files).sorted(Fun.nocaseComp)
+    .forEach(file -> {
+      playingList.add(new Track(file.getAbsolutePath(), file.getName()));
+    });
   }
   
   private void reloadPlayingListForDir(File dir) {
@@ -1729,10 +1733,10 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void loadPlaylistTime() {
-    if (playingList == null) return;
+    if (playingList.isEmpty()) return;
     loadPlaylistTimeTask.cancel();
     
-    List<String> list = Stream.of(playingList).filter(File::isFile).map(File::getPath).collect(Collectors.toList());
+    List<String> list = playingList.stream().map(item -> item.path).collect(Collectors.toList());
     loadPlaylistTimeTask.setList(list);
     
     loadPlaylistTimeTask.execute(time -> {
@@ -1741,23 +1745,19 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private boolean isPlayingListInconsistent() {
-    if (playingList == null) return false;
-    
-    for (int i = 0; i < playingList.length; i++) {
-      if (!playingList[i].exists()) {
-        return true;
-      }
+    for (int i = 0; i < playingList.size(); i++) {
+      if (!Fun.fileExists(playingList.get(i).path)) return true; 
     }
     return false;
   }
   
   private void validatePlayingList() {
-    if (playingList == null) return;
-    File playingListDir = playingList[0].getParentFile();
+    if (playingList.isEmpty()) return;
+    File playingListDir = new File(playingList.get(0).path).getParentFile();
     
     // >> Check if files are added
     
-    if (playingList.length > this.MAX_FILES_FOR_SCANNING) {
+    if (playingList.size() > this.MAX_FILES_FOR_SCANNING) {
       new Thread(() -> {
         if (isPlayingListInconsistent()) {
           runOnUiThread(() -> {
@@ -1877,6 +1877,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void updateItemFavorite(String filePath, boolean isFavorite) {
+    if (filePath == null) return;
+    
     if (isFavorite) {
       favoritesList.add(filePath);
     }
@@ -1889,6 +1891,8 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateFileRepeat(String filePath, boolean repeat) {
     logd("updateFileRepeat(): '%s' => %b", filePath, repeat);
+    if (filePath == null) return;
+    
     if (repeat) {
       repeatableFiles.add(filePath);
     }
@@ -1905,24 +1909,23 @@ public class MainActivity extends AppCompatActivity {
   private void updatePlayingStats() {
     logd("updatePlayingStats()");
     if (playerService == null || !playerService.hasAudio()) return;
-    File playingFile = new File(playerService.getAudioPath());
     
-    if (playingList == null) {
-      loge("playingList is null");
+    if (playingList.isEmpty()) {
+      loge("playingList is empty");
       textPlayingPosition.setText("0/0");
       textFileExtraData.setText("0");
       return;
     }
     
     int playingItemPos = -1;
-    for (int i = 0; i < playingList.length; i++) {
-      if (playingFile.equals(playingList[i])) {
+    for (int i = 0; i < playingList.size(); i++) {
+      if (playerService.getAudioPath().equals(playingList.get(i).path)) {
         playingItemPos = i;
         break;
       }
     }
     
-    String stats = String.format("%d/%d", playingItemPos + 1, playingList.length);
+    String stats = String.format("%d/%d", playingItemPos + 1, playingList.size());
     textPlayingPosition.setText(stats);
     
     int bitrate = playerService.getBitrate() / 1000;
@@ -2191,6 +2194,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void showExtraAudioInfo(String filePath) {
     logd("showExtraAudioInfo()");
+    if (filePath == null) return;
     
     if (!Fun.fileExists(filePath)) {
       loge("File doesn't exist: " + filePath);
@@ -2382,6 +2386,7 @@ public class MainActivity extends AppCompatActivity {
       .filter(item -> item.isFile)
       .mapToLong(item -> new File(item.path).length())
       .reduce(0, Long::sum);
+    
     textTotalSize.setText(Fun.formatSize(totalSize));
     textTotalSize.setVisibility(totalSize > 0 ? View.VISIBLE: View.GONE);
   }
@@ -2471,8 +2476,9 @@ public class MainActivity extends AppCompatActivity {
   
 
   // ---------------------- Classes ----------------------
-  private class LoadDirectoryTimeProcess extends BackgroundProcess<Integer> {
-    private List<String> list;
+  // T is ListItem or String
+  private class LoadDirectoryTimeProcess<T> extends BackgroundProcess<Integer> {
+    private List<T> list;
     private int listSize;
     private int totalTime;
 
@@ -2480,8 +2486,34 @@ public class MainActivity extends AppCompatActivity {
       super(executor, handler);
     }
 
-    public void setList(List<String> list) {
+    public void setList(List<T> list) {
       this.list = list;
+    }
+    
+    private String getPath(int i) {
+      T item = list.get(i);
+      
+      if (item instanceof ListItem) {
+        ListItem _item = (ListItem) item;
+        return _item.path;
+      }
+      
+      if (item instanceof String) {
+        return (String) item;
+      }
+      
+      return null;
+    }
+    
+    private boolean isProsessable(int i) {
+      T item = list.get(i);
+      
+      if (item instanceof ListItem) {
+        ListItem _item = (ListItem) item;
+        return _item.isFile;
+      }
+      
+      return true;
     }
     
     public int getResult() {
@@ -2502,18 +2534,20 @@ public class MainActivity extends AppCompatActivity {
       
       String dir = "[empty]";
       if (this.list.size() > 0) {
-        dir = Fun.getFolder(this.list.get(0));
+        dir = Fun.getFolder(this.getPath(0));
         log("Start process loading total directory time: %s", dir);
       }
       
       this.running = true;
-      totalTime = 0;
+      this.totalTime = 0;
       
-      List<String> files = new ArrayList<>(this.list);
-      for (int i = 0; i < files.size(); i++) {
-        String file = files.get(i);
+      List<T> items = new ArrayList<>(this.list);
+      for (int i = 0; i < items.size(); i++) {
+        if (!this.isProsessable(i)) continue;
+        
+        String file = this.getPath(i);
         int fileTime = extractAudioTime(file);
-        totalTime += fileTime;
+        this.totalTime += fileTime;
         
         if (this.onProgress != null) {
           final int pos = i;
