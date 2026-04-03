@@ -136,8 +136,11 @@ int AudioDecoder::decodeFrames() {
     if (this->seekPending) {
       this->seekPending = false;
       
-      int64_t seek_ts = this->seekTimestamp - 0.05 * AV_TIME_BASE;
-      if (seek_ts < 0) seek_ts = 0;
+      int64_t seek_ts = this->seekTimestamp;
+      if (this->loop) {
+        seek_ts -= 0.05 * AV_TIME_BASE;
+        if (seek_ts < 0) seek_ts = 0;
+      }
       int seek_result = avformat_seek_file(formatContext, -1, 0, seek_ts, INT64_MAX, 0);
       
       if (seek_result >= 0) {
