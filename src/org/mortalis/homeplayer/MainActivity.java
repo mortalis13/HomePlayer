@@ -66,6 +66,7 @@ import org.mortalis.homeplayer.jni.EngineNative;
 import org.mortalis.homeplayer.models.AudioInfo;
 import org.mortalis.homeplayer.models.ListItem;
 import org.mortalis.homeplayer.models.Track;
+import org.mortalis.homeplayer.models.CueTrack;
 
 import static org.mortalis.homeplayer.Fun.log;
 import static org.mortalis.homeplayer.Fun.logd;
@@ -74,6 +75,7 @@ import static org.mortalis.homeplayer.Fun.logw;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -148,6 +150,9 @@ public class MainActivity extends AppCompatActivity {
   private int loopOffsetStep;
   
   private boolean extraInfoIsForCurrentFile;
+  
+  private boolean cueIsPlaying;
+  private List<CueTrack> cuePlayingList = new ArrayList<>();
   
   private Set<String> repeatableFiles;
   
@@ -994,16 +999,28 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
-  private void playPrevFileAction() {
-    if (playerService == null) return;
-    boolean startPlayback = playerService.isPlaying();
-    playPrevFile(startPlayback);
-  }
-  
   private void playNextFileAction() {
     if (playerService == null) return;
     boolean startPlayback = playerService.isPlaying();
-    playNextFile(startPlayback);
+    
+    if (this.cueIsPlaying) {
+      playNextCueTrack(startPlayback);
+    }
+    else {
+      playNextFile(startPlayback);
+    }
+  }
+  
+  private void playPrevFileAction() {
+    if (playerService == null) return;
+    boolean startPlayback = playerService.isPlaying();
+    
+    if (this.cueIsPlaying) {
+      playPrevCueTrack(startPlayback);
+    }
+    else {
+      playPrevFile(startPlayback);
+    }
   }
   
   private void playRandomFile() {
@@ -1047,13 +1064,14 @@ public class MainActivity extends AppCompatActivity {
   // ------------------------------ Audio ------------------------------
   private void playAudio(String filePath, int time, boolean startPlayback) {
     logd("playAudio(), time: %d, \"%s\"", time, filePath);
-    updateTimeEnabled = false;
-    nextFilePreloaded = false;
-    nextPreloadingFailed = false;
+    this.updateTimeEnabled = false;
+    this.nextFilePreloaded = false;
+    this.nextPreloadingFailed = false;
+    this.cueIsPlaying = false;
     
     if (!serviceBound || playerService == null) {
       loge("Player service is not initialized");
-      nextFilePreloaded = false;
+      this.nextFilePreloaded = false;
       return;
     }
     
@@ -1099,7 +1117,7 @@ public class MainActivity extends AppCompatActivity {
     //   // e.printStackTrace();
     // }
     log("playerService started");
-    updateTimeEnabled = true;
+    this.updateTimeEnabled = true;
     
     removeFromShuffleList(filePath);
     
@@ -1110,6 +1128,15 @@ public class MainActivity extends AppCompatActivity {
     selectItem(filePath);
     
     if (!startPlayback) setPlayButtonDefault();
+    
+    var item = filesAdapter.getItemByPath(filePath);
+    if (item != null && item.isCue) {
+      filesAdapter.selectCueTrack(item, time);
+
+      if (this.cuePlayingList.isEmpty()) makeCuePlayingList(item);
+    }
+    
+    this.cueIsPlaying = isCueTrackPlaying(filePath);
   }
   
   private void syncNextFile(String filePath) {
@@ -1200,32 +1227,51 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void playNextCueTrack(boolean startPlayback) {
+    logd("playNextCueTrack()");
+    if (playerService == null || !playerService.hasAudio()) return;
+    CueTrack track = getNextCueTrack(getCurrentCueTime());
+    
+    if (track != null) {
+      log("Next CUE track: \"%s\", start time: %d", track.name, track.startTime);
+      playAudio(playerService.getAudioPath(), track.startTime, startPlayback);
+    }
+    else {
+      logw("Could not find next CUE track for " + playerService.getAudioPath());
+    }
+  }
+  
+  private void playPrevCueTrack(boolean startPlayback) {
+    logd("playPrevCueTrack()");
+    if (playerService == null || !playerService.hasAudio()) return;
+    CueTrack track = getPrevCueTrack(getCurrentCueTime());
+    
+    if (track != null) {
+      log("Previous CUE track: \"%s\", start time: %d", track.name, track.startTime);
+      playAudio(playerService.getAudioPath(), track.startTime, startPlayback);
+    }
+    else {
+      logw("Could not find previous CUE track for " + playerService.getAudioPath());
+    }
+  }
+  
 
   // ------------------------------ Navigation ------------------------------
   private void changeDir(File path, boolean scrollTop) {
     logd("changeDir(): " + path);
     loadDirectoryTimeTask.cancel();
     
-    fileList.clear();
-    
     if (path == null || !path.exists() || !path.isDirectory()) path = ROOT_STORAGE;
 
-    boolean isChangeToChild = (currentPath != null && currentPath.equals(path.getParentFile()));
+    boolean isChangeToChild = (this.currentPath != null && this.currentPath.equals(path.getParentFile()));
     if (isChangeToChild) {
       if (scrollStack != null) {
         scrollStack.push(listLayoutManager.onSaveInstanceState());
       }
     }
 
-    currentPath = path;
-    
-    File[] dirs = path.listFiles(Fun.dirFilter);
-    Stream.of(dirs).sorted(Fun.nocaseComp)
-      .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), false)));
-    
-    File[] files = path.listFiles(Fun.fileFilter);
-    Stream.of(files).sorted(Fun.nocaseComp)
-      .forEach(file -> fileList.add(new ListItem(file.getName(), file.getAbsolutePath(), true)));
+    this.currentPath = path;
+    loadFileList(path);
     
     markVisitedFolders();
     markRepeatFiles();
@@ -1239,21 +1285,7 @@ public class MainActivity extends AppCompatActivity {
     titleScroller.fullScroll(View.FOCUS_LEFT);
     
     updateDirStatus();
-    
-    loadDirectoryTimeTask.setList(fileList);
-    
-    loadDirectoryTimeTask.progress((pos, time) -> {
-      if (pos >= fileList.size()) return;
-      fileList.get(pos).time = Fun.formatTime(time, false, false);
-      
-      if (pos == listLayoutManager.findLastVisibleItemPosition() + 1 || pos == fileList.size() - 1) {
-        filesAdapter.notifyDataSetChanged();
-      }
-    });
-    loadDirectoryTimeTask.execute(time -> {
-      textTotalTime.setText(Fun.formatTime(time, true, false));
-      textTotalTime.setVisibility(time > 0 ? View.VISIBLE: View.GONE);
-    });
+    loadListTime();
     
     if (scrollTop) {
       listLayoutManager.scrollToPositionWithOffset(0, 0);
@@ -1322,6 +1354,147 @@ public class MainActivity extends AppCompatActivity {
     }
   }
   
+  private void loadFileList(File path) {
+    fileList.clear();
+    
+    File[] dirs = path.listFiles(Fun.dirFilter);
+    Stream.of(dirs).sorted(Fun.nocaseComp)
+      .forEach(file -> fileList.add(ListItem.newDir(file.getName(), file.getAbsolutePath())));
+      
+    File[] files = path.listFiles(Fun.fileFilter);
+    
+    Stream.of(files).sorted(Fun.nocaseComp)
+    .forEach(file -> {
+      if (file.getName().endsWith(".cue")) {
+        List<CueTrack> tracks = parseCue(file);
+        if (tracks.isEmpty()) return;
+        
+        var sourceItem = ListItem.newCueSource(Fun.getName(tracks.get(0).path), tracks.get(0).path);
+        fileList.add(sourceItem);
+        
+        for (var track: tracks) {
+          String time = Fun.formatTime(track.endTime - track.startTime, false, false);
+          fileList.add(ListItem.newCueTrack(track.name, sourceItem, time, track.startTime, track.endTime));
+        }
+      }
+      else {
+        fileList.add(ListItem.newFile(file.getName(), file.getAbsolutePath()));
+      }
+    });
+      
+    boolean cueFound = fileList.stream().anyMatch(item -> item.isCue);
+    if (!cueFound) return;
+    
+    // Remove duplicated source file for CUE, that was placed before the CUE tracks
+    var cleanList = fileList.stream().filter(item1 -> {
+      if (item1.isCueTrack || item1.isCue) return true;
+      
+      boolean isSourceFile = fileList.stream().anyMatch(item2 -> {
+        return item2.isCue && item1.path != null && item1.path.equals(item2.path);
+      });
+      
+      if (isSourceFile) return false;
+      return true;
+    })
+    .collect(Collectors.toList());
+
+    fileList.clear();
+    fileList.addAll(cleanList);
+  }
+  
+  private List<CueTrack> parseCue(File file) {
+    List<CueTrack> items = new ArrayList<>();
+    
+    try {
+      List<String> lines = Files.readAllLines(file.toPath());
+      String audioFileName = null;
+      
+      for (String line: lines) {
+        line = line.trim();
+        if (line.toUpperCase().startsWith("FILE")) {
+          int firstQuote = line.indexOf('"');
+          int lastQuote = line.lastIndexOf('"');
+          if (firstQuote != -1 && lastQuote > firstQuote) {
+            audioFileName = line.substring(firstQuote + 1, lastQuote);
+            break;
+          }
+        }
+      }
+      
+      if (audioFileName == null) {
+        logw("Could not extract CUE source file name");
+        return items;
+      }
+      
+      File audioFile = new File(file.getParent(), audioFileName);
+      
+      if (!audioFile.exists()) {
+        logw("Referenced audio file in CUE does not exist: " + audioFile.getAbsolutePath());
+        return items;
+      }
+      
+      int trackNumber = 1;
+      int lastIndexTime = 0;
+      String currentTrackTitle = null;
+      List<Integer> trackStartTimes = new ArrayList<>();
+      List<String> trackTitles = new ArrayList<>();
+
+      for (String line: lines) {
+        line = line.trim();
+        if (line.toUpperCase().startsWith("TRACK")) {
+          currentTrackTitle = null;
+          lastIndexTime = 0;
+        }
+        
+        if (line.toUpperCase().startsWith("TITLE")) {
+          int firstQuote = line.indexOf('"');
+          int lastQuote = line.lastIndexOf('"');
+          if (firstQuote != -1 && lastQuote > firstQuote) {
+            currentTrackTitle = line.substring(firstQuote + 1, lastQuote);
+          }
+        }
+        
+        if (line.toUpperCase().startsWith("INDEX 01")) {
+          String[] parts = line.split(" ");
+          String timeStr = parts[parts.length - 1];
+          String[] timeParts = timeStr.split(":");
+          if (timeParts.length == 3) {
+            int min = Integer.parseInt(timeParts[0]);
+            int sec = Integer.parseInt(timeParts[1]);
+            int frame = Integer.parseInt(timeParts[2]);
+            int ms = (min * 60 + sec) * 1000 + (int) (frame * (1000.0 / 75.0));
+            
+            trackStartTimes.add(ms);
+            String formattedTitle = String.format("Track %02d", trackNumber);
+            if (currentTrackTitle != null) {
+              formattedTitle = String.format("%02d. %s", trackNumber, currentTrackTitle);
+            }
+            trackTitles.add(formattedTitle);
+            
+            trackNumber++;
+          }
+        }
+      }
+      
+      // Get audio file duration
+      int audioDuration = extractAudioTime(audioFile.getAbsolutePath());
+
+      for (int i = 0; i < trackStartTimes.size(); i++) {
+        String trackName = trackTitles.get(i);
+        int startTime = trackStartTimes.get(i);
+        int endTime = (i < trackStartTimes.size() - 1) ? trackStartTimes.get(i + 1) : audioDuration;
+        
+        items.add(new CueTrack(audioFile.getAbsolutePath(), trackName, startTime, endTime));
+      }
+      
+    }
+    catch (Exception e) {
+      loge("Error parsing CUE file: " + file.getAbsolutePath() + " => " + e);
+    }
+    
+    return items;
+  }
+  
   private File getPlayingFile() {
     if (playerService == null || !playerService.hasAudio()) return null;
     File currentFile = new File(playerService.getAudioPath());
@@ -1379,7 +1552,7 @@ public class MainActivity extends AppCompatActivity {
     if (fileList == null) return;
     
     fileList.stream()
-      .filter(item -> !item.isFile)
+      .filter(item -> item.isFolder)
       .forEach(item -> {
         String lastFile = Fun.getSharedPref(this, Vars.PREF_LAST_FILE_IN_FOLDER + item.path);
         item.isVisited = Fun.fileExists(lastFile);
@@ -1603,10 +1776,49 @@ public class MainActivity extends AppCompatActivity {
     return result;
   }
   
+  private CueTrack getNextCueTrack(int time) {
+    int size = this.cuePlayingList.size();
+    
+    for (int i = 0; i < size; i++) {
+      var item = this.cuePlayingList.get(i);
+    
+      if (time >= item.startTime && time < item.endTime) {
+        int nextId = i + 1;
+        if (nextId >= size) nextId = 0;
+        return this.cuePlayingList.get(nextId);
+      }
+    }
+    
+    return null;
+  }
+  
+  private CueTrack getPrevCueTrack(int time) {
+    int size = this.cuePlayingList.size();
+    
+    for (int i = 0; i < size; i++) {
+      var item = this.cuePlayingList.get(i);
+    
+      if (time >= item.startTime && time < item.endTime) {
+        int prevId = i - 1;
+        if (prevId < 0) prevId = size - 1;
+        return this.cuePlayingList.get(prevId);
+      }
+    }
+    
+    return null;
+  }
+  
   private void selectPlayingDirOrFile() {
     if (playerService == null || !playerService.isPlayerLoaded() || !playerService.hasAudio()) return;
-    if (!Fun.fileExists(playerService.getAudioPath())) return;
-    selectItem(playerService.getAudioPath());
+    var audioPath = playerService.getAudioPath();
+    if (!Fun.fileExists(audioPath)) return;
+    
+    selectItem(audioPath);
+    
+    var item = filesAdapter.getItemByPath(audioPath);
+    if (item != null && item.isCue) {
+      filesAdapter.selectCueTrack(item, getCurrentCueTime());
+    }
   }
   
   private void selectItem(String filePath) {
@@ -1709,6 +1921,17 @@ public class MainActivity extends AppCompatActivity {
   
   
   // ------------------------------ Utils ------------------------------
+  
+  private int getCurrentCueTime() {
+    if (playerService == null) return 0;
+    // Adjust CUE track time as seek can offset the real time by some ms
+    return playerService.getPlayingTime() + 50;
+  }
+  
+  private boolean isCueTrackPlaying(String path) {
+    return this.cuePlayingList.size() > 0 && this.cuePlayingList.get(0).path.equals(path);
+  }
+  
   private void cachePlayingList(File dir) {
     logd("cachePlayingList(): " + dir);
     if (dir == null) return;
@@ -1721,8 +1944,50 @@ public class MainActivity extends AppCompatActivity {
     
     Stream.of(files).sorted(Fun.nocaseComp)
     .forEach(file -> {
-      playingList.add(new Track(file.getAbsolutePath(), file.getName()));
+      if (file.getName().endsWith(".cue")) {
+        List<CueTrack> tracks = parseCue(file);
+        playingList.addAll(tracks);
+      }
+      else {
+        playingList.add(new Track(file.getAbsolutePath(), file.getName()));
+      }
     });
+    
+    boolean cueFound = playingList.stream().anyMatch(track -> track instanceof CueTrack);
+    if (!cueFound) return;
+    
+    var cleanList = playingList.stream().filter(track1 -> {
+      if (track1 instanceof CueTrack) return true;
+      
+      boolean isSourceTrack = playingList.stream().anyMatch(track2 -> {
+        return track2 instanceof CueTrack && track1.path.equals(track2.path);
+      });
+      
+      if (isSourceTrack) return false;
+      return true;
+    })
+    .collect(Collectors.toList());
+    
+    playingList.clear();
+    playingList.addAll(cleanList);
+  }
+  
+  private void makeCuePlayingList(ListItem sourceItem) {
+    if (sourceItem == null) return;
+    logd("makeCuePlayingList(): " + sourceItem.path);
+    if (isCueTrackPlaying(sourceItem.path)) return;
+    
+    this.cuePlayingList.clear();
+    var cueItems = filesAdapter.getCueList(sourceItem);
+    
+    for (var cueItem: cueItems) {
+      this.cuePlayingList.add(new CueTrack(
+        cueItem.text,
+        cueItem.cueSource.path,
+        cueItem.cueStartTime,
+        cueItem.cueEndTime
+      ));
+    }
   }
   
   private void reloadPlayingListForDir(File dir) {
@@ -1777,27 +2042,37 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void itemClick(ListItem item) {
-    logd("itemClick() " + item.path);
+    logd("itemClick() %s [%s]", item.text, item.path);
     
     try {
-      File clickedFile = new File(item.path);
+      String path = item.path;
+      if (item.isCueTrack && item.cueSource != null) {
+        path = item.cueSource.path;
+      }
+      
+      File clickedFile = new File(path);
       if (clickedFile.isDirectory()) {
         changeDir(clickedFile);
+        return;
+      }
+      
+      hideExtraPanels();
+      
+      int time = 0;
+      if (item.isLastPlayed) {
+        if (playerService != null && (!playerService.hasAudio() || !playerService.getAudioPath().equals(path)) ) {
+          int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + clickedFile.getParent());
+          if (lastTime != -1) time = lastTime;
+          if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
+        }
       }
       else {
-        hideExtraPanels();
-        
-        int time = 0;
-        if (item.isLastPlayed) {
-          if (playerService != null && (!playerService.hasAudio() || !playerService.getAudioPath().equals(item.path)) ) {
-            int lastTime = Fun.getSharedPrefInt(this, Vars.PREF_LAST_TIME_IN_FOLDER + clickedFile.getParent());
-            if (lastTime != -1) time = lastTime;
-            if (time < Vars.MIN_PLAYABLE_TIME) time = 0;
-          }
+        if (item.isCueTrack) {
+          time = item.cueStartTime;
         }
-        
-        playAudio(item.path, time, true);
       }
+      
+      playAudio(path, time, true);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -2163,6 +2438,19 @@ public class MainActivity extends AppCompatActivity {
   
   private void updateProgress(int time) {
     progressSlider.setProgress(time);
+    
+    if (this.cueIsPlaying) {
+      if (playerService == null || !playerService.hasAudio()) return;
+      String audioPath = playerService.getAudioPath();
+      
+      var currentTrack = filesAdapter.getPlayingCueTrack(audioPath);
+      if (currentTrack == null) return;
+      
+      int cueTime = getCurrentCueTime();
+      if (cueTime < currentTrack.cueStartTime || cueTime > currentTrack.cueEndTime) {
+        filesAdapter.selectCueTrack(currentTrack.cueSource, cueTime);
+      }
+    }
   }
   
   private void setupLooper() {
@@ -2376,6 +2664,24 @@ public class MainActivity extends AppCompatActivity {
   
   private void resetPlayingDirTime() {
     textPlayingFolderTime.setText("00:00:00");
+  }
+  
+  private void loadListTime() {
+    loadDirectoryTimeTask.setList(fileList);
+    
+    loadDirectoryTimeTask.progress((pos, time) -> {
+      if (pos >= fileList.size()) return;
+      fileList.get(pos).time = Fun.formatTime(time, false, false);
+      
+      if (pos == listLayoutManager.findLastVisibleItemPosition() + 1 || pos == fileList.size() - 1 || fileList.get(pos).isCue) {
+        filesAdapter.notifyDataSetChanged();
+      }
+    });
+    
+    loadDirectoryTimeTask.execute(time -> {
+      textTotalTime.setText(Fun.formatTime(time, true, false));
+      textTotalTime.setVisibility(time > 0 ? View.VISIBLE: View.GONE);
+    });
   }
   
   private void updateDirStatus() {

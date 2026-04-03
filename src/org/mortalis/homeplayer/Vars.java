@@ -37,7 +37,7 @@ public class Vars {
   public static final boolean SHOW_TIME_MS = false;
   public static final boolean KEEP_SCREEN_ON = false;
   
-  public static final String[] AUDIO_EXTS = new String[] {
+  public static final String[] FILE_EXTENSIONS = new String[] {
     "flac",
     "mp3",
     "ogg",
@@ -66,6 +66,10 @@ public class Vars {
     "avi",
     "mkv",
     "webm",
+  };
+  
+  public static final String[] OTHER_EXTENSIONS = new String[] {
+    "cue",
   };
   
 }

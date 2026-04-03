@@ -2,6 +2,7 @@ package org.mortalis.homeplayer;
 
 import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -25,6 +26,7 @@ import org.mortalis.homeplayer.components.IconOverlayView;
 import org.mortalis.homeplayer.models.ListItem;
 
 import static org.mortalis.homeplayer.Fun.log;
+import static org.mortalis.homeplayer.Fun.logd;
 
 
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHolder> {
@@ -32,6 +34,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
   private static final int ITEM_LAYOUT = R.layout.browser_list_item;
   private static final int ITEM_ICON_FOLDER = R.drawable.round_folder_black_36;
   private static final int ITEM_ICON_FILE = R.drawable.round_audio_file_black_36;
+  private static final int ITEM_ICON_CUE = R.drawable.baseline_navigate_next_black_24;
   
   private final List<ListItem> fileList;
   private RecyclerView recyclerView;
@@ -43,9 +46,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
 
   private final int item_icon_color_default;
   private final int item_icon_color_folder;
-  private final int item_icon_color_lastplayed;
+  private final int item_icon_color_highlight;
+  private final int item_icon_color_highlight_cue;
   private final int text_color_default;
   private final int text_color_error;
+  private final int item_separator_color;
+  private final int item_cue_separator_color;
+  private final int item_current_cue_background;
+  
   private final float menuButtonWidth;
   
   SingleAction<ListItem> itemClickAction;
@@ -60,9 +68,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     item_icon_color_default = MaterialColors.getColor(context, R.attr.listItemIconColor, Color.TRANSPARENT);
     item_icon_color_folder = MaterialColors.getColor(context, R.attr.listItemIconColorFolder, Color.TRANSPARENT);
-    item_icon_color_lastplayed = MaterialColors.getColor(context, R.attr.listItemIconColorHighlight, Color.TRANSPARENT);
+    item_icon_color_highlight = MaterialColors.getColor(context, R.attr.listItemIconColorHighlight, Color.TRANSPARENT);
+    item_icon_color_highlight_cue = MaterialColors.getColor(context, R.attr.listItemIconColorCueHighlight, Color.TRANSPARENT);
     text_color_default = MaterialColors.getColor(context, R.attr.primaryTextColor, Color.TRANSPARENT);
     text_color_error = MaterialColors.getColor(context, R.attr.listItemTextColorError, Color.TRANSPARENT);
+    item_separator_color = MaterialColors.getColor(context, R.attr.listItemSeparatorColor, Color.TRANSPARENT);
+    item_cue_separator_color = MaterialColors.getColor(context, R.attr.listItemCueSeparatorColor, Color.TRANSPARENT);
+    item_current_cue_background = MaterialColors.getColor(context, R.attr.listItemCueBackgroundSelected, Color.TRANSPARENT);
     
     menuButtonWidth = context.getResources().getDimension(R.dimen.item_menu_button_width);
   }
@@ -82,7 +94,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     ListItem item = this.fileList.get(position);
     
     holder.bind(item);
-    if (position == selectedItemPos) {
+    if (position == selectedItemPos || item.isCurrentCueTrack) {
       holder.select();
     }
     else {
@@ -116,7 +128,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     if (listParent != null && !filePath.startsWith(listParent)) return -1;
     
     for (int i = 0; i < size; i++) {
-      if (this.fileList.get(i).path.equals(filePath)) {
+      var item = this.fileList.get(i);
+      if (item.path != null && item.path.equals(filePath)) {
         return i;
       }
     }
@@ -134,6 +147,30 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     notifyItemChanged(selectedItemPos);
   }
   
+  public void selectCueTrack(ListItem sourceItem, int time) {
+    if (sourceItem == null || !sourceItem.isCue) return;
+    logd("selectCueTrack \"%s\" %d", sourceItem.path, time);
+    int size = this.fileList.size();
+    boolean itemFound = false;
+    
+    for (int i = 0; i < size; i++) {
+      ListItem item = this.fileList.get(i);
+      if (!item.isCueTrack || item.cueSource != sourceItem) continue;
+      
+      if (!itemFound && time < item.cueEndTime) {
+        if (!item.isCurrentCueTrack) {
+          item.isCurrentCueTrack = true;
+          notifyItemChanged(i);
+        }
+        itemFound = true;
+      }
+      else if (item.isCurrentCueTrack) {
+        item.isCurrentCueTrack = false;
+        notifyItemChanged(i);
+      }
+    }
+  }
+  
   public void markLastPlayedItem(String filePath) {
     if (filePath == null) return;
     
@@ -141,9 +178,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (!item.isFile) continue;
+      if (item.isFolder) continue;
     
-      if (item.path.equals(filePath)) {
+      if (item.path != null && item.path.equals(filePath)) {
         item.isLastPlayed = true;
         notifyItemChanged(i);
       }
@@ -160,7 +197,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
 
-      if (item.path.equals(filePath)) {
+      if (item.path != null && item.path.equals(filePath)) {
         item.isFavorite = true;
         notifyItemChanged(i);
       }
@@ -172,9 +209,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (!item.isFile) continue;
+      if (item.isFolder) continue;
       
-      if (item.path.equals(filePath)) {
+      if (item.path != null && item.path.equals(filePath)) {
         item.hasError = true;
         notifyItemChanged(i);
       }
@@ -186,12 +223,56 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     
     for (int i = 0; i < size; i++) {
       ListItem item = this.fileList.get(i);
-      if (item.path.equals(path)) {
+      if (item.path != null && item.path.equals(path)) {
         return i;
       }
     }
     
     return -1;
+  }
+  
+  public ListItem getItemByPath(String path) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
+      ListItem item = this.fileList.get(i);
+      if (item.path != null && item.path.equals(path)) {
+        return item;
+      }
+    }
+    
+    return null;
+  }
+  
+  public ListItem getPlayingCueTrack(String path) {
+    int size = this.fileList.size();
+    
+    for (int i = 0; i < size; i++) {
+      ListItem item = this.fileList.get(i);
+      if (!item.isCurrentCueTrack || !item.isCueTrack) continue;
+      if (item.cueSource == null) continue;
+      
+      if (item.cueSource.path != null && item.cueSource.path.equals(path)) {
+        return item;
+      }
+    }
+    
+    return null;
+  }
+  
+  public List<ListItem> getCueList(ListItem source) {
+    int size = this.fileList.size();
+    List<ListItem> result = new ArrayList<>();
+    
+    for (int i = 0; i < size; i++) {
+      ListItem item = this.fileList.get(i);
+      if (!item.isCueTrack) continue;
+      if (item.cueSource == source) {
+        result.add(item);
+      }
+    }
+    
+    return result;
   }
   
   public void hideActiveItemMenu() {
@@ -215,6 +296,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     ImageButton bFileInfo;
     ImageButton bRepeatFile;
     
+    View itemSeparator;
+    View itemSeparatorThick;
+    
     ListItem item;
     
     private boolean isRemovePressed;
@@ -234,6 +318,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       bRemoveFile = rootView.findViewById(R.id.bRemoveFile);
       bFileInfo = rootView.findViewById(R.id.bFileInfo);
       bRepeatFile = rootView.findViewById(R.id.bRepeatFile);
+      
+      itemSeparator = rootView.findViewById(R.id.itemSeparator);
+      itemSeparatorThick = rootView.findViewById(R.id.itemSeparatorThick);
       
       iconContainer.setOnClickListener(v -> {
         this.item.isFavorite = !this.item.isFavorite;
@@ -272,7 +359,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
     }
     
     public void processLongPress() {
-      if (!this.item.isFile) return;
+      if (this.item.isFolder) return;
       itemLongPressed = true;
       showItemMenu();
       holderWithMenu = this;
@@ -349,16 +436,19 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       this.item = item;
       if (item == null) return;
       
+      int list_item_background = (!item.isCueTrack) ? R.color.list_item_background: R.color.list_item_cue_background;
+      itemView.setBackgroundResource(list_item_background);
+      
       iconContainer.setClickable(true);
       itemIconOverlay.setShowIndicator(item.isFavorite);
-      itemIconOverlay.setShowIcon(!item.isFile && item.isVisited);
+      itemIconOverlay.setShowIcon(item.isFolder && item.isVisited);
       
       itemText.setText(item.text);
       int textColor = item.hasError ? text_color_error: text_color_default;
       itemText.setTextColor(textColor);
       
       itemTime.setText(item.time);
-      itemTime.setVisibility(item.isFile ? View.VISIBLE: View.GONE);
+      itemTime.setVisibility(item.isFile || item.isCueTrack ? View.VISIBLE: View.GONE);
       
       fileRepeatIcon.setVisibility(item.isFile && item.repeat ? View.VISIBLE: View.GONE);
       bRepeatFile.setSelected(item.isFile && item.repeat);
@@ -367,16 +457,25 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ItemViewHold
       if (item.isFile && item.path != null) {
         icon = ITEM_ICON_FILE;
       }
-      else if (!item.isFile) {
+      else if (item.isFolder) {
         icon = ITEM_ICON_FOLDER;
+      }
+      else if (item.isCueTrack) {
+        icon = ITEM_ICON_CUE;
       }
       
       int iconColor = item_icon_color_default;
-      if (item.isLastPlayed) iconColor = item_icon_color_lastplayed;
-      if (!item.isFile) iconColor = item_icon_color_folder;
+      if (item.isLastPlayed) iconColor = item_icon_color_highlight;
+      if (item.isLastPlayed && item.isCue) iconColor = item_icon_color_highlight_cue;
+      if (item.isCueTrack && item.isCurrentCueTrack) iconColor = item_icon_color_highlight_cue;
+      if (item.isFolder) iconColor = item_icon_color_folder;
 
       itemIcon.setImageResource(icon);
       itemIcon.setColorFilter(iconColor);
+      
+      itemSeparator.setVisibility(!item.isCue ? View.VISIBLE: View.GONE);
+      itemSeparatorThick.setVisibility(item.isCue ? View.VISIBLE: View.GONE);
+      itemSeparatorThick.setBackgroundColor(item.isCue ? item_cue_separator_color: item_separator_color);
     }
   } // ItemViewHolder
   

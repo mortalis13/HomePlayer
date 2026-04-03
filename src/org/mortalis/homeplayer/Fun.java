@@ -36,7 +36,13 @@ public class Fun {
   };
   
   public static FileFilter fileFilter = (file) -> {
-    boolean isAudio = Stream.of(Vars.AUDIO_EXTS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
+    boolean isAudio = Stream.of(Vars.FILE_EXTENSIONS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
+    boolean isPlayable = Stream.of(Vars.OTHER_EXTENSIONS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
+    return (file.isFile() && (isAudio || isPlayable));
+  };
+  
+  public static FileFilter fileAudioFilter = (file) -> {
+    boolean isAudio = Stream.of(Vars.FILE_EXTENSIONS).anyMatch(ext -> file.getName().toLowerCase().endsWith(ext));
     return (file.isFile() && isAudio);
   };
   
@@ -217,6 +223,11 @@ public class Fun {
   public static String getFolder(String file) {
     if (file == null) return null;
     return new File(file).getParent();
+  }
+  
+  public static String getName(String file) {
+    if (file == null) return null;
+    return new File(file).getName();
   }
   
   public static String formatTime(int time, boolean withHours, boolean withMs) {  // time in ms

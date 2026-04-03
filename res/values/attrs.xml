@@ -38,11 +38,16 @@
   <attr name="itemToggleButtonBackgroundSelected" format="color"/>
   <attr name="itemToggleButtonBackgroundDefault" format="color"/>
   
+  <attr name="listItemCueBackgroundPressed" format="color"/>
+  <attr name="listItemCueBackgroundSelected" format="color"/>
+  
   <attr name="listItemIconColor" format="color"/>
   <attr name="listItemIconColorFolder" format="color"/>
   <attr name="listItemIconColorHighlight" format="color"/>
+  <attr name="listItemIconColorCueHighlight" format="color"/>
   <attr name="listItemTextColorError" format="color"/>
   <attr name="listItemSeparatorColor" format="color"/>
+  <attr name="listItemCueSeparatorColor" format="color"/>
   
   <attr name="dangerButtonBackgroundPressed" format="color"/>
   <attr name="dangerButtonBackgroundDefault" format="color"/>

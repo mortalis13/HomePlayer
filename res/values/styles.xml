@@ -45,6 +45,9 @@
     <item name="listItemBackgroundSelected">@color/list_item_background_selected</item>
     <item name="listItemBackgroundDefault">@color/list_item_background_default</item>
     
+    <item name="listItemCueBackgroundPressed">@color/list_item_cue_background_pressed</item>
+    <item name="listItemCueBackgroundSelected">@color/list_item_cue_background_selected</item>
+    
     <item name="listItemButtonBackgroundPressed">@color/list_item_button_background_pressed</item>
     <item name="listItemButtonBackgroundDefault">@color/list_item_button_background_default</item>
     
@@ -56,7 +59,9 @@
     <item name="listItemIconColor">@color/list_item_icon_color</item>
     <item name="listItemIconColorFolder">@color/list_item_icon_color_folder</item>
     <item name="listItemIconColorHighlight">@color/list_item_icon_color_highlight</item>
+    <item name="listItemIconColorCueHighlight">@color/list_item_icon_color_cue_highlight</item>
     <item name="listItemSeparatorColor">@color/list_item_separator_color</item>
+    <item name="listItemCueSeparatorColor">@color/list_item_cue_separator_color</item>
     
     <item name="dangerButtonBackgroundPressed">@color/danger_button_background_pressed</item>
     <item name="dangerButtonBackgroundDefault">@color/danger_button_background_default</item>
@@ -135,6 +140,9 @@
     <item name="listItemBackgroundSelected">@color/list_item_background_selected_dark</item>
     <item name="listItemBackgroundDefault">@color/list_item_background_default</item>
     
+    <item name="listItemCueBackgroundPressed">@color/list_item_cue_background_pressed_dark</item>
+    <item name="listItemCueBackgroundSelected">@color/list_item_cue_background_selected_dark</item>
+    
     <item name="listItemButtonBackgroundPressed">@color/list_item_button_background_pressed_dark</item>
     <item name="listItemButtonBackgroundDefault">@color/list_item_button_background_default_dark</item>
     
@@ -146,7 +154,9 @@
     <item name="listItemIconColor">@color/list_item_icon_color_dark</item>
     <item name="listItemIconColorFolder">@color/list_item_icon_color_folder_dark</item>
     <item name="listItemIconColorHighlight">@color/list_item_icon_color_highlight_dark</item>
+    <item name="listItemIconColorCueHighlight">@color/list_item_icon_color_cue_highlight_dark</item>
     <item name="listItemSeparatorColor">@color/list_item_separator_color_dark</item>
+    <item name="listItemCueSeparatorColor">@color/list_item_cue_separator_color_dark</item>
     
     <item name="dangerButtonBackgroundPressed">@color/danger_button_background_pressed_dark</item>
     <item name="dangerButtonBackgroundDefault">@color/danger_button_background_default_dark</item>

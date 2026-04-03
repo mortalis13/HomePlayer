@@ -154,10 +154,20 @@
 </FrameLayout>
 
   <View
+    android:id="@+id/itemSeparator"
     android:layout_width="match_parent"
     android:layout_height="1dp"
     android:background="?listItemSeparatorColor"
     android:focusable="true"
     android:clickable="true"
+  />
+  <View
+    android:id="@+id/itemSeparatorThick"
+    android:layout_width="match_parent"
+    android:layout_height="3dp"
+    android:background="?listItemSeparatorColor"
+    android:focusable="true"
+    android:clickable="true"
+    android:visibility="gone"
   />
 </LinearLayout>
