@@ -1278,6 +1278,8 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private void changeToParentDir() {
+    if (currentPath == null) return;
+    
     if (currentPath.equals(ROOT_STORAGE)) {
       log("In the root folder, cannot go to parent");
       listLayoutManager.scrollToPositionWithOffset(0, 0);
@@ -1471,7 +1473,7 @@ public class MainActivity extends AppCompatActivity {
   }
   
   private boolean belongsToCurrentDir(File file) {
-    if (file == null || file.getParentFile() == null) return false;
+    if (file == null || file.getParentFile() == null || currentPath == null) return false;
     return file.getParentFile().equals(currentPath);
   }
   
@@ -1787,6 +1789,7 @@ public class MainActivity extends AppCompatActivity {
   
   private void markItem(String filePath) {
     if (filePath == null) return;
+    if (currentPath == null) return;
     // File doesn't belong to the current folder
     if (!currentPath.equals(new File(filePath).getParentFile())) return;
     filesAdapter.markLastPlayedItem(filePath);
