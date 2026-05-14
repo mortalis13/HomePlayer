@@ -4,7 +4,7 @@ Android audio player with flat design and direct directory navigation.
 
 ## Features
 - Direct file system navigation (the main UI part is a file manager filtered by playable filetypes)
-- Plain UI based on a single view (no additional activities, the controls and settings are displayed on demand)
+- Plain UI based on a single view (no additional activities, the controls and settings are displayed in panels on demand)
 - Waveform slider
 - The playback position is always saved
 - Adjustable playback limit to up to 5 minutes (for previewing of multiple tracks in the same folder)
@@ -22,6 +22,7 @@ Android audio player with flat design and direct directory navigation.
 - The same action is done when pressing the header with the current folder name
 - Long-pressing the next track button switches to a random track from the currently played folder
 - To repeat only selected tracks, enable the repeat button in the tracks context menu
+- To set the loop points to the current playback position, press the corresponding time labels in the loop panel
 
 ## Build
 - JDK 17, Gradle 8.4
