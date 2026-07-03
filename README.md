@@ -2,9 +2,9 @@
 
 Android audio player with flat design and direct directory navigation.
 
-<img width="230" alt="Main-View" src="https://github.com/user-attachments/assets/edc99325-1d15-4c76-ac31-c643a19e0e26" />
-&nbsp;&nbsp;
-<img width="230" alt="Looper" src="https://github.com/user-attachments/assets/4252add7-032e-4018-aad3-2378a3c7e0e9" />
+<img width="200" alt="homeplayer-01-main" src="https://github.com/user-attachments/assets/1b4eade9-56b9-4294-98aa-1ce96284b366" />
+<img width="200" alt="homeplayer-02-looper" src="https://github.com/user-attachments/assets/2f1cf014-20cb-4092-9788-dc00866baa3b" />
+<img width="200" alt="homeplayer-03-eq" src="https://github.com/user-attachments/assets/559af109-5ba7-4db3-85bb-50d99c600be9" />
 
 ## Features
 - Direct file system navigation (the main UI part is a file manager filtered by playable filetypes)
