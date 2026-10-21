@@ -505,6 +505,25 @@ public class Fun {
     
     return result;
   }
+  
+  public static void logCallChain() {
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    StringBuilder callChain = new StringBuilder("Call chain:");
+
+    for (StackTraceElement frame : stackTrace) {
+      String className = frame.getClassName();
+
+      if (className.equals(Fun.class.getName()) ||
+          className.equals(Thread.class.getName()) ||
+          className.equals("dalvik.system.VMStack")) {
+        continue;
+      }
+
+      callChain.append("\n  -> ").append(frame);
+    }
+
+    logd(callChain.toString());
+  }
 
   public static void createNotificationChannel(Context context) {
     if (Build.VERSION.SDK_INT >= 26) {
