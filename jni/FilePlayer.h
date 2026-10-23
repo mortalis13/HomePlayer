@@ -37,6 +37,7 @@ public:
   
   bool isStreamClosed();
   bool isRestarting();
+  int32_t getDeviceId();
   bool isPlaying();
   bool isRepeat();
   void setGain(float gainDb);
@@ -92,8 +93,10 @@ private:
   bool restarting = false;
   
   bool nextAudioBuffered = false;
-  
+
   float gain = 1.0f;
+
+  int32_t lastDeviceId = -1;
 
   shared_ptr<AudioStream> audioStream;
   shared_ptr<AudioDecoder> decoder;

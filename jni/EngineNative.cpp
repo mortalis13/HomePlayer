@@ -18,6 +18,7 @@ using namespace std;
 static JavaVM* gvm;
 static jclass EngineClassRef;
 static jmethodID NotifyAudioStopMethodID;
+static jmethodID NotifyDeviceChangedMethodID;
 
 static FilePlayer player;
 
@@ -61,14 +62,29 @@ class ChangeListener : public EngineChangeListener {
   virtual void audioEnded() {
     // --> Decoder wait thread
     LOGD("audioEnded()");
-    
+
     JNIEnv *env;
     bool thread_attached = GetJniEnv(gvm, &env);
     LOGI("JNI env attached to the current thread: %d", thread_attached);
-    
+
     if (thread_attached) {
       if (EngineClassRef && NotifyAudioStopMethodID) {
         env->CallStaticVoidMethod(EngineClassRef, NotifyAudioStopMethodID);
+      }
+      gvm->DetachCurrentThread();
+    }
+  }
+
+  virtual void deviceChanged(int32_t deviceId) {
+    LOGD("deviceChanged() => %d", deviceId);
+
+    JNIEnv *env;
+    bool thread_attached = GetJniEnv(gvm, &env);
+    LOGI("JNI env attached to the current thread: %d", thread_attached);
+
+    if (thread_attached) {
+      if (EngineClassRef && NotifyDeviceChangedMethodID) {
+        env->CallStaticVoidMethod(EngineClassRef, NotifyDeviceChangedMethodID, (jint) deviceId);
       }
       gvm->DetachCurrentThread();
     }
@@ -84,6 +100,7 @@ JNIEXPORT void JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_initEngine(
   if (!EngineClassRef) {
     EngineClassRef = (jclass) env->NewGlobalRef(cls);
     NotifyAudioStopMethodID = env->GetStaticMethodID(EngineClassRef, "notifyAudioStopped", "()V");
+    NotifyDeviceChangedMethodID = env->GetStaticMethodID(EngineClassRef, "notifyDeviceChanged", "(I)V");
   }
 }
 
@@ -112,6 +129,11 @@ JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_isStrea
 JNIEXPORT jboolean JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_isStreamRestarting(JNIEnv *env, jclass cls) {
   LOGD(__func__);
   return player.isRestarting();
+}
+
+JNIEXPORT jint JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_getDeviceId(JNIEnv *env, jclass cls) {
+  LOGD(__func__);
+  return player.getDeviceId();
 }
 
 JNIEXPORT bool JNICALL Java_org_mortalis_homeplayer_jni_EngineNative_isPlaying(JNIEnv *env, jclass cls) {

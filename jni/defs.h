@@ -31,6 +31,7 @@ public:
 class EngineChangeListener {
 public:
   virtual void audioEnded() = 0;
+  virtual void deviceChanged(int32_t deviceId) = 0;
 };
 
 #endif //DEFS_H

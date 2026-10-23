@@ -33,6 +33,9 @@ import static org.mortalis.homeplayer.Fun.logd;
 import static org.mortalis.homeplayer.Fun.logw;
 import static org.mortalis.homeplayer.Fun.loge;
 
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -93,6 +96,64 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   public Action onPlayerErrorAction = () -> {};
   public Action onHeadphonesUnplugAction = () -> {};
   public Action onHeadphonesPlugAction = () -> {};
+  
+  
+  private final AudioDeviceCallback audioDeviceCallback = new AudioDeviceCallback() {
+    @Override
+    public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+      for (AudioDeviceInfo info : addedDevices) {
+        log("Device added: " + describeDevice(info));
+      }
+    }
+
+    @Override
+    public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+      for (AudioDeviceInfo info : removedDevices) {
+        log("Device removed: " + describeDevice(info));
+      }
+    }
+  };
+
+  private String describeDevice(AudioDeviceInfo info) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("type=").append(deviceTypeName(info.getType()));
+    sb.append(" name=").append(info.getProductName());
+    sb.append(" id=").append(info.getId());
+    sb.append(" isSink=").append(info.isSink());
+    sb.append(" channelCounts=").append(java.util.Arrays.toString(info.getChannelCounts()));
+    sb.append(" sampleRates=").append(java.util.Arrays.toString(info.getSampleRates()));
+    sb.append(" encodings=").append(java.util.Arrays.toString(info.getEncodings()));
+    sb.append(" address=").append(info.getAddress());
+    return sb.toString();
+  }
+
+  private String deviceTypeName(int type) {
+    switch (type) {
+      case AudioDeviceInfo.TYPE_BUILTIN_EARPIECE: return "BUILTIN_EARPIECE";
+      case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER: return "BUILTIN_SPEAKER";
+      case AudioDeviceInfo.TYPE_WIRED_HEADSET: return "WIRED_HEADSET";
+      case AudioDeviceInfo.TYPE_WIRED_HEADPHONES: return "WIRED_HEADPHONES";
+      case AudioDeviceInfo.TYPE_BLUETOOTH_SCO: return "BLUETOOTH_SCO";
+      case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP: return "BLUETOOTH_A2DP";
+      case AudioDeviceInfo.TYPE_HDMI: return "HDMI";
+      case AudioDeviceInfo.TYPE_DOCK: return "DOCK";
+      case AudioDeviceInfo.TYPE_USB_ACCESSORY: return "USB_ACCESSORY";
+      case AudioDeviceInfo.TYPE_USB_DEVICE: return "USB_DEVICE";
+      case AudioDeviceInfo.TYPE_USB_HEADSET: return "USB_HEADSET";
+      case AudioDeviceInfo.TYPE_TELEPHONY: return "TELEPHONY";
+      case AudioDeviceInfo.TYPE_LINE_ANALOG: return "LINE_ANALOG";
+      case AudioDeviceInfo.TYPE_LINE_DIGITAL: return "LINE_DIGITAL";
+      case AudioDeviceInfo.TYPE_FM: return "FM";
+      case AudioDeviceInfo.TYPE_AUX_LINE: return "AUX_LINE";
+      case AudioDeviceInfo.TYPE_IP: return "IP";
+      case AudioDeviceInfo.TYPE_BUS: return "BUS";
+      case AudioDeviceInfo.TYPE_HEARING_AID: return "HEARING_AID";
+      case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE: return "BUILTIN_SPEAKER_SAFE";
+      case AudioDeviceInfo.TYPE_REMOTE_SUBMIX: return "REMOTE_SUBMIX";
+      default: return "UNKNOWN(" + type + ")";
+    }
+  }
+
 
 
   @Override
@@ -100,6 +161,8 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
     logd("PlayerService.onCreate()");
     super.onCreate();
     init();
+    
+    audioManager.registerAudioDeviceCallback(audioDeviceCallback, null);
   }
 
   @Override
@@ -737,6 +800,20 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
   @Override
   public void onAudioStopped() {
     stopped = true;
+  }
+
+  @Override
+  public void onDeviceChanged(int deviceId) {
+    log("Stream device changed to id=" + deviceId);
+
+    AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+    for (AudioDeviceInfo info : devices) {
+      if (info.getId() == deviceId) {
+        log("New stream device info: " + describeDevice(info));
+        return;
+      }
+    }
+    log("New stream device id " + deviceId + " not found among current output devices");
   }
   
   

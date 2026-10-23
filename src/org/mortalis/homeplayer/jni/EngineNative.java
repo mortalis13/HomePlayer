@@ -10,6 +10,7 @@ public class EngineNative {
   
   public static native boolean isStreamClosed();
   public static native boolean isStreamRestarting();
+  public static native int getDeviceId();
   public static native boolean isPlaying();
   public static native void setGain(float gain);
 
@@ -42,13 +43,19 @@ public class EngineNative {
   public static native String getCodecName();
   
   public static NativeChangeListener changeListener;
-  
+
   public static void notifyAudioStopped() {
     logd("notifyAudioStopped()");
     if (changeListener != null) changeListener.onAudioStopped();
   }
-  
+
+  public static void notifyDeviceChanged(int deviceId) {
+    logd("notifyDeviceChanged() => " + deviceId);
+    if (changeListener != null) changeListener.onDeviceChanged(deviceId);
+  }
+
   public interface NativeChangeListener {
     public void onAudioStopped();
+    public void onDeviceChanged(int deviceId);
   }
 }

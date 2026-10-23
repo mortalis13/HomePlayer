@@ -50,6 +50,9 @@ bool FilePlayer::openStream() {
 
   auto result = builder.openStream(audioStream);
   LOGI("Open stream result: %s", convertToText(result));
+  if (result == Result::OK && audioStream) {
+    LOGI("Opened stream device id: %d", audioStream->getDeviceId());
+  }
   return result == Result::OK;
 }
 
@@ -104,6 +107,11 @@ bool FilePlayer::isStreamClosed() {
 
 bool FilePlayer::isRestarting() {
   return this->restarting;
+}
+
+int32_t FilePlayer::getDeviceId() {
+  if (!audioStream) return -1;
+  return audioStream->getDeviceId();
 }
 
 void FilePlayer::setGain(float gainDb) {
@@ -336,25 +344,34 @@ void FilePlayer::filterAudio(float* stream, int32_t numFrames, int8_t channels) 
 void FilePlayer::writeAudio(uint8_t* stream, int32_t numFrames, int32_t skipFrames) {
   if (!audioStream) return;
   int8_t channels = audioStream->getChannelCount();
-  
+
+  int32_t currentDeviceId = audioStream->getDeviceId();
+  if (currentDeviceId != lastDeviceId) {
+    LOGI("Stream device changed: %d => %d", lastDeviceId, currentDeviceId);
+    lastDeviceId = currentDeviceId;
+    if (engineChangeListener) engineChangeListener->deviceChanged(currentDeviceId);
+  }
+
   if (skipFrames > 0) {
     stream += skipFrames * channels * sizeof(float);
     numFrames -= skipFrames;
   }
-  
+
   this->processAudio((float*) stream, numFrames, channels);
-  
+
   if (this->isFilterEnabled) {
     this->filterAudio((float*) stream, numFrames, channels);
   }
-  
+
   auto result = audioStream->write(stream, numFrames, 100);
   
   if (!result) {
     LOGE("Stream write error: %s", convertToText(result.error()));
     if (result.error() == Result::ErrorDisconnected) {
+      LOGW("Stream is disconnected. Device id before restart: %d", audioStream->getDeviceId());
       LOGW("Stream is disconnected. Restarting");
       if (this->restartStream()) {
+        LOGI("Restarted stream device id: %d", audioStream->getDeviceId());
         audioStream->write(stream, numFrames, 100);
       }
     }
