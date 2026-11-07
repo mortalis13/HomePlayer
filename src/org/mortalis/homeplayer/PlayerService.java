@@ -233,12 +233,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   // ----------------------- Actions
   private void play() {
-    if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
-      boolean audioFocusGranted = requestAudioFocus();
-      if (!audioFocusGranted) {
-        loge("Audio focus is not granted");
-        return;
-      }
+    boolean audioFocusGranted = requestAudioFocus();
+    if (!audioFocusGranted) {
+      loge("Audio focus is not granted");
+      return;
     }
     
     // Called after the focus was previously lost and receiver was unregistered
@@ -252,12 +250,10 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
 
   public boolean resume() {
     logd("resume()");
-    if (Vars.HANDLE_AUDIO_FOCUS_CHANGE) {
-      boolean audioFocusGranted = requestAudioFocus();
-      if (!audioFocusGranted) {
-        loge("Audio focus is not granted");
-        return false;
-      }
+    boolean audioFocusGranted = requestAudioFocus();
+    if (!audioFocusGranted) {
+      loge("Audio focus is not granted");
+      return false;
     }
     
     if (!this.mediaButtonsRegistered) {
@@ -760,6 +756,13 @@ public class PlayerService extends Service implements AudioManager.OnAudioFocusC
           focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
           focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
       {
+        unregisterMediaButtonsReceiver();
+        pause();
+      }
+    }
+    else {
+      if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT && audioManager.getMode() == AudioManager.MODE_IN_CALL) {
+        // Force pause on call
         unregisterMediaButtonsReceiver();
         pause();
       }
